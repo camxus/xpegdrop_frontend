@@ -222,12 +222,12 @@ export default function FolderImageGallery() {
               </p>
               <Button
                 onClick={
-                  !project?.share_url ? handleShare : handleUploadToDropbox
+                  project?.share_url ? handleShare : handleUploadToDropbox
                 }
                 disabled={isUploading}
                 className="cursor-pointer flex items-center gap-2"
               >
-                {!project?.share_url ? (
+                {project?.share_url ? (
                   <>
                     <Share2 className="h-4 w-4" />
                     Share Folder
