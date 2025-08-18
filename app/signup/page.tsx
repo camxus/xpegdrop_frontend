@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
@@ -45,7 +45,15 @@ export type FormData = {
     | undefined;
 };
 
-export default function SignUpPage() {
+export default function SignUpPageWrapper() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <SignUpPageContent />
+    </Suspense>
+  );
+}
+
+export function SignUpPageContent() {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<FormData>({
     first_name: "",
