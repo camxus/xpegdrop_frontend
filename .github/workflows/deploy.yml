@@ -12,8 +12,8 @@ jobs:
 
     env:
       AWS_REGION: ${{ secrets.AWS_REGION }}
-      EB_ENV_NAME: frontend
-      APP_NAME: frontend
+      EB_ENV_NAME: ${{ secrets.APP_NAME }}
+      APP_NAME:  ${{ secrets.APP_NAME }}
 
     steps:
       - name: Checkout code
@@ -65,6 +65,15 @@ jobs:
         run: |
           mkdir -p .elasticbeanstalk
           eb init $APP_NAME --platform "Node.js" --region $AWS_REGION
+
+          if eb list | grep -q $APP_NAME; then
+            echo "Environment exists, deploying..."
+            eb use $APP_NAME
+            else
+              echo "Environment does not exist, creating..."
+              eb create $APP_NAME
+          fi
+          
           eb use $EB_ENV_NAME
 
           # Append the deploy artifact config without overwriting the existing config
