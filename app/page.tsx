@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useRef, useState } from "react";
+import React, { Suspense, useCallback, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { DropletIcon as Dropbox } from "lucide-react";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
@@ -8,7 +8,15 @@ import { useDropbox } from "@/hooks/api/useDropbox";
 import Link from "next/link";
 import { PinterestGridBackground } from "@/components/pinterest-grid-background";
 
-export default function ConnectDropboxPage() {
+export default function HomePageWrapper() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ConnectDropboxPage />
+    </Suspense>
+  );
+}
+
+export function ConnectDropboxPage() {
   const { getDropboxAuthUrl } = useDropbox();
 
   const { data: authUrl } = getDropboxAuthUrl();
