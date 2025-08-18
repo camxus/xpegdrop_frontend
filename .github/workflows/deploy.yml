@@ -73,8 +73,6 @@ jobs:
               echo "Environment does not exist, creating..."
               eb create $APP_NAME
           fi
-          
-          eb use $EB_ENV_NAME
 
           # Append the deploy artifact config without overwriting the existing config
           echo -e "\ndeploy:\n  artifact: app.zip" >> .elasticbeanstalk/config.yml
