@@ -19,7 +19,7 @@ export function FileUploader({
   onFilesSelected,
   accept,
   maxFiles = 1,
-  maxSize = 10485760, // 10MB
+  maxSize = 104857600000, // 10MB
   disabled = false,
   children,
   className,
@@ -45,7 +45,6 @@ export function FileUploader({
     onDragLeave: () => setIsDragActive(false),
     onDropAccepted: () => setIsDragActive(false),
     onDropRejected: () => setIsDragActive(false),
-    directory: directory, // Pass directory prop to useDropzone
   })
 
   return (

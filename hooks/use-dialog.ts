@@ -3,7 +3,7 @@
 import type React from "react"
 
 import { useContext } from "react"
-import { DialogContext } from "@/components/providers"
+import { DialogContext } from "@/components/dialog-provider"
 
 interface DialogState {
   isOpen: boolean

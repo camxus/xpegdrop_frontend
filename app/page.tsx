@@ -1,284 +1,174 @@
-"use client"
+"use client";
 
-import type React from "react"
+import React, { useCallback, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { DropletIcon as Dropbox } from "lucide-react";
+import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
+import { useDropbox } from "@/hooks/api/useDropbox";
+import Link from "next/link";
+import { PinterestGridBackground } from "@/components/pinterest-grid-background";
 
-import { useState, useCallback, useEffect } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { FileUploader } from "@/components/ui/file-uploader"
-import { PinterestGrid } from "@/components/pinterest-grid"
-import { FolderNavigation } from "@/components/folder-navigation"
-import { EditableTitle } from "@/components/editable-title"
-import { useDropbox } from "@/hooks/api/useDropbox"
-import { useToast } from "@/hooks/use-toast"
-import { processFolderUpload } from "@/lib/utils/file-utils"
-import { Upload, FolderOpen, Share2 } from "lucide-react"
-import type { Folder } from "@/types"
-import { ImageCarousel } from "@/components/image-carousel"
-import { ShareDialog } from "@/components/share-dialog"
-import { cn } from "@/lib/utils"
-import { motion, useMotionValue, useSpring, useTransform } from "framer-motion"
-import { useDialog } from "@/hooks/use-dialog" // Import useDialog hook
+export default function ConnectDropboxPage() {
+  const { getDropboxAuthUrl } = useDropbox();
 
-export default function FolderImageGallery() {
-  const [folders, setFolders] = useState<Folder[]>([])
-  const [currentFolderIndex, setCurrentFolderIndex] = useState(0)
-  const [isCarouselOpen, setIsCarouselOpen] = useState(false)
-  const [carouselStartIndex, setCarouselStartIndex] = useState(0)
-  const { toast } = useToast()
-  const { show, hide, isOpen: isDialogOpen, content: dialogContent } = useDialog() // Declare useDialog hook
+  const { data: authUrl } = getDropboxAuthUrl();
 
   // Motion values for mouse position, default center 50%
-  const x = useMotionValue(50)
-  const y = useMotionValue(50)
+  const x = useMotionValue(50);
+  const y = useMotionValue(50);
+
+  const bgX = useMotionValue(50);
+  const bgY = useMotionValue(50);
+
+  const springBgX = useSpring(bgX, { damping: 40, stiffness: 100 });
+  const springBgY = useSpring(bgY, { damping: 40, stiffness: 100 });
 
   // Smooth animated spring following the mouse
-  const springX = useSpring(x, { damping: 40, stiffness: 100 })
-  const springY = useSpring(y, { damping: 40, stiffness: 100 })
+  const springX = useSpring(x, { damping: 40, stiffness: 100 });
+  const springY = useSpring(y, { damping: 40, stiffness: 100 });
 
   // Animate gradient size and opacity (handle hover effect)
-  const [isAnyImageHovered, setIsAnyImageHovered] = useState(false)
-  const gradientSize = useMotionValue(250) // Base size in px
-  const gradientOpacity = useMotionValue(0.05) // Base opacity
-  const springSize = useSpring(gradientSize, { stiffness: 150, damping: 30 })
-  const springOpacity = useSpring(gradientOpacity, { stiffness: 150, damping: 30 })
+  const [isAnyImageHovered, setIsAnyImageHovered] = useState(false);
+  const [buttonIsHovered, setButtonIsHovered] = useState(false);
+  const buttonRef = useRef(null);
+
+  const gradientSize = useMotionValue(250); // Base size in px
+  const gradientOpacity = useMotionValue(0.05); // Base opacity
+  const springSize = useSpring(gradientSize, { stiffness: 150, damping: 30 });
+  const springOpacity = useSpring(gradientOpacity, {
+    stiffness: 150,
+    damping: 30,
+  });
 
   // Compose the gradient string from animated values
   const gradient = useTransform(
     [springX, springY, springSize, springOpacity],
     ([latestX, latestY, latestSize, latestOpacity]) =>
-      `radial-gradient(circle ${latestSize}px at ${latestX}% ${latestY}%, rgba(255,255,255,${latestOpacity}) 0%, rgba(255,255,255,${latestOpacity * 0.25}) 50%, transparent 100%)`,
-  )
-
-  const {
-    uploadFolder: { mutateAsync: uploadToDropbox, isPending: isUploading },
-    getUploadSuccess,
-  } = useDropbox()
-
-  const currentFolder = folders[currentFolderIndex]
-  const uploadSuccess = currentFolder ? getUploadSuccess(currentFolder.name) : null
-  const isUploaded = uploadSuccess?.success
-
-  const handleFolderUpload = useCallback(
-    (files: File[]) => {
-      if (files.length === 0) return
-
-      const newFolders = processFolderUpload(files)
-      if (newFolders.length === 0) {
-        toast({
-          title: "No Images Found",
-          description: "Please upload folders containing image files.",
-          variant: "destructive",
-        })
-        return
-      }
-
-      setFolders((prev) => [...prev, ...newFolders])
-      setCurrentFolderIndex(folders.length) // Navigate to first new folder
-
-      toast({
-        title: "Folders Uploaded",
-        description: `Successfully uploaded ${newFolders.length} folder(s) with images.`,
-      })
-    },
-    [folders.length, toast],
-  )
-
-  const handleFolderRename = useCallback(
-    (newName: string) => {
-      if (!currentFolder) return
-
-      setFolders((prev) =>
-        prev.map((folder) => (folder.id === currentFolder.id ? { ...folder, name: newName } : folder)),
-      )
-    },
-    [currentFolder],
-  )
-
-  const handlePreviousFolder = () => {
-    setCurrentFolderIndex((prev) => Math.max(0, prev - 1))
-  }
-
-  const handleNextFolder = () => {
-    setCurrentFolderIndex((prev) => Math.min(folders.length - 1, prev + 1))
-  }
-
-  const handleUploadToDropbox = async () => {
-    if (!currentFolder) return
-
-    try {
-      const imageFiles = currentFolder.images.map((img) => img.file)
-      await uploadToDropbox({ files: imageFiles, folderName: currentFolder.name })
-    } catch {
-      // Error handled in hook
-    }
-  }
-
-  const handleImageClick = useCallback((imageIndex: number) => {
-    setCarouselStartIndex(imageIndex)
-    setIsCarouselOpen(true)
-  }, [])
-
-  const handleCloseCarousel = useCallback(() => {
-    setIsCarouselOpen(false)
-  }, [])
-
-  const handleShare = () => {
-    if (!currentFolder || !uploadSuccess?.shareUrl) return
-
-    show({
-      content: <ShareDialog folderName={currentFolder.name} shareUrl={uploadSuccess.shareUrl} onClose={hide} />,
-    })
-  }
+      `radial-gradient(circle ${latestSize}px at ${latestX}% ${latestY}%, rgba(255,255,255,${latestOpacity}) 0%, rgba(255,255,255,${
+        (latestOpacity as number) * 0.25
+      }) 50%, transparent 100%)`
+  );
 
   // Global mousemove updates motion values directly
   const handleGlobalMouseMove = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
-      const rect = e.currentTarget.getBoundingClientRect()
-      const xPercent = ((e.clientX - rect.left) / rect.width) * 100
-      const yPercent = ((e.clientY - rect.top) / rect.height) * 100
-      x.set(xPercent)
-      y.set(yPercent)
+    (e: React.MouseEvent<any>) => {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const xPercent = ((e.clientX - rect.left) / rect.width) * 100;
+      const yPercent = ((e.clientY - rect.top) / rect.height) * 100;
+      x.set(xPercent);
+      y.set(yPercent);
     },
-    [x, y],
-  )
+    [x, y]
+  );
 
-  // Handle image hover change for background gradient intensity and size
-  const handleImageHoverChange = useCallback((isHovering: boolean) => {
-    setIsAnyImageHovered(isHovering)
-  }, [])
-
-  // Animate gradient size and opacity on image hover state change
-  useEffect(() => {
-    if (isAnyImageHovered) {
-      gradientSize.set(400) // Larger size for "shine up"
-      gradientOpacity.set(0.2) // Higher opacity for "shine up"
-    } else {
-      gradientSize.set(250) // Revert to base size
-      gradientOpacity.set(0.05) // Revert to base opacity
-    }
-  }, [isAnyImageHovered, gradientSize, gradientOpacity])
+  const handleButtonMouseMove = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const xPx = e.clientX - rect.left;
+      const yPx = e.clientY - rect.top;
+      bgX.set(xPx);
+      bgY.set(yPx);
+    },
+    [bgX, bgY]
+  );
 
   return (
-    <motion.div // Use motion.div for Framer Motion animations
-      className={cn("min-h-screen bg-background relative overflow-hidden")}
+    <motion.div
+      className="min-h-screen bg-background relative overflow-hidden flex items-center justify-center"
       onMouseMove={handleGlobalMouseMove}
       style={{
         backgroundColor: "var(--background)",
-        backgroundImage: gradient, // Use the transformed gradient motion value
+        backgroundImage: gradient,
         backgroundAttachment: "fixed",
-        backgroundPosition: `${springX.get()}% ${springY.get()}%`, // Use spring values for position
+        backgroundPosition: `${springX.get()}% ${springY.get()}%`,
         backgroundSize: "cover",
         backgroundRepeat: "no-repeat",
-        // Framer Motion handles transitions, so no explicit CSS transition needed here
       }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.8 }}
     >
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          {currentFolder ? (
-            <div className="space-y-4">
-              <EditableTitle title={currentFolder.name} onSave={handleFolderRename} />
-              <FolderNavigation
-                currentIndex={currentFolderIndex}
-                totalFolders={folders.length}
-                onPrevious={handlePreviousFolder}
-                onNext={handleNextFolder}
-              />
-            </div>
-          ) : (
-            <div className="text-center">
-              <h1 className="text-3xl font-bold mb-2">Folder Image Gallery</h1>
-              <p className="text-muted-foreground">Upload folders to get started</p>
-            </div>
-          )}
-        </div>
+      <div className="container mx-auto px-4 py-8 flex items-center justify-center">
+        <motion.div
+          className="flex flex-col text-center gap-y-6"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
+          {/* <PinterestGridBackground /> */}
 
-        {/* Main Content */}
-        {currentFolder ? (
-          <div className="mb-20">
-            <div className="mb-6 flex items-center justify-between">
-              <p className="text-muted-foreground">
-                {currentFolder.images.length} image{currentFolder.images.length !== 1 ? "s" : ""}
-              </p>
-              <Button
-                onClick={isUploaded ? handleShare : handleUploadToDropbox}
-                disabled={isUploading}
-                className="flex items-center gap-2"
+          {/* Your existing Link + Button */}
+          <Link href={authUrl?.url ?? ""} passHref legacyBehavior>
+            <a>
+              <button
+                disabled={!authUrl?.url}
+                ref={buttonRef}
+                onMouseEnter={() => setButtonIsHovered(!!authUrl?.url)}
+                onMouseLeave={() => setButtonIsHovered(false)}
+                onMouseMove={handleButtonMouseMove}
+                className={`
+                relative overflow-hidden px-12 py-4 text-lg font-semibold
+                border border-white/30 shadow-inner rounded-[9px] group transition-all duration-300 backdrop-blur-sm
+                hover:border-blue-300 hover:rounded-xl
+                ${
+                  !authUrl
+                    ? "hover:border-gray-700 cursor-not-allowed"
+                    : "cursor-pointer"
+                }
+              `}
               >
-                {isUploaded ? (
-                  <>
-                    <Share2 className="h-4 w-4" />
-                    Share Folder
-                  </>
-                ) : (
-                  <>
-                    <Upload className="h-4 w-4" />
-                    {isUploading ? "Uploading..." : "Upload to Dropbox"}
-                  </>
-                )}
-              </Button>
-            </div>
-            <PinterestGrid
-              images={currentFolder.images}
-              onImageClick={handleImageClick}
-              onImageHoverChange={handleImageHoverChange}
-            />
-          </div>
-        ) : (
-          <div className="mb-20">
-            <Card className="max-w-2xl mx-auto">
-              <CardContent className="p-8">
-                <FileUploader
-                  onFilesSelected={handleFolderUpload}
-                  accept={{ "image/*": [] }}
-                  maxFiles={1000}
-                  directory={true} // Enable multiple folder upload
-                  className="min-h-[200px]"
-                >
-                  <div className="text-center space-y-4">
-                    <FolderOpen className="h-12 w-12 mx-auto text-muted-foreground" />
-                    <div>
-                      <h3 className="text-lg font-semibold">Upload Image Folders</h3>
-                      <p className="text-muted-foreground">
-                        Drag and drop folders containing images, or click to browse
-                      </p>
-                    </div>
-                  </div>
-                </FileUploader>
-              </CardContent>
-            </Card>
-          </div>
-        )}
+                <motion.div
+                  className="absolute top-0 left-0 w-40 h-40 bg-blue-300/70 rounded-full blur-2xl pointer-events-none z-0"
+                  style={{
+                    x: springBgX,
+                    y: springBgY,
+                    translateX: "-50%",
+                    translateY: "-50%",
+                  }}
+                  animate={{
+                    opacity: buttonIsHovered ? 1 : 0,
+                    scale: buttonIsHovered ? 1 : 0,
+                  }}
+                  transition={{
+                    opacity: { duration: 0.3 },
+                    scale: {
+                      duration: 1,
+                      delay: buttonIsHovered ? 0 : 1,
+                      type: "spring",
+                      stiffness: 300,
+                      damping: 30,
+                    },
+                  }}
+                />
+                <div className="relative z-20 flex items-center gap-3">
+                  <span className="bg-gradient-to-br from-white via-[#d3e4f1] to-[#a9cce3] bg-clip-text text-transparent drop-shadow-[0_1px_1px_rgba(255,255,255,0.3)]">
+                    Connect Dropbox
+                  </span>
+                </div>
+              </button>
+            </a>
+          </Link>
 
-        {/* Image Carousel */}
-        {currentFolder && (
-          <ImageCarousel
-            images={currentFolder.images}
-            initialIndex={carouselStartIndex}
-            isOpen={isCarouselOpen}
-            onClose={handleCloseCarousel}
-          />
-        )}
+          {/* New login prompt below the button */}
+          <p className="text-sm text-muted-foreground">
+            Already have an account?{" "}
+            <Link href="/login" legacyBehavior>
+              <a className="text-blue-400 hover:underline font-semibold cursor-pointer">
+                Login
+              </a>
+            </Link>
+          </p>
 
-        {/* Fixed Upload Action */}
-        <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm border-t p-4">
-          <div className="container mx-auto">
-            <FileUploader
-              onFilesSelected={handleFolderUpload}
-              accept={{ "image/*": [] }}
-              maxFiles={1000}
-              directory={true} // Enable multiple folder upload
-              className="h-16"
-            >
-              <div className="flex items-center justify-center gap-2 text-sm">
-                <Upload className="h-4 w-4" />
-                Drop folders here to upload more images
-              </div>
-            </FileUploader>
-          </div>
-        </div>
+          <motion.div
+            className="text-sm text-muted-foreground"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
+          >
+            <p>Secure connection • Your data stays private</p>
+          </motion.div>
+        </motion.div>
       </div>
     </motion.div>
-  )
+  );
 }

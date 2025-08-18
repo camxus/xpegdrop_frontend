@@ -1,58 +1,73 @@
-"use client"
+"use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { dropboxApi } from "@/lib/api/dropboxApi"
-import { useToast } from "@/hooks/use-toast"
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { jwtDecode } from "jwt-decode";
+import { useToast } from "@/hooks/use-toast";
+import { useQuery } from "@tanstack/react-query";
+import { dropboxApi } from "@/lib/api/dropboxApi";
+
+interface DropboxTokenPayload {
+  access_token: string;
+  refresh_token: string;
+  account_id: string;
+  exp?: number;
+}
 
 export function useDropbox() {
-  const queryClient = useQueryClient()
-  const { toast } = useToast()
+  const searchParams = useSearchParams();
+  const { toast } = useToast();
 
-  const uploadFileMutation = useMutation({
-    mutationFn: ({ file, path }: { file: File; path: string }) => dropboxApi.uploadFile(file, path),
-    onSuccess: () => {
-      toast({ title: "Success", description: "File uploaded to Dropbox successfully" })
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to upload file to Dropbox",
-        variant: "destructive",
-      })
-    },
-  })
+  const [token, setToken] = useState<{
+    access_token: string;
+    refresh_token: string;
+  }>();
 
-  const uploadFolderMutation = useMutation({
-    mutationFn: ({ files, folderName }: { files: File[]; folderName: string }) =>
-      dropboxApi.uploadFolder(files, folderName),
-    onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["dropbox-uploads"] })
-      toast({ title: "Success", description: "Folder uploaded to Dropbox successfully" })
+  useEffect(() => {
+    const tokenFromUrl = searchParams.get("dropbox_token");
 
-      // Store the upload success state
-      queryClient.setQueryData(["dropbox-upload-success", variables.folderName], {
-        success: true,
-        uploadedAt: new Date(),
-        shareUrl: `https://dropbox.com/sh/${variables.folderName.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`,
-      })
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to upload folder to Dropbox",
-        variant: "destructive",
-      })
-    },
-  })
+    if (tokenFromUrl) {
+      try {
+        const decoded = jwtDecode<DropboxTokenPayload>(tokenFromUrl);
 
-  // Add function to get upload success state
-  const getUploadSuccess = (folderName: string) => {
-    return queryClient.getQueryData(["dropbox-upload-success", folderName])
-  }
+        if (
+          decoded.exp &&
+          decoded.exp * 1000 < Date.now() &&
+          !decoded.access_token &&
+          !decoded.refresh_token
+        ) {
+          console.warn("Dropbox token has expired");
+          toast({
+            title: "Dropbox token expired",
+            description: "Please reconnect your Dropbox account.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        setToken({
+          access_token: decoded.access_token,
+          refresh_token: decoded.refresh_token,
+        });
+      } catch (err) {
+        console.error("Invalid Dropbox token", err);
+        toast({
+          title: "Invalid token",
+          description: "Dropbox token is invalid or malformed.",
+          variant: "destructive",
+        });
+      }
+    }
+  }, [searchParams, toast]);
+
+  const getDropboxAuthUrl = () =>
+    useQuery({
+      queryKey: ["dropbox", "auth-url"],
+      queryFn: () => dropboxApi.getAuthUrl(),
+    });
 
   return {
-    uploadFile: uploadFileMutation,
-    uploadFolder: uploadFolderMutation,
-    getUploadSuccess,
-  }
+    dropboxToken: token,
+    getDropboxAuthUrl,
+  };
 }
