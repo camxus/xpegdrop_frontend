@@ -1,0 +1,73 @@
+name: Deploy to Dev
+
+on:
+  push:
+    branches:
+      - dev # Deploy only when pushing to main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: dev
+
+    env:
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      EB_ENV_NAME: frontend
+      APP_NAME: frontend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Build Next.js app
+        env:
+          NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
+        run: yarn build
+
+      - name: Prepare deployment package
+        run: |
+          mkdir deploy
+          chmod +x .platform/hooks/prebuild/00_install.sh
+          cp -r .next public package.json next.config.mjs .platform deploy/
+          if [ -f Procfile ]; then cp Procfile deploy/; fi
+          if [ -f server.js ]; then cp server.js deploy/; fi
+          cd deploy
+
+          # Create deployment archive with hidden folders
+          zip -r ../app.zip .
+
+      - name: Set up Python (for EB CLI)
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install EB CLI
+        run: |
+          pip install --upgrade pip
+          pip install awsebcli
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy to Elastic Beanstalk
+        run: |
+          mkdir -p .elasticbeanstalk
+          eb init $APP_NAME --platform "Node.js" --region $AWS_REGION
+          eb use $EB_ENV_NAME
+
+          # Append the deploy artifact config without overwriting the existing config
+          echo -e "\ndeploy:\n  artifact: app.zip" >> .elasticbeanstalk/config.yml
+
+          eb deploy --staged
