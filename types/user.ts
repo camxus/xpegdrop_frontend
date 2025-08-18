@@ -1,3 +1,7 @@
+export interface S3Location {
+  bucket: string
+  key: string
+}
 
 export interface User {
   user_id: string;
@@ -6,7 +10,7 @@ export interface User {
   first_name: string;
   last_name: string;
   bio?: string;
-  avatar_url?: string;
+  avatar?: S3Location | string;
   dropbox?: {
     access_token?: string;
     refresh_token?: string;

@@ -28,6 +28,8 @@ import { FileUploader } from "@/components/ui/file-uploader";
 import { useDropbox } from "@/hooks/api/useDropbox";
 import ConnectDropboxPage from "../page";
 import { useUsers } from "@/hooks/api/useUsers";
+import imageCompression from "browser-image-compression";
+import { useS3 } from "@/hooks/api/useS3";
 
 export type FormData = {
   first_name: string;
@@ -115,15 +117,26 @@ export function SignUpPageContent() {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
-
-  const handleAvatarUpload = (files: File[]) => {
+  const handleAvatarUpload = async (files: File[]) => {
     if (files.length > 0) {
       const file = files[0];
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setAvatarFile(file);
-      };
-      reader.readAsDataURL(file);
+
+      try {
+        // Configure compression options
+        const options = {
+          maxSizeMB: 4, // Target max size
+          maxWidthOrHeight: 1024, // Resize (px) to keep quality
+          useWebWorker: true,
+        };
+
+        // Compress file
+        const compressedFile = await imageCompression(file, options);
+
+        // Keep the compressed file in state
+        setAvatarFile(compressedFile);
+      } catch (err) {
+        console.error("Image compression error:", err);
+      }
     }
   };
 
@@ -410,7 +423,7 @@ export function SignUpPageContent() {
                               onClick={() => {
                                 setFormData((prev) => ({
                                   ...prev,
-                                  avatar_url: "",
+                                  avatar: "",
                                 }));
                                 setAvatarFile(undefined);
                               }}

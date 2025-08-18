@@ -1,4 +1,4 @@
-import { User } from "@/types/user";
+import { S3Location, User } from "@/types/user";
 import { api } from "./client";
 
 // Types
@@ -9,6 +9,7 @@ export interface SignupRequest extends Partial<User> {
   last_name: string;
   phone_number?: string;
   avatar_file?: File;
+  avatar?: S3Location;
 }
 
 export interface SignupResponse {
@@ -84,6 +85,7 @@ export const authApi = {
 
     if (data.bio) formData.append("bio", data.bio);
     if (data.dropbox?.access_token && data.dropbox.refresh_token) formData.append("dropbox", JSON.stringify(data.dropbox));
+    if (data.avatar) formData.append("avatar", JSON.stringify(data.avatar)); // File
     if (data.avatar_file) formData.append("avatar", data.avatar_file); // File
 
     return api.post("/auth/signup", formData, {

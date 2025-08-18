@@ -20,8 +20,10 @@ import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { useDialog } from "@/hooks/use-dialog"; // Import useDialog hook
 import { useProjects } from "@/hooks/api/useProjects";
 import { Project } from "@/types/project";
+import { useS3 } from "@/hooks/api/useS3";
 
 export default function FolderImageGallery() {
+  const { uploadFiles } = useS3();
   const { toast } = useToast();
   const { show, hide } = useDialog(); // Declare useDialog hook
 
@@ -119,12 +121,12 @@ export default function FolderImageGallery() {
 
     try {
       const imageFiles = currentFolder.images.map((img) => img.file);
+      const tempFileLocations = await uploadFiles(imageFiles);
       await createProject({
         name: currentFolder.name,
-        files: imageFiles,
+        file_locations: tempFileLocations,
       });
-    } catch {
-    }
+    } catch {}
   };
 
   const handleImageClick = useCallback((imageIndex: number) => {

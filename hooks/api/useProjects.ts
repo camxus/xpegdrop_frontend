@@ -5,6 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Project } from "@/types/project";
 import { projectsApi } from "@/lib/api/projectsApi";
 import { ApiError } from "next/dist/server/api-utils";
+import { S3Location } from "@/types/user";
 
 export function useProjects(userId?: string) {
   const queryClient = useQueryClient();
@@ -52,7 +53,7 @@ export function useProjects(userId?: string) {
 
   // Mutation: Create new project
   const createProject = useMutation({
-    mutationFn: (formData: { name: string; files: File[] }) =>
+    mutationFn: (formData: { name: string; files?: File[], file_locations?: S3Location[] }) =>
       projectsApi.createProject(formData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });

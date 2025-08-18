@@ -1,12 +1,16 @@
 import { Project } from "@/types/project";
 import { api } from "./client";
+import { S3Location } from "@/types/user";
 
 export const projectsApi = {
   // Create new project with files (multipart/form-data)
-  createProject: async (formData: { name: string; files: File[] }) => {
+  createProject: async (formData: { name: string; files?: File[], file_locations?: S3Location[] }) => {
     const data = new FormData();
     data.append("name", formData.name);
-    formData.files.forEach((file) => {
+    if (formData.file_locations) formData.file_locations.forEach((file) => {
+      data.append("file_locations", JSON.stringify(file)); // multiple files under "file_locations"
+    });
+    if (formData.files) formData.files.forEach((file) => {
       data.append("files", file); // multiple files under "files"
     });
     return await api.post<Project>("/projects", data, {
