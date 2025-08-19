@@ -68,7 +68,13 @@ export function SignUpPageContent() {
     dropbox: { access_token: "", refresh_token: "" },
   });
   const { signup, isSigningUp, error } = useAuth();
-  const { getUserByUsername } = useUsers();
+  const {
+    getUserByUsername: {
+      mutateAsync: getUserByUsername,
+      isPending: isCheckingUsername,
+      data: foundUser,
+    },
+  } = useUsers();
   const { dropboxToken } = useDropbox();
 
   useEffect(() => {
@@ -82,10 +88,6 @@ export function SignUpPageContent() {
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(
     null
   );
-  const [debouncedUsername, setDebouncedUsername] = useState("");
-
-  const { data: foundUser, isFetching: isCheckingUsername } =
-    getUserByUsername(debouncedUsername);
 
   const router = useRouter();
 
@@ -93,7 +95,7 @@ export function SignUpPageContent() {
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (formData.username.length > 0) {
-        setDebouncedUsername(formData.username);
+        getUserByUsername(formData.username);
       } else {
         setUsernameAvailable(null);
       }
@@ -104,14 +106,14 @@ export function SignUpPageContent() {
 
   // React to changes in the API result
   useEffect(() => {
-    if (debouncedUsername.length === 0) {
+    if (!formData.username.length) {
       setUsernameAvailable(null);
     } else if (foundUser) {
       setUsernameAvailable(false); // username taken
     } else if (!isCheckingUsername && !foundUser) {
       setUsernameAvailable(true); // username available
     }
-  }, [foundUser, debouncedUsername, isCheckingUsername]);
+  }, [foundUser, formData.username, isCheckingUsername]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

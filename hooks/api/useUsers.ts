@@ -24,12 +24,9 @@ export function useUsers() {
     });
 
   // Get user by public username
-  const getUserByUsername = (username: string) =>
-    useQuery<User, Error>({
-      queryKey: ["user", "username", username],
-      queryFn: () => userApi.getUserByUsername(username),
-      enabled: !!username,
-    });
+  const getUserByUsername = useMutation<User, Error, string>({
+    mutationFn: (username: string) => userApi.getUserByUsername(username),
+  });
 
   // ✅ Update user info + avatar with toast
   const updateUser = useMutation({
