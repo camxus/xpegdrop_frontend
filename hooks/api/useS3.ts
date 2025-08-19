@@ -8,6 +8,7 @@ import { api } from "@/lib/api/client";
 
 type UploadFileOptions = {
   onProgress?: (progress: number) => void;
+  key?: string;
   bucket?: string; // Optional override (defaults to temp bucket)
 };
 
@@ -26,7 +27,7 @@ export function useS3() {
       }
 
       // Construct S3 key
-      const key = `temp_uploads/${uuidv4()}.${ext}`;
+      const key = options?.key || `${uuidv4()}.${ext}`;
       const bucket = options?.bucket || process.env.NEXT_PUBLIC_TEMP_BUCKET;
 
       // 1️⃣ Request presigned URL (GET with query params)
@@ -60,7 +61,7 @@ export function useS3() {
       throw err;
     }
   };
-  
+
   const uploadFiles = async (files: File[], options?: UploadFileOptions) => {
     try {
       // Map each file to a promise from uploadFile
