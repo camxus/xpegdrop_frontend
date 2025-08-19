@@ -194,6 +194,7 @@ axiosInstance.interceptors.response.use(
 
     // If error is 401 and we haven't tried refreshing yet
     if (error.response?.status === 401 && !originalRequest._retry) {
+      if (!originalRequest.withCredentials) return
       if (isRefreshing) {
         // Queue up the request to be retried once token refresh finishes
         return new Promise((resolve, reject) => {

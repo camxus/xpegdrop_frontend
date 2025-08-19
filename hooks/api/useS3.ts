@@ -39,9 +39,10 @@ export function useS3() {
           key,
           content_type: file.type,
         },
+        withCredentials: false
       });
 
-      const { upload_url } = data.data;
+      const { upload_url } = data;
 
       // 2️⃣ Upload file to S3 using presigned URL
       await axios.put(upload_url, file, {
