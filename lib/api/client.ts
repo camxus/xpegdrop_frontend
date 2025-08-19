@@ -26,7 +26,7 @@ const axiosInstance = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
-  withCredentials: false, // Include cookies in requests
+  withCredentials: true, // Include cookies in requests
 });
 
 // Error class for API errors

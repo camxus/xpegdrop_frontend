@@ -39,7 +39,6 @@ export function useS3() {
           key,
           content_type: file.type,
         },
-        withCredentials: false
       });
 
       const { upload_url } = data.data;
