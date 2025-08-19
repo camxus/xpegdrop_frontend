@@ -7,9 +7,12 @@ export const projectsApi = {
   createProject: async (formData: { name: string; files?: File[], file_locations?: S3Location[] }) => {
     const data = new FormData();
     data.append("name", formData.name);
-    if (formData.file_locations) formData.file_locations.forEach((file) => {
-      data.append("file_locations", JSON.stringify(file)); // multiple files under "file_locations"
-    });
+    if (formData.file_locations) {
+      const fileLocations = formData.file_locations.map((file) => {
+        file
+      });
+      data.append("file_locations", JSON.stringify(fileLocations)); // multiple files under "file_locations"
+    }
     if (formData.files) formData.files.forEach((file) => {
       data.append("files", file); // multiple files under "files"
     });
