@@ -6,6 +6,8 @@ import { v4 as uuidv4 } from "uuid";
 import { extension as mimeExtension } from "mime-types";
 import { api } from "@/lib/api/client";
 
+const BATCH_SIZE = 5
+
 type UploadFileOptions = {
   onProgress?: (progress: number) => void;
   key?: string;
@@ -63,18 +65,17 @@ export function useS3() {
   };
 
   const uploadFiles = async (files: File[], options?: UploadFileOptions) => {
-    try {
-      // Map each file to a promise from uploadFile
-      const uploadPromises = files.map((file) => uploadFile(file, options));
+    const results: any[] = [];
+    const batchSize = BATCH_SIZE;
 
-      // Wait for all uploads to complete in parallel
-      const results = await Promise.all(uploadPromises);
-
-      return results; // Array of S3 keys or upload results
-    } catch (err) {
-      console.error("One or more uploads failed:", err);
-      throw err; // rethrow to handle in caller
+    for (let i = 0; i < files.length; i += batchSize) {
+      const batch = files.slice(i, i + batchSize);
+      // Wait for this batch to complete before starting the next
+      const batchResults = await Promise.all(batch.map((file) => uploadFile(file, options)));
+      results.push(...batchResults);
     }
+
+    return results;
   };
 
   return { uploadFile, uploadFiles, uploading, error };
