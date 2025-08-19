@@ -15,11 +15,11 @@ type UploadFileOptions = {
 };
 
 export function useS3() {
-  const [uploading, setUploading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const uploadFile = async (file: File, options?: UploadFileOptions) => {
-    setUploading(true);
+    setIsUploading(true);
     setError(null);
 
     try {
@@ -54,12 +54,12 @@ export function useS3() {
         },
       });
 
-      setUploading(false);
+      setIsUploading(false);
       return { key, bucket };
     } catch (err: any) {
       console.error("S3 Upload error:", err);
       setError(err.message || "Upload failed");
-      setUploading(false);
+      setIsUploading(false);
       throw err;
     }
   };
@@ -78,5 +78,5 @@ export function useS3() {
     return results;
   };
 
-  return { uploadFile, uploadFiles, uploading, error };
+  return { uploadFile, uploadFiles, isUploading, error };
 }

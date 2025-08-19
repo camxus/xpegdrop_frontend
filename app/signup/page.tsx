@@ -29,7 +29,6 @@ import { useDropbox } from "@/hooks/api/useDropbox";
 import ConnectDropboxPage from "../page";
 import { useUsers } from "@/hooks/api/useUsers";
 import imageCompression from "browser-image-compression";
-import { useS3 } from "@/hooks/api/useS3";
 
 export type FormData = {
   first_name: string;

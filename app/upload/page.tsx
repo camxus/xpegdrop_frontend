@@ -23,23 +23,24 @@ import { Project } from "@/types/project";
 import { useS3 } from "@/hooks/api/useS3";
 
 export default function FolderImageGallery() {
-  const { uploadFiles } = useS3();
+  const { uploadFiles, isUploading: isUploadingToS3 } = useS3();
   const { toast } = useToast();
   const { show, hide } = useDialog(); // Declare useDialog hook
 
   const {
     createProject: {
       mutateAsync: createProject,
-      isPending: isUploading,
+      isPending: isUploadingProject,
       data: project,
     },
   } = useProjects();
+
+  const isUploading = isUploadingProject || isUploadingToS3
 
   const [folders, setFolders] = useState<Folder[]>([]);
   const [currentFolderIndex, setCurrentFolderIndex] = useState(0);
   const [isCarouselOpen, setIsCarouselOpen] = useState(false);
   const [carouselStartIndex, setCarouselStartIndex] = useState(0);
-  const [createdProject, setCreatedProject] = useState<Project>();
 
   // Motion values for mouse position, default center 50%
   const x = useMotionValue(50);
