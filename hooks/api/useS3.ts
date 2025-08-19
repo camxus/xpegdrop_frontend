@@ -33,7 +33,7 @@ export function useS3() {
       const bucket = options?.bucket || process.env.NEXT_PUBLIC_TEMP_BUCKET;
 
       // 1️⃣ Request presigned URL (GET with query params)
-      const data = await api.get("/auth/presign-url", {
+      const data = await axios.get("/auth/presign-url", {
         params: {
           bucket,
           key,
@@ -41,7 +41,7 @@ export function useS3() {
         },
       });
 
-      const { upload_url } = data;
+      const { upload_url } = data.data;
 
       // 2️⃣ Upload file to S3 using presigned URL
       await axios.put(upload_url, file, {
