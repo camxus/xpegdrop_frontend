@@ -109,8 +109,8 @@ export async function apiRequest<T = any>(
             ? "message" in data && typeof data.message === "string"
               ? data.message
               : "error" in data && typeof (data as any).error === "string"
-              ? (data as any).error
-              : `API request failed with status ${status}`
+                ? (data as any).error
+                : `API request failed with status ${status}`
             : `API request failed with status ${status}`;
 
         throw new ApiError(message, status, data);
@@ -132,20 +132,24 @@ export async function apiRequest<T = any>(
 
 axiosInstance.interceptors.request.use(
   async (config) => {
-    const token = await getCookieClient(TOKEN_KEY);
-    if (token) {
-      const { accessToken, idToken } = JSON.parse(token);
+    // Only add tokens if withCredentials is true
+    if (config.withCredentials) {
+      const token = await getCookieClient(TOKEN_KEY);
+      if (token) {
+        const { accessToken, idToken } = JSON.parse(token);
 
-      config.headers = config.headers ?? {};
+        config.headers = config.headers ?? {};
 
-      if (accessToken) {
-        config.headers.Authorization = `Bearer ${accessToken}`;
-      }
+        if (accessToken) {
+          config.headers.Authorization = `Bearer ${accessToken}`;
+        }
 
-      if (idToken) {
-        config.headers["x-id-token"] = idToken;
+        if (idToken) {
+          config.headers["x-id-token"] = idToken;
+        }
       }
     }
+
     return config;
   },
   (error) => Promise.reject(error)
