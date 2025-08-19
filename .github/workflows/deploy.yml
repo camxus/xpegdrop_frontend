@@ -30,7 +30,6 @@ jobs:
       - name: Build Next.js app
         env:
           NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
-          NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
         run: yarn build
 
       - name: Prepare deployment package
