@@ -197,6 +197,7 @@ export default function FolderImageGallery() {
               <EditableTitle
                 title={currentFolder.name}
                 onSave={handleFolderRename}
+                editable={!project || !isUploading}
               />
               <FolderNavigation
                 currentIndex={currentFolderIndex}

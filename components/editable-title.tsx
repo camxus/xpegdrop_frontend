@@ -1,51 +1,57 @@
-"use client"
+"use client";
 
-import type React from "react"
+import type React from "react";
 
-import { useState, useRef, useEffect } from "react"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Edit2, Check, X } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { useState, useRef, useEffect } from "react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Edit2, Check, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface EditableTitleProps {
-  title: string
-  onSave: (newTitle: string) => void
-  className?: string
+  title: string;
+  onSave: (newTitle: string) => void;
+  editable: boolean;
+  className?: string;
 }
 
-export function EditableTitle({ title, onSave, className }: EditableTitleProps) {
-  const [isEditing, setIsEditing] = useState(false)
-  const [editValue, setEditValue] = useState(title)
-  const inputRef = useRef<HTMLInputElement>(null)
+export function EditableTitle({
+  title,
+  onSave,
+  className,
+  editable,
+}: EditableTitleProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editValue, setEditValue] = useState(title);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
-      inputRef.current.focus()
-      inputRef.current.select()
+      inputRef.current.focus();
+      inputRef.current.select();
     }
-  }, [isEditing])
+  }, [isEditing]);
 
   const handleSave = () => {
     if (editValue.trim() && editValue !== title) {
-      onSave(editValue.trim())
+      onSave(editValue.trim());
     }
-    setIsEditing(false)
-    setEditValue(title)
-  }
+    setIsEditing(false);
+    setEditValue(title);
+  };
 
   const handleCancel = () => {
-    setIsEditing(false)
-    setEditValue(title)
-  }
+    setIsEditing(false);
+    setEditValue(title);
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
-      handleSave()
+      handleSave();
     } else if (e.key === "Escape") {
-      handleCancel()
+      handleCancel();
     }
-  }
+  };
 
   if (isEditing) {
     return (
@@ -64,7 +70,7 @@ export function EditableTitle({ title, onSave, className }: EditableTitleProps) 
           <X className="h-4 w-4" />
         </Button>
       </div>
-    )
+    );
   }
 
   return (
@@ -78,8 +84,8 @@ export function EditableTitle({ title, onSave, className }: EditableTitleProps) 
         onClick={() => setIsEditing(true)}
         className="opacity-0 group-hover:opacity-100 transition-opacity"
       >
-        <Edit2 className="h-4 w-4" />
+        {editable && <Edit2 className="h-4 w-4" />}
       </Button>
     </div>
-  )
+  );
 }
