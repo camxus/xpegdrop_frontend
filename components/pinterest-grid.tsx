@@ -1,64 +1,85 @@
-"use client"
+"use client";
 
-import { useState, memo, useCallback } from "react"
-import Image from "next/image"
-import { cn } from "@/lib/utils"
-import type { ImageFile } from "@/types"
+import { useState, memo, useCallback } from "react";
+import Image from "next/image";
+import { cn } from "@/lib/utils";
+import type { ImageFile } from "@/types";
+import { StarRatingSlider } from "./star-rating-slider";
+import { Rating } from "@/lib/api/ratingsApi";
 
 interface PinterestGridProps {
-  images: ImageFile[]
-  className?: string
-  onImageClick?: (imageIndex: number) => void
-  onImageHoverChange?: (isHovering: boolean) => void
+  images: ImageFile[];
+  ratings?: Rating[];
+  className?: string;
+  onImageClick?: (imageIndex: number) => void;
+  onImageHoverChange?: (isHovering: boolean) => void;
+  onRatingChange?: (imageId: string, rating: number, ratingId?: string) => void;
 }
 
 export function PinterestGrid({
   images,
+  ratings = [],
   className,
   onImageClick,
   onImageHoverChange,
+  onRatingChange,
 }: PinterestGridProps) {
-  const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set())
-  const [hoveredImage, setHoveredImage] = useState<string | null>(null)
+  const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
+  const [hoveredImage, setHoveredImage] = useState<string | null>(null);
 
   const handleImageLoad = useCallback((imageId: string) => {
     setLoadedImages((prev) => {
-      if (prev.has(imageId)) return prev
-      const newSet = new Set(prev)
-      newSet.add(imageId)
-      return newSet
-    })
-  }, [])
+      if (prev.has(imageId)) return prev;
+      const newSet = new Set(prev);
+      newSet.add(imageId);
+      return newSet;
+    });
+  }, []);
 
   const handleMouseEnter = useCallback(
     (imageId: string) => {
       if (hoveredImage !== imageId) {
-        setHoveredImage(imageId)
-        onImageHoverChange?.(true)
+        setHoveredImage(imageId);
+        onImageHoverChange?.(true);
       }
     },
-    [hoveredImage, onImageHoverChange],
-  )
+    [hoveredImage, onImageHoverChange]
+  );
 
   const handleMouseLeave = useCallback(() => {
     if (hoveredImage !== null) {
-      setHoveredImage(null)
-      onImageHoverChange?.(false)
+      setHoveredImage(null);
+      onImageHoverChange?.(false);
     }
-  }, [hoveredImage, onImageHoverChange])
+  }, [hoveredImage, onImageHoverChange]);
 
   const handleImageClick = useCallback(
     (imageIndex: number) => {
-      onImageClick?.(imageIndex)
+      onImageClick?.(imageIndex);
     },
-    [onImageClick],
-  )
+    [onImageClick]
+  );
+
+  const handleRatingChange = useCallback(
+    (imageId: string, rating: number, ratingId?: string) => {
+      onRatingChange?.(imageId, rating, ratingId);
+    },
+    [onRatingChange]
+  );
 
   return (
-    <div className={cn("columns-2 gap-4 sm:columns-3 md:columns-4 lg:columns-5", className)}>
-      {images.map((image, index) => (
+    <div
+      className={cn(
+        "columns-2 gap-4 sm:columns-3 md:columns-4 lg:columns-5",
+        className
+      )}
+    >
+      {images.map((image: ImageFile, index: number) => (
         <PinterestImage
           key={image.id}
+          rating={
+            ratings.find((r) => r.image_id === image.id) ?? new Rating()
+          }
           image={image}
           index={index}
           isHovered={hoveredImage === image.id}
@@ -67,10 +88,11 @@ export function PinterestGrid({
           onLeave={handleMouseLeave}
           onClick={() => handleImageClick(index)}
           onLoad={() => handleImageLoad(image.id)}
+          onRatingChange={(rating, ratingId) => handleRatingChange(image.id, rating, ratingId)}
         />
       ))}
     </div>
-  )
+  );
 }
 
 // ✅ Memoized PinterestImage sub-component
@@ -79,32 +101,38 @@ const PinterestImage = memo(function PinterestImage({
   index,
   isHovered,
   isLoaded,
+  rating,
   onHover,
   onLeave,
   onClick,
   onLoad,
+  onRatingChange,
 }: {
-  image: ImageFile
-  index: number
-  isHovered: boolean
-  isLoaded: boolean
-  onHover: () => void
-  onLeave: () => void
-  onClick: () => void
-  onLoad: () => void
+  rating: Rating;
+  image: ImageFile;
+  index: number;
+  isHovered: boolean;
+  isLoaded: boolean;
+  onHover: () => void;
+  onLeave: () => void;
+  onClick: () => void;
+  onLoad: () => void;
+  onRatingChange: (rating: number, ratingId?: string) => void;
 }) {
   return (
-    <div className="mb-4 break-inside-avoid">
+    <div
+      className="mb-4 break-inside-avoid"
+      onMouseEnter={onHover}
+      onMouseLeave={onLeave}
+    >
       <div
         className="group relative overflow-hidden rounded-lg bg-muted cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
-        onMouseEnter={onHover}
-        onMouseLeave={onLeave}
         onClick={onClick}
       >
         <div
           className={cn(
             "absolute inset-0 border-2 border-transparent transition-all duration-300 rounded-lg z-20 pointer-events-none",
-            isHovered && "border-white shadow-[0_0_20px_rgba(255,255,255,0.5)]",
+            isHovered && "border-white shadow-[0_0_20px_rgba(255,255,255,0.5)]"
           )}
         />
         <Image
@@ -117,15 +145,24 @@ const PinterestImage = memo(function PinterestImage({
           className={cn(
             "h-auto w-full object-cover transition-all duration-300",
             isLoaded ? "opacity-100" : "opacity-0",
-            isHovered && "brightness-105",
+            isHovered && "brightness-105"
           )}
           sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
         />
-        {!isLoaded && <div className="absolute inset-0 animate-pulse bg-muted" />}
+        {!isLoaded && (
+          <div className="absolute inset-0 animate-pulse bg-muted" />
+        )}
       </div>
       <p className="mt-2 truncate text-sm text-muted-foreground group-hover:text-foreground transition-colors">
         {image.name}
       </p>
+      <div className="w-full flex justify-center">
+        <StarRatingSlider
+          value={rating.value || 0}
+          onRatingChange={(value) => onRatingChange(value, rating.rating_id)}
+          className="mt-1"
+        />
+      </div>
     </div>
-  )
-})
+  );
+});

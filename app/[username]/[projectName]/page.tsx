@@ -1,10 +1,11 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { PinterestGrid } from "@/components/pinterest-grid";
 import { ImageCarousel } from "@/components/image-carousel";
 import { useProjects } from "@/hooks/api/useProjects";
+import { useRatings } from "@/hooks/api/useRatings";
 import { useToast } from "@/hooks/use-toast";
 import { useDialog } from "@/hooks/use-dialog";
 import type { ImageFile } from "@/types";
@@ -31,6 +32,12 @@ export default function PublicProjectPage() {
   const [carouselStartIndex, setCarouselStartIndex] = useState(0);
 
   const { getProjectByShareUrl } = useProjects();
+  const {
+    ratings,
+    getRatings: { mutateAsync: getRatings },
+    createRating: { mutateAsync: createRating },
+    updateRating: { mutateAsync: updateRating },
+  } = useRatings();
 
   const x = useMotionValue(50);
   const y = useMotionValue(50);
@@ -43,7 +50,6 @@ export default function PublicProjectPage() {
     stiffness: 150,
     damping: 30,
   });
-
   const gradient = useTransform(
     [springX, springY, springSize, springOpacity],
     ([x, y, size, opacity]) =>
@@ -66,9 +72,7 @@ export default function PublicProjectPage() {
   const loadProject = async (email?: string) => {
     try {
       const data = await getProjectByShareUrl(username, projectName, email);
-
       setProject(data?.project || null);
-
       setImages(
         data.images.map(
           (i: { preview_url: string; thumbnail_url: string }) => ({
@@ -77,6 +81,12 @@ export default function PublicProjectPage() {
           })
         )
       );
+
+      // Load ratings for the project
+      if (data.project?.project_id) {
+        await getRatings(data.project.project_id);
+      }
+
       hide();
     } catch (error: any) {
       const status = (error as ApiError)?.status;
@@ -112,6 +122,25 @@ export default function PublicProjectPage() {
       await loadProject(email);
     } catch (e) {}
   };
+
+  const handleRatingChange = useCallback(
+    async (imageId: string, value: number, ratingId?: string) => {
+      if (!project) return;
+
+      if (!ratingId) {
+        const newRating = await createRating({
+          project_id: project.project_id,
+          image_id: imageId,
+          value,
+        });
+        return newRating;
+      } else {
+        const updated = await updateRating({ ratingId, value });
+        return updated;
+      }
+    },
+    [project, createRating, updateRating, toast]
+  );
 
   useEffect(() => {
     loadProject();
@@ -151,10 +180,12 @@ export default function PublicProjectPage() {
 
             <PinterestGrid
               images={images}
+              ratings={ratings}
               onImageClick={(i) => {
                 setCarouselStartIndex(i);
                 setIsCarouselOpen(true);
               }}
+              onRatingChange={handleRatingChange}
               onImageHoverChange={(hovering) => setIsHovered(hovering)}
             />
 

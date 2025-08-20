@@ -21,6 +21,7 @@ import { useDialog } from "@/hooks/use-dialog"; // Import useDialog hook
 import { useProjects } from "@/hooks/api/useProjects";
 import { Project } from "@/types/project";
 import { useS3 } from "@/hooks/api/useS3";
+import { useRatings } from "@/hooks/api/useRatings";
 
 export default function FolderImageGallery() {
   const { uploadFiles, isUploading: isUploadingToS3 } = useS3();
@@ -35,9 +36,17 @@ export default function FolderImageGallery() {
     },
   } = useProjects();
 
-  const isUploading = isUploadingProject || isUploadingToS3
+  const {
+    ratings,
+    getRatings: { mutateAsync: getRatings },
+    createRating: { mutateAsync: createRating },
+    updateRating: { mutateAsync: updateRating, data: updatedRating },
+  } = useRatings();
+
+  const isUploading = isUploadingProject || isUploadingToS3;
 
   const [folders, setFolders] = useState<Folder[]>([]);
+  const [createdprojects, setCreatedProjects] = useState<Project[]>([]);
   const [currentFolderIndex, setCurrentFolderIndex] = useState(0);
   const [isCarouselOpen, setIsCarouselOpen] = useState(false);
   const [carouselStartIndex, setCarouselStartIndex] = useState(0);
@@ -70,6 +79,9 @@ export default function FolderImageGallery() {
   );
 
   const currentFolder = folders[currentFolderIndex];
+  const currentProject = createdprojects.find(
+    (project) => project.name === currentFolder.name
+  );
 
   const handleFolderUpload = useCallback(
     (files: File[]) => {
@@ -123,10 +135,11 @@ export default function FolderImageGallery() {
     try {
       const imageFiles = currentFolder.images.map((img) => img.file);
       const tempFileLocations = await uploadFiles(imageFiles);
-      await createProject({
+      const project = await createProject({
         name: currentFolder.name,
         file_locations: tempFileLocations,
       });
+      setCreatedProjects((projects) => [...projects, project]);
     } catch {}
   };
 
@@ -134,6 +147,29 @@ export default function FolderImageGallery() {
     setCarouselStartIndex(imageIndex);
     setIsCarouselOpen(true);
   }, []);
+
+  const handleRatingChange = useCallback(
+    async (imageId: string, rating: number, ratingId?: string) => {
+      if (!currentProject) return;
+
+      if (!ratingId) {
+        const createdRating = await createRating({
+          project_id: currentProject.project_id,
+          image_id: imageId,
+          value: rating,
+        });
+        return createdRating;
+      }
+
+      const updatedRating = await updateRating({
+        ratingId,
+        value: rating,
+      });
+
+      return updatedRating;
+    },
+    [currentProject]
+  );
 
   const handleCloseCarousel = useCallback(() => {
     setIsCarouselOpen(false);
@@ -174,6 +210,10 @@ export default function FolderImageGallery() {
       gradientOpacity.set(0.05); // Revert to base opacity
     }
   }, [isAnyImageHovered, gradientSize, gradientOpacity]);
+
+  useEffect(() => {
+    getRatings(project?.project_id);
+  }, [project]);
 
   return (
     <motion.div // Use motion.div for Framer Motion animations
@@ -246,7 +286,9 @@ export default function FolderImageGallery() {
             </div>
             <PinterestGrid
               images={currentFolder.images}
+              ratings={ratings}
               onImageClick={handleImageClick}
+              onRatingChange={handleRatingChange}
               onImageHoverChange={handleImageHoverChange}
             />
           </div>
