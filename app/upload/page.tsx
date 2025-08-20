@@ -149,21 +149,22 @@ export default function FolderImageGallery() {
   }, []);
 
   const handleRatingChange = useCallback(
-    async (imageId: string, rating: number, ratingId?: string) => {
+    async (imageId: string, value: number, ratingId?: string) => {
+      console.log(value);
       if (!currentProject) return;
 
       if (!ratingId) {
         const createdRating = await createRating({
           project_id: currentProject.project_id,
           image_id: imageId,
-          value: rating,
+          value,
         });
         return createdRating;
       }
 
       const updatedRating = await updateRating({
         ratingId,
-        value: rating,
+        value,
       });
 
       return updatedRating;
@@ -285,6 +286,7 @@ export default function FolderImageGallery() {
               </Button>
             </div>
             <PinterestGrid
+              ratingDisabled={!project}
               images={currentFolder.images}
               ratings={ratings}
               onImageClick={handleImageClick}

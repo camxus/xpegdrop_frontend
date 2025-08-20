@@ -8,17 +8,19 @@ import { StarRatingSlider } from "./star-rating-slider";
 import { Rating } from "@/lib/api/ratingsApi";
 
 interface PinterestGridProps {
+  ratingDisabled?: boolean;
   images: ImageFile[];
   ratings?: Rating[];
   className?: string;
   onImageClick?: (imageIndex: number) => void;
   onImageHoverChange?: (isHovering: boolean) => void;
-  onRatingChange?: (imageId: string, rating: number, ratingId?: string) => void;
+  onRatingChange?: (imageId: string, value: number, ratingId?: string) => void;
 }
 
 export function PinterestGrid({
+  ratingDisabled = false,
   images,
-  ratings = [],
+  ratings,
   className,
   onImageClick,
   onImageHoverChange,
@@ -61,8 +63,8 @@ export function PinterestGrid({
   );
 
   const handleRatingChange = useCallback(
-    (imageId: string, rating: number, ratingId?: string) => {
-      onRatingChange?.(imageId, rating, ratingId);
+    (imageId: string, value: number, ratingId?: string) => {
+      onRatingChange?.(imageId, value, ratingId);
     },
     [onRatingChange]
   );
@@ -76,10 +78,9 @@ export function PinterestGrid({
     >
       {images.map((image: ImageFile, index: number) => (
         <PinterestImage
+          disabled={ratingDisabled}
           key={image.id}
-          rating={
-            ratings.find((r) => r.image_id === image.id) ?? new Rating()
-          }
+          rating={ratings?.find((r) => r.image_id === image.id) ?? new Rating()}
           image={image}
           index={index}
           isHovered={hoveredImage === image.id}
@@ -88,7 +89,9 @@ export function PinterestGrid({
           onLeave={handleMouseLeave}
           onClick={() => handleImageClick(index)}
           onLoad={() => handleImageLoad(image.id)}
-          onRatingChange={(rating, ratingId) => handleRatingChange(image.id, rating, ratingId)}
+          onRatingChange={(value, ratingId) =>
+            handleRatingChange(image.id, value, ratingId)
+          }
         />
       ))}
     </div>
@@ -97,6 +100,7 @@ export function PinterestGrid({
 
 // ✅ Memoized PinterestImage sub-component
 const PinterestImage = memo(function PinterestImage({
+  disabled,
   image,
   index,
   isHovered,
@@ -108,6 +112,7 @@ const PinterestImage = memo(function PinterestImage({
   onLoad,
   onRatingChange,
 }: {
+  disabled: boolean;
   rating: Rating;
   image: ImageFile;
   index: number;
@@ -117,7 +122,7 @@ const PinterestImage = memo(function PinterestImage({
   onLeave: () => void;
   onClick: () => void;
   onLoad: () => void;
-  onRatingChange: (rating: number, ratingId?: string) => void;
+  onRatingChange: (value: number, ratingId?: string) => void;
 }) {
   return (
     <div
@@ -156,13 +161,12 @@ const PinterestImage = memo(function PinterestImage({
       <p className="mt-2 truncate text-sm text-muted-foreground group-hover:text-foreground transition-colors">
         {image.name}
       </p>
-      <div className="w-full flex justify-center">
-        <StarRatingSlider
-          value={rating.value || 0}
-          onRatingChange={(value) => onRatingChange(value, rating.rating_id)}
-          className="mt-1"
-        />
-      </div>
+      <StarRatingSlider
+        disabled={disabled}
+        value={rating.value || 0}
+        onRatingChange={(value) => onRatingChange(value, rating.rating_id)}
+        className="w-full flex justify-center mt-1"
+      />
     </div>
   );
 });

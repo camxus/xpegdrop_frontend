@@ -10,6 +10,7 @@ interface RatingSliderProps {
   onRatingChange: (rating: number) => void;
   showBullets?: boolean;
   className?: string;
+  disabled?: boolean;
 }
 
 const STAR_AMOUNT = 5;
@@ -19,6 +20,7 @@ export function StarRatingSlider({
   onRatingChange,
   showBullets = true,
   className,
+  disabled,
 }: RatingSliderProps) {
   const [hoverRating, setHoverRating] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -40,8 +42,9 @@ export function StarRatingSlider({
     <div
       ref={containerRef}
       className={cn(
-        "flex items-center gap-1 cursor-pointer select-none py-1",
-        className
+        "flex items-center gap-1 cursor-pointer select-none py-1 transition-opacity",
+        className,
+        disabled && "opacity-50 pointer-events-none",
       )}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}

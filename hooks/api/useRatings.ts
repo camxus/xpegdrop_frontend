@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ratingsApi } from "@/lib/api/ratingsApi";
+import { Rating, ratingsApi } from "@/lib/api/ratingsApi";
 import { api } from "@/lib/api/client";
 import { useToast } from "../use-toast";
 import { useState } from "react";
@@ -9,7 +9,7 @@ import { useState } from "react";
 
 export function useRatings(projectId?: string) {
   const queryClient = useQueryClient();
-  const [ratings, setRatings] = useState<any[]>([]);
+  const [ratings, setRatings] = useState<Rating[]>([]);
   const { toast } = useToast();
 
   const getRatings = useMutation({
@@ -48,24 +48,28 @@ export function useRatings(projectId?: string) {
 
   // Mutation: Update rating
   const updateRating = useMutation({
-    mutationFn: ({ ratingId, value }: { ratingId: string; value: number }) =>
-      ratingsApi.updateRating(ratingId, value),
-    onSuccess: (data, variables) => {
-
-      const { ratingId } = variables
-
-      if (data)
-        setRatings((prev) =>
-          prev.map((r) => (r.rating_id === ratingId ? data : r))
-        );
-
+    mutationFn: ({ ratingId, value }: { ratingId: string; value: number }) => {
+      setRatings((prev) =>
+        prev.map((r) => (r.rating_id === ratingId ? { ...r, value } : r))
+      );
+      return ratingsApi.updateRating(ratingId, value)
+    },
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["ratings", projectId] });
       toast({
         title: "Rating updated",
         description: "Your rating was updated successfully.",
       });
     },
-    onError: (err: any) => {
+    onError: (err: any, variables) => {
+      const { ratingId } = variables
+
+      const prevValue = ratings.find((r) => r.rating_id === ratingId)?.value || 0
+
+      setRatings((prev) =>
+        prev.map((r) => (r.rating_id === ratingId ? { ...r, value: prevValue } : r))
+      );
+      
       console.error("Update rating error:", err);
       toast({
         title: "Error",

@@ -135,7 +135,10 @@ export default function PublicProjectPage() {
         });
         return newRating;
       } else {
-        const updated = await updateRating({ ratingId, value });
+        const updated = await updateRating({
+          ratingId,
+          value,
+        });
         return updated;
       }
     },
@@ -179,6 +182,7 @@ export default function PublicProjectPage() {
             </div>
 
             <PinterestGrid
+              ratingDisabled={!project}
               images={images}
               ratings={ratings}
               onImageClick={(i) => {
