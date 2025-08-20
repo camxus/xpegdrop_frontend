@@ -29,7 +29,7 @@ export function useS3() {
       }
 
       // Construct S3 key
-      const key = options?.key || `${uuidv4()}.${ext}`;
+      const key = options?.key || `${uuidv4()}/${file.name}`;
       const bucket = options?.bucket || process.env.NEXT_PUBLIC_TEMP_BUCKET;
 
       // 1️⃣ Request presigned URL (GET with query params)

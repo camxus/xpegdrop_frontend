@@ -166,7 +166,7 @@ export function SignUpPageContent() {
         dropbox: formData.dropbox,
         avatar_file: avatarFile,
       });
-      router.push("/upload");
+      router.push("/login");
       // Navigation is handled in the useAuth hook
     } catch (error) {
       // Error is handled in the useAuth hook
