@@ -4,16 +4,15 @@ import { TOKEN_KEY } from "./lib/api/token";
 
 // Define public routes that don't require authentication
 const publicRoutes = ["/", "/login", "/signup"];
+const authorizedRoutes = ["/upload"];
 
 function isPublicPath(pathname: string): boolean {
-  // Exact matches
-  if (publicRoutes.includes(pathname)) return true;
-
   // Dynamic username route match — adjust if you have stricter rules
   const isUsernameRoute = /^\/[a-zA-Z0-9_-]+(\/[a-zA-Z0-9_-]+)?$/.test(
     pathname
   );
-  return isUsernameRoute;
+
+  return isUsernameRoute && !authorizedRoutes.includes(pathname)|| publicRoutes.includes(pathname);
 }
 
 // Helper function to decode JWT token
