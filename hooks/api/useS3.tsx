@@ -5,7 +5,7 @@ import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 import { extension as mimeExtension } from "mime-types";
 import { api } from "@/lib/api/client";
-import { toast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { RotateCcw } from "lucide-react"; // retry icon
@@ -28,34 +28,55 @@ type FileProgress = {
 export function useS3() {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const uploadFile = async (file: File, options?: UploadFileOptions) => {
-    const ext = mimeExtension(file.type);
-    if (!ext) {
-      throw new Error("Unsupported file type");
+    setIsUploading(true);
+    setError(null);
+
+    try {
+      const ext = mimeExtension(file.type);
+      if (!ext) {
+        throw new Error("Unsupported file type");
+      }
+
+      const key = options?.key || `${uuidv4()}/${file.name}`;
+      const bucket = options?.bucket || process.env.NEXT_PUBLIC_TEMP_BUCKET;
+
+      const { upload_url } = await api.get("/auth/presign-url", {
+        params: { bucket, key, content_type: file.type },
+        withCredentials: false,
+      });
+
+      await axios.put(upload_url, file, {
+        headers: { "Content-Type": file.type },
+        onUploadProgress: (progressEvent) => {
+          if (options?.onProgress && progressEvent.total) {
+            const percent = Math.round(
+              (progressEvent.loaded * 100) / progressEvent.total
+            );
+            options.onProgress(percent);
+          }
+        },
+      });
+
+      toast({
+        title: "Upload successful",
+        description: `${file.name} uploaded successfully.`,
+      });
+
+      return { key, bucket };
+    } catch (err: any) {
+      setError(err.message || "Upload failed");
+      toast({
+        title: "Upload failed",
+        description: err.message || "An error occurred while uploading.",
+        variant: "destructive",
+      });
+      throw err;
+    } finally {
+      setIsUploading(false);
     }
-
-    const key = options?.key || `${uuidv4()}/${file.name}`;
-    const bucket = options?.bucket || process.env.NEXT_PUBLIC_TEMP_BUCKET;
-
-    const { upload_url } = await api.get("/auth/presign-url", {
-      params: { bucket, key, content_type: file.type },
-      withCredentials: false,
-    });
-
-    await axios.put(upload_url, file, {
-      headers: { "Content-Type": file.type },
-      onUploadProgress: (progressEvent) => {
-        if (options?.onProgress && progressEvent.total) {
-          const percent = Math.round(
-            (progressEvent.loaded * 100) / progressEvent.total
-          );
-          options.onProgress(percent);
-        }
-      },
-    });
-
-    return { key, bucket };
   };
 
   const uploadFiles = async (files: File[], options?: UploadFileOptions) => {
@@ -137,9 +158,7 @@ export function useS3() {
           })
         );
 
-        results.push(
-          ...batchResults
-        );
+        results.push(...batchResults);
       }
 
       if (progressState.every((f) => f.status === "done")) {
@@ -158,7 +177,9 @@ export function useS3() {
       }
 
       setIsUploading(false);
-      return results.filter((result) => result.status === "fulfilled").map(result => result.value);
+      return results
+        .filter((result) => result.status === "fulfilled")
+        .map((result) => result.value);
     } catch (err: any) {
       setError(err.message || "Upload failed");
       setIsUploading(false);

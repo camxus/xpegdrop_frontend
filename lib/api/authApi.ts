@@ -85,8 +85,8 @@ export const authApi = {
 
     if (data.bio) formData.append("bio", data.bio);
     if (data.dropbox?.access_token && data.dropbox.refresh_token) formData.append("dropbox", JSON.stringify(data.dropbox));
-    if (data.avatar) formData.append("avatar", JSON.stringify(data.avatar)); // File
-    if (data.avatar_file) formData.append("avatar", data.avatar_file); // File
+    if (data.avatar) formData.append("avatar", JSON.stringify(data.avatar)); // S3Location
+    if (data.avatar_file) formData.append("avatar_file", data.avatar_file); // File
 
     return api.post("/auth/signup", formData, {
       headers: {
