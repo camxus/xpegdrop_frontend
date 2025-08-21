@@ -75,17 +75,22 @@ export function EditableTitle({
 
   return (
     <div className={cn("flex items-center gap-2 group", className)}>
-      <h1 className="text-2xl font-bold" onClick={() => setIsEditing(true)}>
+      <h1
+        className="text-2xl font-bold"
+        onClick={() => editable && setIsEditing(true)}
+      >
         {title}
       </h1>
-      <Button
-        size="sm"
-        variant="ghost"
-        onClick={() => setIsEditing(true)}
-        className="opacity-0 group-hover:opacity-100 transition-opacity"
-      >
-        {editable && <Edit2 className="h-4 w-4" />}
-      </Button>
+      {editable && (
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => setIsEditing(true)}
+          className="opacity-0 group-hover:opacity-100 transition-opacity"
+        >
+          <Edit2 className="h-4 w-4" />
+        </Button>
+      )}
     </div>
   );
 }

@@ -9,5 +9,6 @@ export interface Project {
   created_at: string;
   is_public: boolean;
   approved_emails: string[];
+  can_download: boolean;
   updated_at?: string;
 }

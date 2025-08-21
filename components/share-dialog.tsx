@@ -25,6 +25,7 @@ export function ShareDialog({ project, onClose }: ShareDialogProps) {
   const [emails, setEmails] = useState<string[]>([]);
   const [newEmail, setNewEmail] = useState("");
   const [isPublic, setIsPublic] = useState(true);
+  const [canDownload, setCanDownload] = useState(true);
   const { toast } = useToast();
 
   const handleCopyToClipboard = async () => {
@@ -79,6 +80,7 @@ export function ShareDialog({ project, onClose }: ShareDialogProps) {
           data: {
             is_public: isPublic,
             approved_emails: emails,
+            can_download: canDownload, // <-- added here
           },
         });
         toast({ title: "Project updated", description: "Settings saved" });
@@ -92,8 +94,7 @@ export function ShareDialog({ project, onClose }: ShareDialogProps) {
     };
 
     update();
-  }, [isPublic, emails]);
-
+  }, [isPublic, emails, canDownload]);
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
@@ -203,6 +204,22 @@ export function ShareDialog({ project, onClose }: ShareDialogProps) {
           id="is-public"
           checked={isPublic}
           onCheckedChange={setIsPublic}
+        />
+      </div>
+
+      <div className="flex items-center justify-between border rounded-lg p-3 mt-2">
+        <div>
+          <Label htmlFor="can-download" className="text-sm font-medium">
+            Allow Download
+          </Label>
+          <p className="text-xs text-muted-foreground">
+            Users with access can download folder with full resolution files
+          </p>
+        </div>
+        <Switch
+          id="can-download"
+          checked={canDownload}
+          onCheckedChange={setCanDownload}
         />
       </div>
 

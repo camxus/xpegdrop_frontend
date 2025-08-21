@@ -15,6 +15,9 @@ import { Button } from "@/components/ui/button";
 import { Project } from "@/types/project";
 import { ApiError } from "@/lib/api/client";
 import { v4 } from "uuid";
+import axios from "axios";
+import JSZip from "jszip";
+import { saveAs } from "file-saver";
 
 export default function PublicProjectPage() {
   const { username, projectName } = useParams<{
@@ -145,6 +148,27 @@ export default function PublicProjectPage() {
     [project, createRating, updateRating, toast]
   );
 
+  const handleDownload = async () => {
+    if (!project || images.length === 0) return;
+
+    const zip = new JSZip();
+    const folder = zip.folder(project.name) || zip;
+
+    const fetchPromises = images.map(async (img, index) => {
+      try {
+        const response = await axios.get(img.url, { responseType: "blob" });
+        folder.file(`${img.name}`, response.data);
+      } catch (err) {
+        console.error(`Failed to fetch ${img.url}`, err);
+      }
+    });
+
+    await Promise.all(fetchPromises);
+
+    const content = await zip.generateAsync({ type: "blob" });
+    saveAs(content, `${project.name}.zip`);
+  };
+
   useEffect(() => {
     loadProject();
   }, []);
@@ -171,14 +195,26 @@ export default function PublicProjectPage() {
           </div>
         ) : project ? (
           <>
-            <div className="mb-6 space-y-2">
-              <h1 className="text-3xl font-bold">{project.name}</h1>
-              {project.description && (
-                <p className="text-muted-foreground">{project.description}</p>
+            <div className="mb-6 flex items-center justify-between">
+              <div className="mb-6 space-y-2">
+                <h1 className="text-3xl font-bold">{project.name}</h1>
+                {project.description && (
+                  <p className="text-muted-foreground">{project.description}</p>
+                )}
+                <p className="text-sm text-muted-foreground">
+                  Created on {new Date(project.created_at).toLocaleDateString()}
+                </p>
+              </div>
+
+              {project.can_download && (
+                <Button
+                  onClick={handleDownload}
+                  className="mt-4"
+                  variant="default"
+                >
+                  Download All
+                </Button>
               )}
-              <p className="text-sm text-muted-foreground">
-                Created on {new Date(project.created_at).toLocaleDateString()}
-              </p>
             </div>
 
             <PinterestGrid
