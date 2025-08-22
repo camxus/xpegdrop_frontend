@@ -41,7 +41,7 @@ export default function FolderImageGallery() {
     ratings,
     getRatings: { mutateAsync: getRatings },
     createRating: { mutateAsync: createRating },
-    updateRating: { mutateAsync: updateRating, data: updatedRating },
+    updateRating: { mutateAsync: updateRating },
   } = useRatings();
 
   const isUploading = isUploadingProject || isUploadingToS3;

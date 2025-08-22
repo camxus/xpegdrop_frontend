@@ -31,7 +31,9 @@ export function useS3() {
   const { toast } = useToast();
 
   const uploadSingleFile = async (file: File, options?: UploadFileOptions) => {
+    setIsUploading(true)
     await uploadFile(file, options);
+    setIsUploading(false)
     toast({
       title: "Upload successful",
       description: `${file.name} uploaded successfully.`,
@@ -68,8 +70,10 @@ export function useS3() {
         },
       });
 
+      setIsUploading(false);
       return { key, bucket };
     } catch (err: any) {
+      setIsUploading(false);
       setError(err.message || "Upload failed");
       toast({
         title: "Upload failed",
@@ -77,8 +81,6 @@ export function useS3() {
         variant: "destructive",
       });
       throw err;
-    } finally {
-      setIsUploading(false);
     }
   };
 
