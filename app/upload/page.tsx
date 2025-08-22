@@ -22,6 +22,7 @@ import { useProjects } from "@/hooks/api/useProjects";
 import { Project } from "@/types/project";
 import { useS3 } from "@/hooks/api/useS3";
 import { useRatings } from "@/hooks/api/useRatings";
+import { Rating } from "@/lib/api/ratingsApi";
 
 export default function FolderImageGallery() {
   const { uploadFiles, isUploading: isUploadingToS3 } = useS3();
@@ -46,7 +47,11 @@ export default function FolderImageGallery() {
   const isUploading = isUploadingProject || isUploadingToS3;
 
   const [folders, setFolders] = useState<Folder[]>([]);
-  const [createdprojects, setCreatedProjects] = useState<Project[]>([]);
+  const [queuedRatings, setQueuedRatings] = useState<{
+    image_id: string;
+    value: number;
+  }[]>([]);
+  const [createdProjects, setCreatedProjects] = useState<Project[]>([]);
   const [currentFolderIndex, setCurrentFolderIndex] = useState(0);
   const [isCarouselOpen, setIsCarouselOpen] = useState(false);
   const [carouselStartIndex, setCarouselStartIndex] = useState(0);
@@ -79,7 +84,7 @@ export default function FolderImageGallery() {
   );
 
   const currentFolder = folders[currentFolderIndex];
-  const currentProject = createdprojects.find(
+  const currentProject = createdProjects.find(
     (project) => project.name === currentFolder.name
   );
 
@@ -139,6 +144,16 @@ export default function FolderImageGallery() {
         name: currentFolder.name,
         file_locations: tempFileLocations,
       });
+      Promise.all(
+        queuedRatings.map(async (rating) => {
+          await createRating({
+            project_id: project.project_id,
+            ...rating,
+          });
+        })
+      );
+      setQueuedRatings([]);
+
       setCreatedProjects((projects) => [...projects, project]);
     } catch {}
   };
@@ -150,14 +165,20 @@ export default function FolderImageGallery() {
 
   const handleRatingChange = useCallback(
     async (imageId: string, value: number, ratingId?: string) => {
-      console.log(value);
-      if (!currentProject) return;
+      const rating = {
+        image_id: imageId,
+        value,
+      };
+
+      if (!currentProject) {
+        setQueuedRatings((queuedRatings) => [...queuedRatings, rating]);
+        return;
+      }
 
       if (!ratingId) {
         const createdRating = await createRating({
-          project_id: currentProject.project_id,
-          image_id: imageId,
-          value,
+          project_id: currentProject?.project_id,
+          ...rating,
         });
         return createdRating;
       }
@@ -286,7 +307,6 @@ export default function FolderImageGallery() {
               </Button>
             </div>
             <PinterestGrid
-              ratingDisabled={!project}
               images={currentFolder.images}
               ratings={ratings}
               onImageClick={handleImageClick}
