@@ -30,6 +30,14 @@ export function useS3() {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
+  const uploadSingleFile = async (file: File, options?: UploadFileOptions) => {
+    await uploadFile(file, options);
+    toast({
+      title: "Upload successful",
+      description: `${file.name} uploaded successfully.`,
+    });
+  };
+
   const uploadFile = async (file: File, options?: UploadFileOptions) => {
     setIsUploading(true);
     setError(null);
@@ -58,11 +66,6 @@ export function useS3() {
             options.onProgress(percent);
           }
         },
-      });
-
-      toast({
-        title: "Upload successful",
-        description: `${file.name} uploaded successfully.`,
       });
 
       return { key, bucket };
@@ -194,7 +197,7 @@ export function useS3() {
     }
   };
 
-  return { uploadFile, uploadFiles, isUploading, error };
+  return { uploadFile: uploadSingleFile, uploadFiles, isUploading, error };
 }
 
 // 👇 Helper: render file list with progress + retry icon
