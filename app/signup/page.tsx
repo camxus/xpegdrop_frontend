@@ -71,7 +71,7 @@ const fullSchema = yup.object().shape({
     .oneOf([yup.ref("password")])
     .required(),
   bio: yup.string().optional(),
-  avatar_file: yup.mixed().optional(),
+  avatar_file: yup.mixed().required(),
   dropbox: yup.object({
     access_token: yup.string().required(),
     refresh_token: yup.string().required(),
@@ -430,7 +430,7 @@ export function SignUpPageContent() {
                   >
                     <div className="space-y-2">
                       <Label htmlFor="avatar" className="text-white">
-                        Profile Image (optional)
+                        Profile Image
                       </Label>
                       <div className="flex w-full justify-center">
                         {!avatarFile ? (
