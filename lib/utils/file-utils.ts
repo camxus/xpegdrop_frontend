@@ -24,10 +24,14 @@ export function processFolderUpload(files: File[]): Folder[] {
   files.forEach((file) => {
     if (!isImageFile(file)) return
 
+    const getFolderName = (file: any) => {
+      const rel = file.relativePath || file.webkitRelativePath || "";
+      const parts = rel.split("/").filter(Boolean);
+      return parts.length ? parts[0] : "Untitled Folder";
+    };
+
     // Use relativePath instead of webkitRelativePath
-    const path = (file as any).relativePath || file.webkitRelativePath || ""
-    const pathParts = path.split("/")
-    const folderName = pathParts[1] || "Untitled Folder"
+    const folderName = getFolderName(file)
 
     if (!folderMap.has(folderName)) {
       folderMap.set(folderName, [])

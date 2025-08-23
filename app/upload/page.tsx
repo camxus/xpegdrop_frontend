@@ -23,6 +23,7 @@ import { Project } from "@/types/project";
 import { useS3 } from "@/hooks/api/useS3";
 import { useRatings } from "@/hooks/api/useRatings";
 import { Rating } from "@/lib/api/ratingsApi";
+import { FolderPreviewActions, FolderPreviewContent } from "@/components/folder-preview-dialog";
 
 export default function FolderImageGallery() {
   const { uploadFiles, isUploading: isUploadingToS3 } = useS3();
@@ -47,10 +48,12 @@ export default function FolderImageGallery() {
   const isUploading = isUploadingProject || isUploadingToS3;
 
   const [folders, setFolders] = useState<Folder[]>([]);
-  const [queuedRatings, setQueuedRatings] = useState<{
-    image_id: string;
-    value: number;
-  }[]>([]);
+  const [queuedRatings, setQueuedRatings] = useState<
+    {
+      image_id: string;
+      value: number;
+    }[]
+  >([]);
   const [createdProjects, setCreatedProjects] = useState<Project[]>([]);
   const [currentFolderIndex, setCurrentFolderIndex] = useState(0);
   const [isCarouselOpen, setIsCarouselOpen] = useState(false);
@@ -88,7 +91,7 @@ export default function FolderImageGallery() {
     (project) => project.name === currentFolder.name
   );
 
-  const handleFolderUpload = useCallback(
+  const handleNewFolders = useCallback(
     (files: File[]) => {
       if (files.length === 0) return;
 
@@ -102,15 +105,27 @@ export default function FolderImageGallery() {
         return;
       }
 
-      setFolders((prev) => [...prev, ...newFolders]);
-      setCurrentFolderIndex(folders.length); // Navigate to first new folder
-
-      toast({
-        title: "Folders Uploaded",
-        description: `Successfully uploaded ${newFolders.length} folder(s) with images.`,
+      show({
+        title: "Review Folders",
+        content: FolderPreviewContent,
+        contentProps: {
+          editable: !project || !isUploading,
+          folders: newFolders,
+          onRename: (folderIndex: number, newName: string) => {
+            newFolders[folderIndex].name = newName;
+          },
+          onCancel: hide,
+          onUpload: async (confirmedFolders: Folder[]) => {
+            setFolders((prev) => [...prev, ...confirmedFolders]);
+            setCurrentFolderIndex(folders.length);
+            await handleUploadToDropbox()
+            hide();
+          },
+        },
+        actions: FolderPreviewActions,
       });
     },
-    [folders.length, toast]
+    [folders.length, toast, show, hide, project, isUploading]
   );
 
   const handleFolderRename = useCallback(
@@ -319,7 +334,7 @@ export default function FolderImageGallery() {
             <Card className="max-w-2xl mx-auto">
               <CardContent className="p-8">
                 <FileUploader
-                  onFilesSelected={handleFolderUpload}
+                  onFilesSelected={handleNewFolders}
                   accept={{ "image/*": [] }}
                   maxFiles={1000}
                   directory={true} // Enable multiple folder upload
@@ -357,7 +372,7 @@ export default function FolderImageGallery() {
         <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm border-t p-4">
           <div className="container mx-auto">
             <FileUploader
-              onFilesSelected={handleFolderUpload}
+              onFilesSelected={handleNewFolders}
               accept={{ "image/*": [] }}
               maxFiles={1000}
               directory={true} // Enable multiple folder upload

@@ -1,18 +1,18 @@
-"use client"
+"use client";
 
-import type * as React from "react"
-import { useCallback, useState } from "react"
-import { type Accept, useDropzone } from "react-dropzone"
-import { cn } from "@/lib/utils"
+import type * as React from "react";
+import { useCallback, useState } from "react";
+import { type Accept, useDropzone } from "react-dropzone";
+import { cn } from "@/lib/utils";
 
 interface FileUploaderProps extends React.HTMLAttributes<HTMLDivElement> {
-  onFilesSelected: (files: File[]) => void
-  accept?: Accept
-  maxFiles?: number
-  maxSize?: number
-  disabled?: boolean
-  children?: React.ReactNode
-  directory?: boolean // New prop for folder upload
+  onFilesSelected: (files: File[]) => void;
+  accept?: Accept;
+  maxFiles?: number;
+  maxSize?: number;
+  disabled?: boolean;
+  children?: React.ReactNode;
+  directory?: boolean; // New prop for folder upload
 }
 
 export function FileUploader({
@@ -26,14 +26,14 @@ export function FileUploader({
   directory = false, // Default to false
   ...props
 }: FileUploaderProps) {
-  const [isDragActive, setIsDragActive] = useState(false)
+  const [isDragActive, setIsDragActive] = useState(false);
 
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
-      onFilesSelected(acceptedFiles)
+      onFilesSelected(acceptedFiles);
     },
-    [onFilesSelected],
-  )
+    [onFilesSelected]
+  );
 
   const { getRootProps, getInputProps, isDragReject } = useDropzone({
     onDrop,
@@ -45,7 +45,7 @@ export function FileUploader({
     onDragLeave: () => setIsDragActive(false),
     onDropAccepted: () => setIsDragActive(false),
     onDropRejected: () => setIsDragActive(false),
-  })
+  });
 
   return (
     <div
@@ -55,12 +55,15 @@ export function FileUploader({
         isDragActive && "border-primary/50 bg-primary/5",
         isDragReject && "border-destructive/50 bg-destructive/5",
         disabled && "cursor-not-allowed opacity-60",
-        className,
+        className
       )}
       {...props}
     >
-      <input {...getInputProps()} />
+      <input
+        {...getInputProps()}
+        {...(directory && { webkitdirectory: "true", directory: "true" })}
+      />
       {children}
     </div>
-  )
+  );
 }

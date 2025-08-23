@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 interface EditableTitleProps {
   title: string;
   onSave: (newTitle: string) => void;
-  editable: boolean;
+  editable?: boolean;
   className?: string;
 }
 
