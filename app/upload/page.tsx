@@ -23,7 +23,10 @@ import { Project } from "@/types/project";
 import { useS3 } from "@/hooks/api/useS3";
 import { useRatings } from "@/hooks/api/useRatings";
 import { Rating } from "@/lib/api/ratingsApi";
-import { FolderPreviewActions, FolderPreviewContent } from "@/components/folder-preview-dialog";
+import {
+  FolderPreviewActions,
+  FolderPreviewContent,
+} from "@/components/folder-preview-dialog";
 
 export default function FolderImageGallery() {
   const { uploadFiles, isUploading: isUploadingToS3 } = useS3();
@@ -117,8 +120,10 @@ export default function FolderImageGallery() {
           onCancel: hide,
           onUpload: async (confirmedFolders: Folder[]) => {
             setFolders((prev) => [...prev, ...confirmedFolders]);
-            setCurrentFolderIndex(folders.length);
-            await handleUploadToDropbox()
+            setCurrentFolderIndex(confirmedFolders.length);
+            Promise.all(
+              confirmedFolders.map(async (folder) => await handleUploadToDropbox(folder))
+            );
             hide();
           },
         },
@@ -149,14 +154,16 @@ export default function FolderImageGallery() {
     setCurrentFolderIndex((prev) => Math.min(folders.length - 1, prev + 1));
   };
 
-  const handleUploadToDropbox = async () => {
-    if (!currentFolder) return;
+  const handleUploadToDropbox = async (folder?: Folder) => {
+    console.log(folder)
+    const uploadFolder = currentFolder || folder;
+    if (!uploadFolder) return;
 
     try {
-      const imageFiles = currentFolder.images.map((img) => img.file);
+      const imageFiles = uploadFolder.images.map((img) => img.file);
       const tempFileLocations = await uploadFiles(imageFiles);
       const project = await createProject({
-        name: currentFolder.name,
+        name: uploadFolder.name,
         file_locations: tempFileLocations,
       });
       Promise.all(

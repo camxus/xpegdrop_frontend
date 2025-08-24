@@ -1,6 +1,6 @@
-"use client";
+"use client"
 
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast"
 import {
   Toast,
   ToastClose,
@@ -8,32 +8,28 @@ import {
   ToastProvider,
   ToastTitle,
   ToastViewport,
-} from "@/components/ui/toast";
+} from "@/components/ui/toast"
 
 export function Toaster() {
-  const { toasts } = useToast();
+  const { toasts } = useToast()
 
   return (
     <ToastProvider>
-      {toasts.map(({ id, title, description, action, ...props }) => (
-        <Toast key={id} {...props} className="max-h-[60vh]">
-          <div className="grid gap-1 w-full">
-            {title && <ToastTitle>{title}</ToastTitle>}
-          </div>
-
-          {description && (
-            <div className="overflow-y-auto flex-1 max-h-[inherit] w-full mt-1 grid gap-1">
-              <ToastDescription>{description}</ToastDescription>
+      {toasts.map(function ({ id, title, description, action, ...props }) {
+        return (
+          <Toast key={id} {...props}>
+            <div className="grid gap-1 w-full">
+              {title && <ToastTitle>{title}</ToastTitle>}
+              {description && (
+                <ToastDescription>{description}</ToastDescription>
+              )}
             </div>
-          )}
-
-          {action && <div className="mt-1">{action}</div>}
-
-          <ToastClose />
-        </Toast>
-      ))}
-
+            {action}
+            <ToastClose />
+          </Toast>
+        )
+      })}
       <ToastViewport />
     </ToastProvider>
-  );
+  )
 }
