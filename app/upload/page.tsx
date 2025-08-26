@@ -155,7 +155,6 @@ export default function FolderImageGallery() {
   };
 
   const handleUploadToDropbox = async (folder?: Folder) => {
-    console.log(folder)
     const uploadFolder = currentFolder || folder;
     if (!uploadFolder) return;
 

@@ -59,7 +59,10 @@ export function DialogProvider({ children }: { children: ReactNode }) {
     <DialogContext.Provider value={{ show, hide, updateProps }}>
       {children}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-h-[calc(100vh-4rem)] overflow-hidden flex flex-col">
+         <DialogContent
+          className="overflow-hidden flex flex-col"
+          style={{ maxHeight: "calc(100vh - 4rem)" }}
+        >
           {dialogOptions.title && (
             <DialogHeader className="flex-shrink-0">
               <DialogTitle>{dialogOptions.title}</DialogTitle>
