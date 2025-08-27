@@ -14,13 +14,12 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Project } from "@/types/project";
 import { ApiError } from "@/lib/api/client";
-import { v4 } from "uuid";
-import axios from "axios";
-import JSZip from "jszip";
-import { saveAs } from "file-saver";
 import { b64ToFile, createImageFile } from "@/lib/utils/file-utils";
 import { useAuth } from "@/hooks/api/useAuth";
-import { Download } from "lucide-react";
+import axios from "axios";
+import { EditableTitle } from "@/components/editable-title";
+import { ShareDialog } from "@/components/share-dialog";
+import { Download, Share2 } from "lucide-react";
 
 export default function PublicProjectPage() {
   const { username, projectName } = useParams<{
@@ -43,7 +42,10 @@ export default function PublicProjectPage() {
   const [isCarouselOpen, setIsCarouselOpen] = useState(false);
   const [carouselStartIndex, setCarouselStartIndex] = useState(0);
 
-  const { getProjectByShareUrl } = useProjects();
+  const {
+    getProjectByShareUrl,
+    updateProject: { mutateAsync: updateProject },
+  } = useProjects();
   const {
     ratings,
     getRatings: { mutateAsync: getRatings },
@@ -92,15 +94,10 @@ export default function PublicProjectPage() {
           return {
             ...createImageFile(thumbnailFile, projectName),
             preview_url: i.preview_url,
-          }; // real File object;
+          };
         })
       );
-
-      // Load ratings for the project
-      if (data.project?.project_id) {
-        await getRatings(data.project.project_id);
-      }
-
+      if (data.project?.project_id) await getRatings(data.project.project_id);
       hide();
     } catch (error: any) {
       const status = (error as ApiError)?.status;
@@ -131,37 +128,28 @@ export default function PublicProjectPage() {
   };
 
   const handleEmailSubmit = async (email: string) => {
-    try {
-      setIsLoading(true);
-      await loadProject(email);
-    } catch (e) {}
+    setIsLoading(true);
+    await loadProject(email);
   };
 
   const handleRatingChange = useCallback(
     async (imageName: string, value: number, ratingId?: string) => {
       if (!project) return;
-
-      if (!ratingId) {
-        const newRating = await createRating({
+      if (!ratingId)
+        return await createRating({
           project_id: project.project_id,
           image_name: imageName,
           value,
         });
-        return newRating;
-      } else {
-        const updated = await updateRating({
-          ratingId,
-          value,
-        });
-        return updated;
-      }
+      return await updateRating({ ratingId, value });
     },
-    [project, createRating, updateRating, toast]
+    [project, createRating, updateRating]
   );
 
   const handleDownload = async () => {
     if (!project || images.length === 0) return;
-
+    const JSZip = (await import("jszip")).default;
+    const { saveAs } = await import("file-saver");
     const zip = new JSZip();
     const folder = zip.folder(project.name) || zip;
 
@@ -181,6 +169,26 @@ export default function PublicProjectPage() {
 
     const content = await zip.generateAsync({ type: "blob" });
     saveAs(content, `${project.name}.zip`);
+  };
+
+  const handleUpdateProject = async (newName: string) => {
+    if (!project || !isCurrentUser) return;
+    try {
+      const updated = await updateProject({
+        projectId: project.project_id,
+        data: { name: newName },
+      });
+      setProject(updated);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleShare = () => {
+    if (!project) return;
+    show({
+      content: () => <ShareDialog project={project} onClose={hide} />,
+    });
   };
 
   useEffect(() => {
@@ -211,7 +219,11 @@ export default function PublicProjectPage() {
           <>
             <div className="mb-6 flex items-center justify-between">
               <div className="mb-6 space-y-2">
-                <h1 className="text-3xl font-bold">{project.name}</h1>
+                <EditableTitle
+                  title={project.name}
+                  onSave={handleUpdateProject}
+                  editable={isCurrentUser}
+                />
                 {project.description && (
                   <p className="text-muted-foreground">{project.description}</p>
                 )}
@@ -219,19 +231,23 @@ export default function PublicProjectPage() {
                   Created on {new Date(project.created_at).toLocaleDateString()}
                 </p>
               </div>
-
-              {project.can_download && (
-                <Button
-                  onClick={handleDownload}
-                  className="mt-4"
-                  variant="default"
-                >
-                  Download
-                  <Download />
-                </Button>
-              )}
+              <div className="flex gap-2">
+                {(project.can_download || isCurrentUser) && (
+                  <Button onClick={handleDownload}>
+                    <Download className="h-4 w-4" />
+                    Download
+                  </Button>
+                )}
+                {project.share_url && isCurrentUser&& (
+                  <Button
+                    onClick={handleShare}
+                    className="cursor-pointer flex items-center gap-2"
+                  >
+                    <Share2 className="h-4 w-4" /> Share
+                  </Button>
+                )}
+              </div>
             </div>
-
             <PinterestGrid
               ratingDisabled={!project}
               images={images}
@@ -241,9 +257,8 @@ export default function PublicProjectPage() {
                 setIsCarouselOpen(true);
               }}
               onRatingChange={handleRatingChange}
-              onImageHoverChange={(hovering) => setIsHovered(hovering)}
+              onImageHoverChange={(hover) => setIsHovered(hover)}
             />
-
             <ImageCarousel
               images={images}
               initialIndex={carouselStartIndex}
@@ -271,18 +286,15 @@ export function EmailProtectedDialog({
 
   const handleSubmit = () => {
     const trimmed = email.trim().toLowerCase();
-    const emailRegex = /^\S+@\S+\.\S+$/;
-
     if (!trimmed) {
       setError("Email is required");
       return;
     }
-
+    const emailRegex = /^\S+@\S+\.\S+$/;
     if (!emailRegex.test(trimmed)) {
       setError("Please enter a valid email");
       return;
     }
-
     setError("");
     onSubmit(trimmed);
   };
