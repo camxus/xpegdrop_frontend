@@ -27,6 +27,7 @@ export function processFolderUpload(files: File[]): Folder[] {
     const getFolderName = (file: any) => {
       const rel = file.relativePath || file.webkitRelativePath || "";
       const parts = rel.split("/").filter(Boolean);
+      if (parts[0] === ".") return "Untitled Folder"
       return parts.length ? parts[0] : "Untitled Folder";
     };
 

@@ -25,6 +25,7 @@ import {
   FolderPreviewActions,
   FolderPreviewContent,
 } from "@/components/folder-preview-dialog";
+import { GlobalFileUploader } from "@/components/global-file-uploader";
 
 export default function FolderImageGallery() {
   const { uploadFiles, isUploading: isUploadingToS3 } = useS3();
@@ -326,6 +327,10 @@ export default function FolderImageGallery() {
           </div>
         ) : (
           <div className="mb-20">
+            <GlobalFileUploader
+              onFilesSelected={handleNewFolders}
+              directory={true}
+            />
             <Card className="max-w-2xl mx-auto">
               <CardContent className="p-8">
                 <FileUploader

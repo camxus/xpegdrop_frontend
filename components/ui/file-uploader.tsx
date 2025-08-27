@@ -37,7 +37,7 @@ export function FileUploader({
 
   const { getRootProps, getInputProps, isDragReject } = useDropzone({
     onDrop,
-    accept,
+    accept: directory ? undefined : accept,
     maxFiles: directory ? undefined : maxFiles, // Allow unlimited files if directory upload
     maxSize,
     disabled,
