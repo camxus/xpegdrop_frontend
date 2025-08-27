@@ -178,7 +178,7 @@ export default function PublicProjectPage() {
         projectId: project.project_id,
         data: { name: newName },
       });
-      setProject(updated);
+      setProject({...project, ...updated});
     } catch (e) {
       console.error(e);
     }
