@@ -85,7 +85,6 @@ export function useAuth() {
       }
 
       queryClient.setQueryData(["auth", "check"], { authenticated: true });
-      queryClient.setQueryData(["auth", "profile"], data.user);
     },
     onError: (error: any) => {
       setError("Session expired. Please log in again.");
