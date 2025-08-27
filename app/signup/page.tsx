@@ -20,7 +20,7 @@ import { useAuth } from "@/hooks/api/useAuth";
 import { FileUploader } from "@/components/ui/file-uploader";
 import { useDropbox } from "@/hooks/api/useDropbox";
 import ConnectDropboxPage from "../page";
-import { useUsers } from "@/hooks/api/useUsers";
+import { useUser } from "@/hooks/api/useUser";
 import imageCompression from "browser-image-compression";
 import * as yup from "yup";
 
@@ -113,7 +113,7 @@ export function SignUpPageContent() {
       isPending: isCheckingUsername,
       data: foundUser,
     },
-  } = useUsers();
+  } = useUser();
   const { dropboxToken } = useDropbox();
   const router = useRouter();
 

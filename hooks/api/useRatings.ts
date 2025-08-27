@@ -22,6 +22,16 @@ export function useRatings() {
     setLocalStorage(LOCAL_RATINGS_STORAGE_KEY, localData);
   };
 
+  // All ratings from the current user
+  const userRatings: Rating[] = user?.user_id
+    ? ratings.filter(r => r.user_id === user?.user_id)
+    : [];
+
+  // All ratings from other users
+  const foreignRatings: Rating[] = user?.user_id
+    ? ratings.filter(r => r.user_id !== user?.user_id)
+    : [];
+
   const getRatings = useMutation({
     mutationFn: async (projectId?: string) => {
       if (!projectId) return [];
@@ -130,6 +140,8 @@ export function useRatings() {
 
   return {
     ratings,
+    userRatings,
+    foreignRatings,
     getRatings,
     createRating,
     updateRating,

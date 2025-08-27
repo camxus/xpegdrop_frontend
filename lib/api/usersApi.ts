@@ -1,19 +1,20 @@
+import { User } from "@/types/user";
 import { api } from "./client";
 
 export const userApi = {
   // 🔐 Get current authenticated user
   getCurrentUser: async () => {
-    return await api.get("/users/");
+    return await api.get<User>("/users/");
   },
 
   // 👤 Get user by ID (or fallback to current user)
   getUserById: async (userId?: string) => {
-    return await api.get(`/users/${userId || ""}`);
+    return await api.get<User>(`/users/${userId || ""}`);
   },
 
   // 🔍 Get user by username (public profile)
   getUserByUsername: async (username: string) => {
-    return await api.get(`/users/username/${username}`);
+    return await api.get<User>(`/users/username/${username}`);
   },
 
   // ✏️ Update current user (with avatar optional)

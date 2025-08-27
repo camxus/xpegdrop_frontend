@@ -1,0 +1,94 @@
+import { Star } from "lucide-react";
+import * as React from "react";
+
+import { Rating } from "@/lib/api/ratingsApi";
+import { MultiSelect } from "./ui/multi-select";
+import { useEffect } from "react";
+import { useUsers } from "@/hooks/api/useUsers";
+import { cn, getInitials } from "@/lib/utils";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { useAuth } from "@/hooks/api/useAuth";
+
+interface ImagesFilterProps {
+  foreignRatings: Rating[];
+  onFilterChange: (filters: {
+    userIds: string[];
+    ratingValues: number[];
+  }) => void;
+}
+
+export function ImagesFilter({
+  foreignRatings,
+  onFilterChange,
+}: ImagesFilterProps) {
+  const { user } = useAuth();
+  const usersQueries = useUsers(foreignRatings.map((rating) => rating.user_id));
+
+  const foreignUsers = usersQueries.map((user) => user.data);
+
+  const [selectedUserIds, setSelectedUserIds] = React.useState<string[]>([]);
+  const [selectedRatingValues, setSelectedRatingValues] = React.useState<
+    number[]
+  >([]);
+
+  useEffect(() => {
+    onFilterChange({
+      userIds: selectedUserIds,
+      ratingValues: selectedRatingValues,
+    });
+  }, [selectedUserIds, selectedRatingValues]);
+
+  return (
+    <div className="flex flex-wrap gap-4 mb-4 items-center">
+      {/* Rated by */}
+      <div className="flex-1 min-w-[200px]">
+        <MultiSelect
+          className="opacity-[0.5]"
+          disabled={!foreignUsers.length}
+          options={foreignUsers.map((user) => ({
+            label: (
+              <div className="flex items-center gap-2">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src={user?.avatar as string} />
+                  <AvatarFallback className="text-lg">
+                    {getInitials(user?.first_name || "", user?.last_name || "")}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
+            ),
+            value: user?.user_id || "",
+          }))}
+          value={selectedUserIds}
+          onChange={setSelectedUserIds}
+          placeholder="Rated by"
+        />
+      </div>
+
+      {/* Rating */}
+      <div className="flex-1 min-w-[200px]">
+        <MultiSelect
+          className="opacity-[0.5]"
+          options={[5, 4, 3, 2, 1].map((n) => ({
+            label: (
+              <div className="flex items-center gap-2">
+                {Array.from({ length: n }).map((_, i) => (
+                  <Star
+                    key={i}
+                    className={cn(
+                      "w-3 h-3 transition-colors duration-150",
+                      "fill-white text-white"
+                    )}
+                  />
+                ))}
+              </div>
+            ),
+            value: n.toString(),
+          }))}
+          value={selectedRatingValues.map(String)}
+          onChange={(vals) => setSelectedRatingValues(vals.map(Number))}
+          placeholder="Ratings"
+        />
+      </div>
+    </div>
+  );
+}

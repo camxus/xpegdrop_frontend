@@ -20,6 +20,8 @@ import axios from "axios";
 import { EditableTitle } from "@/components/editable-title";
 import { ShareDialog } from "@/components/share-dialog";
 import { Download, Share2 } from "lucide-react";
+import { Rating } from "@/lib/api/ratingsApi";
+import { ImagesFilter } from "@/components/images-filter";
 
 export default function PublicProjectPage() {
   const { username, projectName } = useParams<{
@@ -33,6 +35,18 @@ export default function PublicProjectPage() {
   const { toast } = useToast();
   const { show, hide } = useDialog();
 
+  const {
+    getProjectByShareUrl,
+    updateProject: { mutateAsync: updateProject },
+  } = useProjects();
+  const {
+    ratings,
+    foreignRatings,
+    getRatings: { mutateAsync: getRatings },
+    createRating: { mutateAsync: createRating },
+    updateRating: { mutateAsync: updateRating },
+  } = useRatings();
+
   const [project, setProject] = useState<Project | null>(null);
   const [images, setImages] = useState<
     (ImageFile & { preview_url?: string })[]
@@ -41,17 +55,8 @@ export default function PublicProjectPage() {
   const [isHovered, setIsHovered] = useState(false);
   const [isCarouselOpen, setIsCarouselOpen] = useState(false);
   const [carouselStartIndex, setCarouselStartIndex] = useState(0);
-
-  const {
-    getProjectByShareUrl,
-    updateProject: { mutateAsync: updateProject },
-  } = useProjects();
-  const {
-    ratings,
-    getRatings: { mutateAsync: getRatings },
-    createRating: { mutateAsync: createRating },
-    updateRating: { mutateAsync: updateRating },
-  } = useRatings();
+  const [filteredRatings, setFilteredRatings] =
+    useState<Rating[]>(foreignRatings);
 
   const x = useMotionValue(50);
   const y = useMotionValue(50);
@@ -178,7 +183,7 @@ export default function PublicProjectPage() {
         projectId: project.project_id,
         data: { name: newName },
       });
-      setProject({...project, ...updated});
+      setProject({ ...project, ...updated });
     } catch (e) {
       console.error(e);
     }
@@ -189,6 +194,24 @@ export default function PublicProjectPage() {
     show({
       content: () => <ShareDialog project={project} onClose={hide} />,
     });
+  };
+
+  const hanldeFilterChange = ({
+    userIds,
+    ratingValues,
+  }: {
+    userIds: string[];
+    ratingValues: number[];
+  }) => {
+    setFilteredRatings(
+      Object.entries(foreignRatings)
+        .filter(([uid, r]) => {
+          const userMatch = !userIds.length || userIds.includes(uid);
+          const ratingMatch = !ratingValues.length || ratingValues.includes(r.value);
+          return userMatch && ratingMatch;
+        })
+        .map(([_, r]) => r) // convert back to array
+    );
   };
 
   useEffect(() => {
@@ -238,7 +261,7 @@ export default function PublicProjectPage() {
                     Download
                   </Button>
                 )}
-                {project.share_url && isCurrentUser&& (
+                {project.share_url && isCurrentUser && (
                   <Button
                     onClick={handleShare}
                     className="cursor-pointer flex items-center gap-2"
@@ -248,6 +271,12 @@ export default function PublicProjectPage() {
                 )}
               </div>
             </div>
+
+            <ImagesFilter
+              foreignRatings={foreignRatings}
+              onFilterChange={hanldeFilterChange}
+            />
+
             <PinterestGrid
               ratingDisabled={!project}
               images={images}

@@ -1,11 +1,11 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, useQueries } from "@tanstack/react-query";
 import { userApi } from "@/lib/api/usersApi";
 import type { User } from "@/types/user";
 import { useToast } from "@/hooks/use-toast";
 
-export function useUsers() {
+export function useUser() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -93,4 +93,19 @@ export function useUsers() {
     updateDropboxToken,
     deleteUser,
   };
+}
+
+
+export function useUsers(
+  userIds: string[]
+) {
+  const queries = useQueries({
+    queries: userIds.map((userId) => ({
+      queryKey: ["profile", userId],
+      queryFn: () => userApi.getUserById(userId),
+      enabled: !!userId
+    })),
+  });
+
+  return queries;
 }
