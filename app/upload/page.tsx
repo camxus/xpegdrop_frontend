@@ -2,7 +2,7 @@
 
 import type React from "react";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FileUploader } from "@/components/ui/file-uploader";
@@ -53,7 +53,7 @@ export default function FolderImageGallery() {
   const [folders, setFolders] = useState<Folder[]>([]);
   const [queuedRatings, setQueuedRatings] = useState<
     {
-      image_id: string;
+      image_name: string;
       value: number;
     }[]
   >([]);
@@ -120,9 +120,11 @@ export default function FolderImageGallery() {
           onCancel: hide,
           onUpload: async (confirmedFolders: Folder[]) => {
             setFolders((prev) => [...prev, ...confirmedFolders]);
-            setCurrentFolderIndex(confirmedFolders.length);
+            setCurrentFolderIndex(!!confirmedFolders.length ? 0 : 0);
             Promise.all(
-              confirmedFolders.map(async (folder) => await handleUploadToDropbox(folder))
+              confirmedFolders.map(
+                async (folder) => await handleUploadToDropbox(folder)
+              )
             );
             hide();
           },
@@ -187,7 +189,7 @@ export default function FolderImageGallery() {
   const handleRatingChange = useCallback(
     async (imageId: string, value: number, ratingId?: string) => {
       const rating = {
-        image_id: imageId,
+        image_name: imageId,
         value,
       };
 
@@ -309,7 +311,9 @@ export default function FolderImageGallery() {
               </p>
               <Button
                 onClick={
-                  project?.share_url ? handleShare : handleUploadToDropbox
+                  project?.share_url
+                    ? handleShare
+                    : () => handleUploadToDropbox()
                 }
                 disabled={isUploading}
                 className="cursor-pointer flex items-center gap-2"

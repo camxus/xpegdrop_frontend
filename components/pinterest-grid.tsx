@@ -1,11 +1,14 @@
 "use client";
 
-import { useState, memo, useCallback } from "react";
+import { useState, memo, useCallback, useEffect } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import type { ImageFile } from "@/types";
 import { StarRatingSlider } from "./star-rating-slider";
 import { Rating } from "@/lib/api/ratingsApi";
+import { useAuth } from "@/hooks/api/useAuth";
+import { getLocalStorage } from "@/lib/localStorage";
+import { LOCAL_RATINGS_STORAGE_KEY } from "@/hooks/api/useRatings";
 
 interface PinterestGridProps {
   ratingDisabled?: boolean;
@@ -26,6 +29,7 @@ export function PinterestGrid({
   onImageHoverChange,
   onRatingChange,
 }: PinterestGridProps) {
+  const { user } = useAuth();
   const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
   const [hoveredImage, setHoveredImage] = useState<string | null>(null);
 
@@ -63,11 +67,22 @@ export function PinterestGrid({
   );
 
   const handleRatingChange = useCallback(
-    (imageId: string, value: number, ratingId?: string) => {
-      onRatingChange?.(imageId, value, ratingId);
+    (imageName: string, value: number, ratingId?: string) => {
+      onRatingChange?.(imageName, value, ratingId);
     },
     [onRatingChange]
   );
+
+  const localRatings =
+    ratings?.[0]?.project_id &&
+    (getLocalStorage(LOCAL_RATINGS_STORAGE_KEY) || {})[ratings?.[0].project_id];
+
+  const rating = (image: ImageFile) =>
+    (ratings?.find(
+      (r) => r.image_name === image.name && user?.user_id === r.user_id
+    ) ??
+      localRatings?.find((r: Rating) => r.image_name === image.name)) ||
+    new Rating();
 
   return (
     <div
@@ -80,7 +95,7 @@ export function PinterestGrid({
         <PinterestImage
           disabled={ratingDisabled}
           key={image.id}
-          rating={ratings?.find((r) => r.image_id === image.id) ?? new Rating()}
+          rating={rating(image)}
           image={image}
           index={index}
           isHovered={hoveredImage === image.id}
@@ -90,7 +105,7 @@ export function PinterestGrid({
           onClick={() => handleImageClick(index)}
           onLoad={() => handleImageLoad(image.id)}
           onRatingChange={(value, ratingId) =>
-            handleRatingChange(image.id, value, ratingId)
+            handleRatingChange(image.name, value, ratingId)
           }
         />
       ))}

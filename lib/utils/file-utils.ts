@@ -46,3 +46,47 @@ export function processFolderUpload(files: File[]): Folder[] {
     createdAt: new Date(),
   }))
 }
+
+// Convert File -> Base64 string
+export function fileToB64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      resolve(reader.result as string);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file); // includes mime type prefix
+  });
+}
+
+// Convert Base64 string -> File and extract filename from embedded metadata
+export function b64ToFile(base64: string): File {
+  const arr = base64.split(",");
+  const mimeMatch = arr[0].match(/data:(.*);base64/);
+  const mime = mimeMatch ? mimeMatch[1] : "application/octet-stream";
+
+  // Extract embedded filename metadata if present: data:image/jpeg;name=BASE64;...
+  const nameMatch = arr[0].match(/name=([^;]+)/);
+  let filename = `file-${Date.now()}`; // fallback
+
+  if (nameMatch) {
+    try {
+      // Decode Base64 name: "originalName:id"
+      const decoded = atob(nameMatch[1]);
+      const [originalName] = decoded.split(":");
+      if (originalName) filename = originalName;
+    } catch (err) {
+      console.warn("Failed to decode filename from Base64 metadata", err);
+    }
+  }
+
+  // Convert Base64 to binary
+  const bstr = atob(arr[1]);
+  const n = bstr.length;
+  const u8arr = new Uint8Array(n);
+  for (let i = 0; i < n; i++) {
+    u8arr[i] = bstr.charCodeAt(i);
+  }
+
+  return new File([u8arr], filename, { type: mime });
+}

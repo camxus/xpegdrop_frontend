@@ -8,9 +8,10 @@ import axios, {
   type AxiosResponse,
 } from "axios";
 import { authApi } from "./authApi";
-import { getCookieClient } from "../cookie";
+import { getCookieClient, setCookieClient } from "../cookie";
 import { TOKEN_KEY } from "./token";
 import { cookies } from "next/headers";
+import { parseJwtToken } from "@/middleware";
 
 // Base API URL - can be overridden with environment variable
 const API_BASE_URL =
@@ -187,53 +188,57 @@ const processQueue = (error: any, token: string | null = null) => {
   failedQueue = [];
 };
 
-axiosInstance.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
+axiosInstance.interceptors.request.use(
+  async (config) => {
+    if (config.withCredentials) {
+      const token = await getCookieClient(TOKEN_KEY);
 
-    // If error is 401 and we haven't tried refreshing yet
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      if (!originalRequest.withCredentials) return
-      if (isRefreshing) {
-        // Queue up the request to be retried once token refresh finishes
-        return new Promise((resolve, reject) => {
-          failedQueue.push({ resolve, reject });
-        })
-          .then(() => axiosInstance(originalRequest))
-          .catch((err) => Promise.reject(err));
-      }
+      if (token) {
+        const { accessToken, idToken, refreshToken } = JSON.parse(token);
 
-      originalRequest._retry = true;
-      isRefreshing = true;
+        let isExpired = false;
 
-      try {
-        let refreshToken;
-        const token = await getCookieClient(TOKEN_KEY);
-        if (token) {
-          refreshToken = JSON.parse(token).refreshToken;
-          if (!refreshToken) {
-            return;
+        try {
+          const decoded: any = parseJwtToken(accessToken.replace("Bearer ", ""))
+          if (decoded?.exp) {
+            const now = Math.floor(Date.now() / 1000);
+            isExpired = decoded.exp <= now;
           }
-          await authApi.refreshToken({ refreshToken }); // Refresh the token here
+        } catch (err) {
+          isExpired = true; // if decoding fails, force refresh
         }
 
-        processQueue(null); // Retry queued requests
+        if (isExpired && refreshToken && !isRefreshing) {
+          try {
+            isRefreshing = true;
+            const { accessToken, idToken } = await authApi.refreshToken({ refreshToken });
+            setCookieClient(TOKEN_KEY, JSON.stringify({ accessToken, idToken, refreshToken }))
+            processQueue(null);
+          } catch (refreshError) {
+            processQueue(refreshError, null);
+            throw refreshError;
+          } finally {
+            isRefreshing = false;
+          }
+        }
 
-        return axiosInstance(originalRequest); // Retry original request
-      } catch (refreshError) {
-        processQueue(refreshError, null);
-        // Optionally handle logout here if refresh fails
-        return Promise.reject(refreshError);
-      } finally {
-        isRefreshing = false;
+        // set headers after refresh attempt
+        config.headers = config.headers ?? {};
+
+        if (accessToken) {
+          config.headers.Authorization = `Bearer ${accessToken}`;
+        }
+
+        if (idToken) {
+          config.headers["x-id-token"] = idToken;
+        }
       }
     }
 
-    return Promise.reject(error);
-  }
+    return config;
+  },
+  (error) => Promise.reject(error)
 );
-
 // Convenience methods for common HTTP methods
 export const api = {
   get: <T = any>(endpoint: string, options?: RequestOptions) =>

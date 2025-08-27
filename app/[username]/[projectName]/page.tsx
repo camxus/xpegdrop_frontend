@@ -18,6 +18,7 @@ import { v4 } from "uuid";
 import axios from "axios";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
+import { b64ToFile, createImageFile } from "@/lib/utils/file-utils";
 
 export default function PublicProjectPage() {
   const { username, projectName } = useParams<{
@@ -77,12 +78,11 @@ export default function PublicProjectPage() {
       const data = await getProjectByShareUrl(username, projectName, email);
       setProject(data?.project || null);
       setImages(
-        data.images.map(
-          (i: { preview_url: string; thumbnail_url: string }) => ({
-            id: v4(),
-            url: i.thumbnail_url,
-          })
-        )
+        data.images.map((i: { preview_url: string; thumbnail_url: string }) => {
+          const thumbnailFile = b64ToFile(i.thumbnail_url);
+
+          return createImageFile(thumbnailFile, projectName) // real File object;
+        })
       );
 
       // Load ratings for the project
@@ -127,13 +127,13 @@ export default function PublicProjectPage() {
   };
 
   const handleRatingChange = useCallback(
-    async (imageId: string, value: number, ratingId?: string) => {
+    async (imageName: string, value: number, ratingId?: string) => {
       if (!project) return;
 
       if (!ratingId) {
         const newRating = await createRating({
           project_id: project.project_id,
-          image_id: imageId,
+          image_name: imageName,
           value,
         });
         return newRating;

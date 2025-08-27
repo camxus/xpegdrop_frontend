@@ -16,7 +16,7 @@ function isPublicPath(pathname: string): boolean {
 }
 
 // Helper function to decode JWT token
-function parseJwtToken(token: string) {
+export function parseJwtToken(token: string) {
   try {
     const base64Url = token.split(".")[1];
     const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");

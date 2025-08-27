@@ -40,7 +40,7 @@ export interface LoginResponse {
   user: User;
 }
 
-export type RefreshTokenResponse = LoginResponse;
+export type RefreshTokenResponse = LoginResponse["token"];
 
 export interface UserProfile {
   id: string;
