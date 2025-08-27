@@ -1,8 +1,7 @@
 "use client";
 
 import type React from "react";
-
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FileUploader } from "@/components/ui/file-uploader";
@@ -17,12 +16,11 @@ import { ImageCarousel } from "@/components/image-carousel";
 import { ShareDialog } from "@/components/share-dialog";
 import { cn } from "@/lib/utils";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
-import { useDialog } from "@/hooks/use-dialog"; // Import useDialog hook
+import { useDialog } from "@/hooks/use-dialog";
 import { useProjects } from "@/hooks/api/useProjects";
 import { Project } from "@/types/project";
 import { useS3 } from "@/hooks/api/useS3";
 import { useRatings } from "@/hooks/api/useRatings";
-import { Rating } from "@/lib/api/ratingsApi";
 import {
   FolderPreviewActions,
   FolderPreviewContent,
@@ -31,7 +29,7 @@ import {
 export default function FolderImageGallery() {
   const { uploadFiles, isUploading: isUploadingToS3 } = useS3();
   const { toast } = useToast();
-  const { show, hide } = useDialog(); // Declare useDialog hook
+  const { show, hide } = useDialog();
 
   const {
     createProject: {
@@ -39,6 +37,7 @@ export default function FolderImageGallery() {
       isPending: isUploadingProject,
       data: project,
     },
+    updateProject: { mutateAsync: updateProject },
   } = useProjects();
 
   const {
@@ -52,35 +51,27 @@ export default function FolderImageGallery() {
 
   const [folders, setFolders] = useState<Folder[]>([]);
   const [queuedRatings, setQueuedRatings] = useState<
-    {
-      image_name: string;
-      value: number;
-    }[]
+    { image_name: string; value: number }[]
   >([]);
   const [createdProjects, setCreatedProjects] = useState<Project[]>([]);
   const [currentFolderIndex, setCurrentFolderIndex] = useState(0);
   const [isCarouselOpen, setIsCarouselOpen] = useState(false);
   const [carouselStartIndex, setCarouselStartIndex] = useState(0);
 
-  // Motion values for mouse position, default center 50%
   const x = useMotionValue(50);
   const y = useMotionValue(50);
-
-  // Smooth animated spring following the mouse
   const springX = useSpring(x, { damping: 40, stiffness: 100 });
   const springY = useSpring(y, { damping: 40, stiffness: 100 });
 
-  // Animate gradient size and opacity (handle hover effect)
   const [isAnyImageHovered, setIsAnyImageHovered] = useState(false);
-  const gradientSize = useMotionValue(250); // Base size in px
-  const gradientOpacity = useMotionValue(0.05); // Base opacity
+  const gradientSize = useMotionValue(250);
+  const gradientOpacity = useMotionValue(0.05);
   const springSize = useSpring(gradientSize, { stiffness: 150, damping: 30 });
   const springOpacity = useSpring(gradientOpacity, {
     stiffness: 150,
     damping: 30,
   });
 
-  // Compose the gradient string from animated values
   const gradient = useTransform(
     [springX, springY, springSize, springOpacity],
     ([latestX, latestY, latestSize, latestOpacity]) =>
@@ -91,13 +82,12 @@ export default function FolderImageGallery() {
 
   const currentFolder = folders[currentFolderIndex];
   const currentProject = createdProjects.find(
-    (project) => project.name === currentFolder.name
+    (p) => p.name === currentFolder?.name
   );
 
   const handleNewFolders = useCallback(
     (files: File[]) => {
       if (files.length === 0) return;
-
       const newFolders = processFolderUpload(files);
       if (newFolders.length === 0) {
         toast({
@@ -107,7 +97,6 @@ export default function FolderImageGallery() {
         });
         return;
       }
-
       show({
         title: "Review Folders",
         content: FolderPreviewContent,
@@ -120,7 +109,7 @@ export default function FolderImageGallery() {
           onCancel: hide,
           onUpload: async (confirmedFolders: Folder[]) => {
             setFolders((prev) => [...prev, ...confirmedFolders]);
-            setCurrentFolderIndex(!!confirmedFolders.length ? 0 : 0);
+            setCurrentFolderIndex(confirmedFolders.length ? 0 : 0);
             Promise.all(
               confirmedFolders.map(
                 async (folder) => await handleUploadToDropbox(folder)
@@ -132,13 +121,12 @@ export default function FolderImageGallery() {
         actions: FolderPreviewActions,
       });
     },
-    [folders.length, toast, show, hide, project, isUploading]
+    [toast, show, hide, project, isUploading]
   );
 
   const handleFolderRename = useCallback(
     (newName: string) => {
       if (!currentFolder) return;
-
       setFolders((prev) =>
         prev.map((folder) =>
           folder.id === currentFolder.id ? { ...folder, name: newName } : folder
@@ -148,18 +136,46 @@ export default function FolderImageGallery() {
     [currentFolder]
   );
 
-  const handlePreviousFolder = () => {
-    setCurrentFolderIndex((prev) => Math.max(0, prev - 1));
-  };
+  const handleUpdateProject = useCallback(
+    async (newName: string) => {
+      if (!currentProject) return;
+      try {
+        const updatedProject = await updateProject({
+          projectId: currentProject.project_id,
+          data: {
+            name: newName,
+          },
+        });
+        setCreatedProjects((prev) =>
+          prev.map((proj) =>
+            proj.project_id === updatedProject.project_id
+              ? updatedProject
+              : proj
+          )
+        );
+        setFolders((prev) =>
+          prev.map((folder) =>
+            folder.name === currentProject.name
+              ? { ...folder, name: newName }
+              : folder
+          )
+        );
+        toast({ title: "Project name updated" });
+      } catch {
+        toast({ title: "Failed to update project", variant: "destructive" });
+      }
+    },
+    [currentProject, updateProject, toast]
+  );
 
-  const handleNextFolder = () => {
+  const handlePreviousFolder = () =>
+    setCurrentFolderIndex((prev) => Math.max(0, prev - 1));
+  const handleNextFolder = () =>
     setCurrentFolderIndex((prev) => Math.min(folders.length - 1, prev + 1));
-  };
 
   const handleUploadToDropbox = async (folder?: Folder) => {
     const uploadFolder = currentFolder || folder;
     if (!uploadFolder) return;
-
     try {
       const imageFiles = uploadFolder.images.map((img) => img.file);
       const tempFileLocations = await uploadFiles(imageFiles);
@@ -167,16 +183,12 @@ export default function FolderImageGallery() {
         name: uploadFolder.name,
         file_locations: tempFileLocations,
       });
-      Promise.all(
-        queuedRatings.map(async (rating) => {
-          await createRating({
-            project_id: project.project_id,
-            ...rating,
-          });
-        })
+      await Promise.all(
+        queuedRatings.map(async (rating) =>
+          createRating({ project_id: project.project_id, ...rating })
+        )
       );
       setQueuedRatings([]);
-
       setCreatedProjects((projects) => [...projects, project]);
     } catch {}
   };
@@ -188,101 +200,76 @@ export default function FolderImageGallery() {
 
   const handleRatingChange = useCallback(
     async (imageId: string, value: number, ratingId?: string) => {
-      const rating = {
-        image_name: imageId,
-        value,
-      };
-
+      const rating = { image_name: imageId, value };
       if (!currentProject) {
-        setQueuedRatings((queuedRatings) => [...queuedRatings, rating]);
+        setQueuedRatings((queued) => [...queued, rating]);
         return;
       }
-
-      if (!ratingId) {
-        const createdRating = await createRating({
-          project_id: currentProject?.project_id,
+      if (!ratingId)
+        return await createRating({
+          project_id: currentProject.project_id,
           ...rating,
         });
-        return createdRating;
-      }
-
-      const updatedRating = await updateRating({
-        ratingId,
-        value,
-      });
-
-      return updatedRating;
+      return await updateRating({ ratingId, value });
     },
     [currentProject]
   );
 
-  const handleCloseCarousel = useCallback(() => {
-    setIsCarouselOpen(false);
-  }, []);
+  const handleCloseCarousel = useCallback(() => setIsCarouselOpen(false), []);
 
   const handleShare = () => {
-    if (!currentFolder || !project) return;
-
+    if (!currentFolder || !currentProject) return;
     show({
-      content: () => <ShareDialog project={project} onClose={hide} />,
+      content: () => <ShareDialog project={currentProject} onClose={hide} />,
     });
   };
 
-  // Global mousemove updates motion values directly
   const handleGlobalMouseMove = useCallback(
     (e: React.MouseEvent<HTMLDivElement>) => {
       const rect = e.currentTarget.getBoundingClientRect();
-      const xPercent = ((e.clientX - rect.left) / rect.width) * 100;
-      const yPercent = ((e.clientY - rect.top) / rect.height) * 100;
-      x.set(xPercent);
-      y.set(yPercent);
+      x.set(((e.clientX - rect.left) / rect.width) * 100);
+      y.set(((e.clientY - rect.top) / rect.height) * 100);
     },
     [x, y]
   );
 
-  // Handle image hover change for background gradient intensity and size
-  const handleImageHoverChange = useCallback((isHovering: boolean) => {
-    setIsAnyImageHovered(isHovering);
-  }, []);
+  const handleImageHoverChange = useCallback(
+    (isHovering: boolean) => setIsAnyImageHovered(isHovering),
+    []
+  );
 
-  // Animate gradient size and opacity on image hover state change
   useEffect(() => {
-    if (isAnyImageHovered) {
-      gradientSize.set(400); // Larger size for "shine up"
-      gradientOpacity.set(0.2); // Higher opacity for "shine up"
-    } else {
-      gradientSize.set(250); // Revert to base size
-      gradientOpacity.set(0.05); // Revert to base opacity
-    }
+    gradientSize.set(isAnyImageHovered ? 400 : 250);
+    gradientOpacity.set(isAnyImageHovered ? 0.2 : 0.05);
   }, [isAnyImageHovered, gradientSize, gradientOpacity]);
 
   useEffect(() => {
-    getRatings(project?.project_id);
-  }, [project]);
+    if (currentProject?.project_id) getRatings(currentProject.project_id);
+  }, [currentProject]);
 
   return (
-    <motion.div // Use motion.div for Framer Motion animations
+    <motion.div
       className={cn("min-h-screen bg-background relative overflow-hidden")}
       onMouseMove={handleGlobalMouseMove}
       style={{
         backgroundColor: "var(--background)",
-        backgroundImage: gradient, // Use the transformed gradient motion value
+        backgroundImage: gradient,
         backgroundAttachment: "fixed",
-        backgroundPosition: `${springX.get()}% ${springY.get()}%`, // Use spring values for position
+        backgroundPosition: `${springX.get()}% ${springY.get()}%`,
         backgroundSize: "cover",
         backgroundRepeat: "no-repeat",
-        // Framer Motion handles transitions, so no explicit CSS transition needed here
       }}
     >
       <div className="container mx-auto px-4 py-8">
-        {/* Header */}
         <div className="mb-8">
           {currentFolder ? (
             <div className="space-y-4">
               <EditableTitle
                 title={currentFolder.name}
-                onSave={handleFolderRename}
-                editable={!project || !isUploading}
+                onSave={
+                  currentProject ? handleUpdateProject : handleFolderRename
+                }
+                editable={!isUploading}
               />
               <FolderNavigation
                 currentIndex={currentFolderIndex}
@@ -301,7 +288,6 @@ export default function FolderImageGallery() {
           )}
         </div>
 
-        {/* Main Content */}
         {currentFolder ? (
           <div className="mb-20">
             <div className="mb-6 flex items-center justify-between">
@@ -311,21 +297,20 @@ export default function FolderImageGallery() {
               </p>
               <Button
                 onClick={
-                  project?.share_url
+                  currentProject?.share_url
                     ? handleShare
                     : () => handleUploadToDropbox()
                 }
                 disabled={isUploading}
                 className="cursor-pointer flex items-center gap-2"
               >
-                {project?.share_url ? (
+                {currentProject?.share_url ? (
                   <>
-                    <Share2 className="h-4 w-4" />
-                    Share Folder
+                    <Share2 className="h-4 w-4" /> Share Folder
                   </>
                 ) : (
                   <>
-                    <Upload className="h-4 w-4" />
+                    <Upload className="h-4 w-4" />{" "}
                     {isUploading ? "Uploading..." : "Upload to Dropbox"}
                   </>
                 )}
@@ -347,7 +332,7 @@ export default function FolderImageGallery() {
                   onFilesSelected={handleNewFolders}
                   accept={{ "image/*": [] }}
                   maxFiles={1000}
-                  directory={true} // Enable multiple folder upload
+                  directory={true}
                   className="min-h-[200px]"
                 >
                   <div className="text-center space-y-4">
@@ -368,7 +353,6 @@ export default function FolderImageGallery() {
           </div>
         )}
 
-        {/* Image Carousel */}
         {currentFolder && (
           <ImageCarousel
             images={currentFolder.images}
@@ -377,23 +361,22 @@ export default function FolderImageGallery() {
             onClose={handleCloseCarousel}
           />
         )}
+      </div>
 
-        {/* Fixed Upload Action */}
-        <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm border-t p-4">
-          <div className="container mx-auto">
-            <FileUploader
-              onFilesSelected={handleNewFolders}
-              accept={{ "image/*": [] }}
-              maxFiles={1000}
-              directory={true} // Enable multiple folder upload
-              className="h-16"
-            >
-              <div className="flex items-center justify-center gap-2 text-sm">
-                <Upload className="h-4 w-4" />
-                Drop folders here to upload more images
-              </div>
-            </FileUploader>
-          </div>
+      <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm border-t p-4">
+        <div className="container mx-auto">
+          <FileUploader
+            onFilesSelected={handleNewFolders}
+            accept={{ "image/*": [] }}
+            maxFiles={1000}
+            directory={true}
+            className="h-16"
+          >
+            <div className="flex items-center justify-center gap-2 text-sm">
+              <Upload className="h-4 w-4" /> Drop folders here to upload more
+              images
+            </div>
+          </FileUploader>
         </div>
       </div>
     </motion.div>

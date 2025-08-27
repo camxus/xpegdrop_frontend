@@ -19,17 +19,25 @@ import axios from "axios";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
 import { b64ToFile, createImageFile } from "@/lib/utils/file-utils";
+import { useAuth } from "@/hooks/api/useAuth";
+import { Download } from "lucide-react";
 
 export default function PublicProjectPage() {
   const { username, projectName } = useParams<{
     username: string;
     projectName: string;
   }>();
+  const { user } = useAuth();
+
+  const isCurrentUser = user?.username === username;
+
   const { toast } = useToast();
   const { show, hide } = useDialog();
 
   const [project, setProject] = useState<Project | null>(null);
-  const [images, setImages] = useState<ImageFile[]>([]);
+  const [images, setImages] = useState<
+    (ImageFile & { preview_url?: string })[]
+  >([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
   const [isCarouselOpen, setIsCarouselOpen] = useState(false);
@@ -81,7 +89,10 @@ export default function PublicProjectPage() {
         data.images.map((i: { preview_url: string; thumbnail_url: string }) => {
           const thumbnailFile = b64ToFile(i.thumbnail_url);
 
-          return createImageFile(thumbnailFile, projectName) // real File object;
+          return {
+            ...createImageFile(thumbnailFile, projectName),
+            preview_url: i.preview_url,
+          }; // real File object;
         })
       );
 
@@ -156,8 +167,11 @@ export default function PublicProjectPage() {
 
     const fetchPromises = images.map(async (img, index) => {
       try {
-        const response = await axios.get(img.url, { responseType: "blob" });
-        folder.file(`${img.name}`, response.data);
+        if (!img.preview_url) return;
+        const response = await axios.get(img.preview_url, {
+          responseType: "blob",
+        });
+        folder.file(`${img.name}`, response?.data);
       } catch (err) {
         console.error(`Failed to fetch ${img.url}`, err);
       }
@@ -212,7 +226,8 @@ export default function PublicProjectPage() {
                   className="mt-4"
                   variant="default"
                 >
-                  Download All
+                  Download
+                  <Download />
                 </Button>
               )}
             </div>
