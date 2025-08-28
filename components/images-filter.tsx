@@ -4,7 +4,7 @@ import * as React from "react";
 import { Rating } from "@/lib/api/ratingsApi";
 import { MultiSelect } from "./ui/multi-select";
 import { useEffect } from "react";
-import { useUsers } from "@/hooks/api/useUsers";
+import { useUsers } from "@/hooks/api/useUser";
 import { cn, getInitials } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { useAuth } from "@/hooks/api/useAuth";
