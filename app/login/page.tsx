@@ -38,10 +38,6 @@ export default function LoginPage() {
     setIsSubmitting(true); // <-- start submitting
     try {
       await login({ username: formData.username, password: formData.password });
-      toast({
-        title: "Login successful",
-        description: "Redirecting...",
-      });
       router.push("/upload");
     } catch {
       toast({
