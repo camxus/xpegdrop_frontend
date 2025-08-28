@@ -5,6 +5,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/toaster";
 import { Providers } from "@/components/providers"; // Import DialogProvider
+import { SiteHeader } from "@/components/layout/site-header";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -22,7 +23,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <Providers>{children}</Providers>
+        <Providers>
+          <SiteHeader>{children}</SiteHeader>
+        </Providers>
       </body>
     </html>
   );

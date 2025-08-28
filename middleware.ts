@@ -33,7 +33,7 @@ export function parseJwtToken(token: string) {
 }
 
 // Helper function to check if token is expired
-function isTokenExpired(payload: any): boolean {
+export function isTokenExpired(payload: any): boolean {
   if (!payload || !payload.exp) return true;
   const expirationTime = payload.exp * 1000; // Convert to milliseconds
   return Date.now() >= expirationTime;

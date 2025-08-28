@@ -9,6 +9,7 @@ import { Rating } from "@/lib/api/ratingsApi";
 import { useAuth } from "@/hooks/api/useAuth";
 import { getLocalStorage } from "@/lib/localStorage";
 import { LOCAL_RATINGS_STORAGE_KEY } from "@/hooks/api/useRatings";
+import { motion } from "framer-motion";
 
 interface PinterestGridProps {
   ratingDisabled?: boolean;
@@ -140,10 +141,13 @@ const PinterestImage = memo(function PinterestImage({
   onRatingChange: (value: number, ratingId?: string) => void;
 }) {
   return (
-    <div
+    <motion.div
       className="mb-4 break-inside-avoid"
       onMouseEnter={onHover}
       onMouseLeave={onLeave}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: index * 0.05 }}
     >
       <div
         className="group relative overflow-hidden rounded-lg bg-muted cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
@@ -182,6 +186,6 @@ const PinterestImage = memo(function PinterestImage({
         onRatingChange={(value) => onRatingChange(value, rating.rating_id)}
         className="w-full flex justify-center mt-1"
       />
-    </div>
+    </motion.div>
   );
 });

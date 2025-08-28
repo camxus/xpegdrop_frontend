@@ -10,9 +10,10 @@ import {
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { TOKEN_KEY } from "@/lib/api/token";
-import { removeCookieClient, setCookieClient } from "@/lib/cookie";
+import { getCookieClient, removeCookieClient, setCookieClient } from "@/lib/cookie";
 import { getLocalStorage, setLocalStorage } from "@/lib/localStorage";
 import { User } from "@/types/user";
+import { isTokenExpired } from "@/middleware";
 
 const AUTH_USER_KEY = "user";
 
@@ -25,8 +26,9 @@ export function useAuth() {
   const { data: user } = useQuery<User | null>({
     queryKey: ["auth", "profile"],
     queryFn: async () => {
-      // Intentionally empty — won't run unless refetched
-      return getLocalStorage(AUTH_USER_KEY);
+      if (isTokenExpired(JSON.parse(await getCookieClient(TOKEN_KEY) || "{}").accessToken))
+        // Intentionally empty — won't run unless refetched
+        return getLocalStorage(AUTH_USER_KEY);
     },
     // enabled: false, // prevents auto-fetch
   });

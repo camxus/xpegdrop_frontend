@@ -6,24 +6,26 @@ import type { Project } from "@/types/project";
 import { projectsApi } from "@/lib/api/projectsApi";
 import { S3Location } from "@/types/user";
 import { toast } from "@/hooks/use-toast";
+import { useAuth } from "./useAuth";
 
-export function useProjects(userId?: string) {
+export function useProjects() {
+  const { user } = useAuth()
   const queryClient = useQueryClient();
+
+  // Get all projects
+  const projects =
+    useQuery<Project[], Error>({
+      queryKey: ["projects", user?.user_id],
+      queryFn: () => projectsApi.getProjects(),
+      enabled: !!user?.user_id,
+    });
 
   // Get single project by id
   const getProject = async (projectId: string) =>
     useQuery<Project[], Error>({
-      queryKey: ["projects", userId],
+      queryKey: ["projects", projectId],
       queryFn: () => projectsApi.getProject(projectId),
-      enabled: !!userId,
-    });
-
-  // Get all projects
-  const getProjects = async () =>
-    useQuery<Project[], Error>({
-      queryKey: ["projects", userId],
-      queryFn: () => projectsApi.getProjects(),
-      enabled: !!userId,
+      enabled: !!projectId,
     });
 
   // Get single project by share URL (public route)
@@ -115,10 +117,10 @@ export function useProjects(userId?: string) {
       });
     },
   });
-  
+
   return {
+    projects,
     getProject,
-    getProjects,
     getProjectByShareUrl,
     createProject,
     updateProject,

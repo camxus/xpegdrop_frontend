@@ -351,7 +351,7 @@ export default function FolderImageGallery() {
                     accept={{ "image/*": [] }}
                     maxFiles={1000}
                     directory={true}
-                    className="h-screen w-screen flex items-center justify-center"
+                    className="h-screen w-screen max-w-full max-h-full flex items-center justify-center"
                   >
                     <div className="text-center space-y-4">
                       <FolderOpen className="h-12 w-12 mx-auto text-muted-foreground" />
@@ -374,22 +374,6 @@ export default function FolderImageGallery() {
               );
           }
         })()}
-        <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm border-t p-4">
-          <div className="container mx-auto">
-            <FileUploader
-              onFilesSelected={handleNewFolders}
-              accept={{ "image/*": [] }}
-              maxFiles={1000}
-              directory={true}
-              className="h-16"
-            >
-              <div className="flex items-center justify-center gap-2 text-sm">
-                <Upload className="h-4 w-4" /> Drop folders here to upload more
-                images
-              </div>
-            </FileUploader>
-          </div>
-        </div>
       </motion.div>
     </>
   );
