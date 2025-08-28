@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect, useCallback, useRef } from "react"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
@@ -23,7 +22,6 @@ export function ImageCarousel({ images, initialIndex, isOpen, onClose }: ImageCa
   const [touchEnd, setTouchEnd] = useState<number | null>(null)
   const carouselRef = useRef<HTMLDivElement>(null)
 
-  // Minimum swipe distance (in px)
   const minSwipeDistance = 50
 
   useEffect(() => {
@@ -36,26 +34,28 @@ export function ImageCarousel({ images, initialIndex, isOpen, onClose }: ImageCa
     } else {
       document.body.style.overflow = "unset"
     }
-
     return () => {
       document.body.style.overflow = "unset"
     }
   }, [isOpen])
 
   const handlePrevious = useCallback(() => {
-    setCurrentIndex((prev) => (prev > 0 ? prev - 1 : images.length - 1))
-    setIsLoading(true)
-  }, [images.length])
+    if (currentIndex > 0) {
+      setCurrentIndex((prev) => prev - 1)
+      setIsLoading(true)
+    }
+  }, [currentIndex])
 
   const handleNext = useCallback(() => {
-    setCurrentIndex((prev) => (prev < images.length - 1 ? prev + 1 : 0))
-    setIsLoading(true)
-  }, [images.length])
+    if (currentIndex < images.length - 1) {
+      setCurrentIndex((prev) => prev + 1)
+      setIsLoading(true)
+    }
+  }, [currentIndex, images.length])
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (!isOpen) return
-
       switch (e.key) {
         case "Escape":
           onClose()
@@ -68,7 +68,7 @@ export function ImageCarousel({ images, initialIndex, isOpen, onClose }: ImageCa
           break
       }
     },
-    [isOpen, onClose, handlePrevious, handleNext],
+    [isOpen, onClose, handlePrevious, handleNext]
   )
 
   useEffect(() => {
@@ -87,16 +87,11 @@ export function ImageCarousel({ images, initialIndex, isOpen, onClose }: ImageCa
 
   const onTouchEnd = () => {
     if (!touchStart || !touchEnd) return
-
     const distance = touchStart - touchEnd
     const isLeftSwipe = distance > minSwipeDistance
     const isRightSwipe = distance < -minSwipeDistance
-
-    if (isLeftSwipe) {
-      handleNext()
-    } else if (isRightSwipe) {
-      handlePrevious()
-    }
+    if (isLeftSwipe) handleNext()
+    else if (isRightSwipe) handlePrevious()
   }
 
   if (!isOpen) return null
@@ -131,6 +126,7 @@ export function ImageCarousel({ images, initialIndex, isOpen, onClose }: ImageCa
           variant="ghost"
           size="icon"
           onClick={handlePrevious}
+          disabled={currentIndex === 0}
           className="absolute left-4 top-1/2 -translate-y-1/2 z-10 text-white hover:bg-white/20 h-12 w-12"
         >
           <ChevronLeft className="h-8 w-8" />
@@ -151,7 +147,7 @@ export function ImageCarousel({ images, initialIndex, isOpen, onClose }: ImageCa
               height={800}
               className={cn(
                 "max-w-full max-h-[80vh] w-auto h-auto object-contain transition-opacity duration-300",
-                isLoading ? "opacity-0" : "opacity-100",
+                isLoading ? "opacity-0" : "opacity-100"
               )}
               onLoad={() => setIsLoading(false)}
               priority
@@ -164,6 +160,7 @@ export function ImageCarousel({ images, initialIndex, isOpen, onClose }: ImageCa
           variant="ghost"
           size="icon"
           onClick={handleNext}
+          disabled={currentIndex === images.length - 1}
           className="absolute right-4 top-1/2 -translate-y-1/2 z-10 text-white hover:bg-white/20 h-12 w-12"
         >
           <ChevronRight className="h-8 w-8" />
@@ -172,22 +169,19 @@ export function ImageCarousel({ images, initialIndex, isOpen, onClose }: ImageCa
 
       {/* Bottom navigation dots */}
       <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/50 rounded-full px-4 py-2">
-        {images.slice(Math.max(0, currentIndex - 2), Math.min(images.length, currentIndex + 3)).map((_, index) => {
-          const actualIndex = Math.max(0, currentIndex - 2) + index
-          return (
-            <button
-              key={actualIndex}
-              onClick={() => {
-                setCurrentIndex(actualIndex)
-                setIsLoading(true)
-              }}
-              className={cn(
-                "w-2 h-2 rounded-full transition-all duration-200",
-                actualIndex === currentIndex ? "bg-white scale-125" : "bg-white/50 hover:bg-white/75",
-              )}
-            />
-          )
-        })}
+        {images.map((_, idx) => (
+          <button
+            key={idx}
+            onClick={() => {
+              setCurrentIndex(idx)
+              setIsLoading(true)
+            }}
+            className={cn(
+              "w-2 h-2 rounded-full transition-all duration-200",
+              idx === currentIndex ? "bg-white scale-125" : "bg-white/50 hover:bg-white/75"
+            )}
+          />
+        ))}
       </div>
 
       {/* Swipe indicator */}
