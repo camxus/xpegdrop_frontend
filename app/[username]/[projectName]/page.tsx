@@ -58,8 +58,6 @@ export default function PublicProjectPage() {
   const [isHovered, setIsHovered] = useState(false);
   const [isCarouselOpen, setIsCarouselOpen] = useState(false);
   const [carouselStartIndex, setCarouselStartIndex] = useState(0);
-  const [filteredRatings, setFilteredRatings] =
-    useState<Rating[]>(foreignRatings);
 
   const x = useMotionValue(50);
   const y = useMotionValue(50);
@@ -199,28 +197,34 @@ export default function PublicProjectPage() {
     });
   };
 
-  const hanldeFilterChange = ({
+  const handleFilterChange = ({
     userIds,
     ratingValues,
   }: {
     userIds: string[];
     ratingValues: number[];
   }) => {
-    const filteredRatings = Object.values(ratings).filter((r) => {
-      const userMatch = userIds.length === 0 || userIds.includes(r.user_id);
-      const ratingMatch =
-        ratingValues.length === 0 || ratingValues.includes(r.value);
-      return userMatch && ratingMatch;
-    });
+    const isFiltering = !!userIds.length || !!ratingValues.length;
 
-    setFilteredRatings(filteredRatings);
+    if (!isFiltering) {
+      setFilteredImages(images);
+      return;
+    }
 
-    // Step 2: Filter images based on the filtered ratings
-    setFilteredImages(
-      images.filter((image) =>
-        filteredRatings.some((rating) => rating.image_name === image.name)
-      )
+    const filteredRatings = Object.values(ratings).filter(
+      ({ user_id, value }) => {
+        const userMatch = !!userIds.length || userIds.includes(user_id);
+        const valueMatch =
+          !!ratingValues.length || ratingValues.includes(value);
+        return userMatch && valueMatch;
+      }
     );
+
+    const filteredImages = images.filter((image) =>
+      filteredRatings.some((rating) => rating.image_name === image.name)
+    );
+
+    setFilteredImages(filteredImages);
   };
 
   useEffect(() => {
@@ -283,7 +287,7 @@ export default function PublicProjectPage() {
 
             <ImagesFilter
               ratings={ratings}
-              onFilterChange={hanldeFilterChange}
+              onFilterChange={handleFilterChange}
             />
 
             <PinterestGrid
@@ -298,7 +302,7 @@ export default function PublicProjectPage() {
               onImageHoverChange={(hover) => setIsHovered(hover)}
             />
             <ImageCarousel
-              images={images}
+              images={filteredImages}
               initialIndex={carouselStartIndex}
               isOpen={isCarouselOpen}
               onClose={() => setIsCarouselOpen(false)}

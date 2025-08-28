@@ -64,8 +64,6 @@ export function useRatings() {
       const updated = [...ratings, data];
       setRatings(updated);
 
-      console.log(updated, user?.user_id, projectId)
-
       if (!user?.user_id && projectId) saveLocalRatings(projectId, updated);
 
       queryClient.invalidateQueries({ queryKey: ["ratings", projectId] });
@@ -95,15 +93,13 @@ export function useRatings() {
     onSuccess: (data) => {
       if (!data) return;
 
-      const projectId = data.project_id
-
       const { ratingId, value } = data;
       const updated = ratings.map((r) => (r.rating_id === ratingId ? { ...r, value } : r));
       setRatings(updated);
 
-      if (!user?.user_id && projectId) saveLocalRatings(projectId, updated);
+      if (!user?.user_id && updated[0]?.project_id) saveLocalRatings(updated[0]?.project_id, updated);
 
-      queryClient.invalidateQueries({ queryKey: ["ratings", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["ratings", updated[0]?.project_id] });
       toast({
         title: "Rating updated",
         description: "Your rating was updated successfully.",
