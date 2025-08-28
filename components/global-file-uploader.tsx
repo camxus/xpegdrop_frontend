@@ -27,13 +27,8 @@ export function GlobalFileUploader({
     (e: DragEvent) => {
       e.preventDefault();
       setShowOverlay(false);
-
-      if (e.dataTransfer?.files) {
-        const files = Array.from(e.dataTransfer.files);
-        onFilesSelected(files);
-      }
     },
-    [onFilesSelected]
+    []
   );
 
   const handleDragLeave = useCallback((e: DragEvent) => {

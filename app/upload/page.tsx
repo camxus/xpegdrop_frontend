@@ -10,7 +10,7 @@ import { FolderNavigation } from "@/components/folder-navigation";
 import { EditableTitle } from "@/components/editable-title";
 import { useToast } from "@/hooks/use-toast";
 import { processFolderUpload } from "@/lib/utils/file-utils";
-import { Upload, FolderOpen, Share2 } from "lucide-react";
+import { Upload, FolderOpen, Share2, UploadIcon } from "lucide-react";
 import type { Folder } from "@/types";
 import { ImageCarousel } from "@/components/image-carousel";
 import { ShareDialog } from "@/components/share-dialog";
@@ -87,9 +87,10 @@ export default function FolderImageGallery() {
   );
 
   const handleNewFolders = useCallback(
-    (files: File[]) => {
+    async (files: File[]) => {
       if (files.length === 0) return;
       const newFolders = processFolderUpload(files);
+      console.log(newFolders);
       if (newFolders.length === 0) {
         toast({
           title: "No Images Found",
@@ -122,7 +123,7 @@ export default function FolderImageGallery() {
         actions: FolderPreviewActions,
       });
     },
-    [toast, show, hide, project, isUploading]
+    [project, isUploading]
   );
 
   const handleFolderRename = useCallback(
@@ -249,141 +250,147 @@ export default function FolderImageGallery() {
   }, [currentProject]);
 
   return (
-    <motion.div
-      className={cn("min-h-screen bg-background relative overflow-hidden")}
-      onMouseMove={handleGlobalMouseMove}
-      style={{
-        backgroundColor: "var(--background)",
-        backgroundImage: gradient,
-        backgroundAttachment: "fixed",
-        backgroundPosition: `${springX.get()}% ${springY.get()}%`,
-        backgroundSize: "cover",
-        backgroundRepeat: "no-repeat",
-      }}
-    >
-      <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          {currentFolder ? (
-            <div className="space-y-4">
-              <EditableTitle
-                title={currentFolder.name}
-                onSave={
-                  currentProject ? handleUpdateProject : handleFolderRename
-                }
-                editable={!isUploading}
-              />
-              <FolderNavigation
-                currentIndex={currentFolderIndex}
-                totalFolders={folders.length}
-                onPrevious={handlePreviousFolder}
-                onNext={handleNextFolder}
-              />
-            </div>
-          ) : (
-            <div className="text-center">
-              <h1 className="text-3xl font-bold mb-2">Folder Image Gallery</h1>
-              <p className="text-muted-foreground">
-                Upload folders to get started
-              </p>
-            </div>
-          )}
-        </div>
-
-        {currentFolder ? (
-          <div className="mb-20">
-            <div className="mb-6 flex items-center justify-between">
-              <p className="text-muted-foreground">
-                {currentFolder.images.length} image
-                {currentFolder.images.length !== 1 ? "s" : ""}
-              </p>
-              <Button
-                onClick={
-                  currentProject?.share_url
-                    ? handleShare
-                    : () => handleUploadToDropbox()
-                }
-                disabled={isUploading}
-                className="cursor-pointer flex items-center gap-2"
-              >
-                {currentProject?.share_url ? (
-                  <>
-                    <Share2 className="h-4 w-4" /> Share Folder
-                  </>
-                ) : (
-                  <>
-                    <Upload className="h-4 w-4" />{" "}
-                    {isUploading ? "Uploading..." : "Upload to Dropbox"}
-                  </>
-                )}
-              </Button>
-            </div>
-            <PinterestGrid
-              images={currentFolder.images}
-              ratings={ratings}
-              onImageClick={handleImageClick}
-              onRatingChange={handleRatingChange}
-              onImageHoverChange={handleImageHoverChange}
-            />
-          </div>
-        ) : (
-          <div className="mb-20">
-            <GlobalFileUploader
-              onFilesSelected={handleNewFolders}
-              directory={true}
-            />
-            <Card className="max-w-2xl mx-auto">
-              <CardContent className="p-8">
-                <FileUploader
-                  onFilesSelected={handleNewFolders}
-                  accept={{ "image/*": [] }}
-                  maxFiles={1000}
-                  directory={true}
-                  className="min-h-[200px]"
-                >
-                  <div className="text-center space-y-4">
-                    <FolderOpen className="h-12 w-12 mx-auto text-muted-foreground" />
-                    <div>
-                      <h3 className="text-lg font-semibold">
-                        Upload Image Folders
-                      </h3>
-                      <p className="text-muted-foreground">
-                        Drag and drop folders containing images, or click to
-                        browse
-                      </p>
+    <>
+      <motion.div
+        className={cn("min-h-screen bg-background relative overflow-hidden")}
+        onMouseMove={handleGlobalMouseMove}
+        style={{
+          backgroundColor: "var(--background)",
+          backgroundImage: gradient,
+          backgroundAttachment: "fixed",
+          backgroundPosition: `${springX.get()}% ${springY.get()}%`,
+          backgroundSize: "cover",
+          backgroundRepeat: "no-repeat",
+        }}
+      >
+        {(() => {
+          switch (!!currentFolder) {
+            case true:
+              return (
+                <>
+                  <div className="container mx-auto px-4 py-8">
+                    <div className="mb-8">
+                      <div className="space-y-4">
+                        <EditableTitle
+                          title={currentFolder.name}
+                          onSave={
+                            currentProject
+                              ? handleUpdateProject
+                              : handleFolderRename
+                          }
+                          editable={!isUploading}
+                        />
+                        <FolderNavigation
+                          currentIndex={currentFolderIndex}
+                          totalFolders={folders.length}
+                          onPrevious={handlePreviousFolder}
+                          onNext={handleNextFolder}
+                        />
+                      </div>
                     </div>
+
+                    <div className="mb-20">
+                      <div className="mb-6 flex items-center justify-between">
+                        <p className="text-muted-foreground">
+                          {currentFolder.images.length} image
+                          {currentFolder.images.length !== 1 ? "s" : ""}
+                        </p>
+                        <Button
+                          onClick={
+                            currentProject?.share_url
+                              ? handleShare
+                              : () => handleUploadToDropbox()
+                          }
+                          disabled={isUploading}
+                          className="cursor-pointer flex items-center gap-2"
+                        >
+                          {currentProject?.share_url ? (
+                            <>
+                              <Share2 className="h-4 w-4" /> Share Folder
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="h-4 w-4" />
+                              {isUploading
+                                ? "Uploading..."
+                                : "Upload to Dropbox"}
+                            </>
+                          )}
+                        </Button>
+                      </div>
+
+                      <PinterestGrid
+                        images={currentFolder.images}
+                        ratings={ratings}
+                        onImageClick={handleImageClick}
+                        onRatingChange={handleRatingChange}
+                        onImageHoverChange={handleImageHoverChange}
+                      />
+                    </div>
+
+                    <ImageCarousel
+                      images={currentFolder.images}
+                      initialIndex={carouselStartIndex}
+                      isOpen={isCarouselOpen}
+                      onClose={handleCloseCarousel}
+                    />
                   </div>
-                </FileUploader>
-              </CardContent>
-            </Card>
+                </>
+              );
+
+            default:
+              return (
+                <>
+                  <GlobalFileUploader
+                    onFilesSelected={handleNewFolders}
+                    directory={true}
+                  />
+
+                  <FileUploader
+                    onFilesSelected={handleNewFolders}
+                    accept={{ "image/*": [] }}
+                    maxFiles={1000}
+                    directory={true}
+                    className="h-screen w-screen flex items-center justify-center"
+                  >
+                    <div className="text-center space-y-4">
+                      <FolderOpen className="h-12 w-12 mx-auto text-muted-foreground" />
+                      <div>
+                        <h3 className="text-lg font-semibold">
+                          Upload Image Folders
+                        </h3>
+                        <p className="text-muted-foreground">
+                          Drag and drop folders containing images, or click to
+                          browse
+                        </p>
+                      </div>
+                    </div>
+                    <Button className="m-4">
+                      <UploadIcon />
+                      Upload
+                    </Button>
+                  </FileUploader>
+                </>
+              );
+          }
+        })()}
+        <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm border-t p-4">
+          <div className="container mx-auto">
+            <FileUploader
+              onFilesSelected={handleNewFolders}
+              accept={{ "image/*": [] }}
+              maxFiles={1000}
+              directory={true}
+              className="h-16"
+            >
+              <div className="flex items-center justify-center gap-2 text-sm">
+                <Upload className="h-4 w-4" /> Drop folders here to upload more
+                images
+              </div>
+            </FileUploader>
           </div>
-        )}
-
-        {currentFolder && (
-          <ImageCarousel
-            images={currentFolder.images}
-            initialIndex={carouselStartIndex}
-            isOpen={isCarouselOpen}
-            onClose={handleCloseCarousel}
-          />
-        )}
-      </div>
-
-      <div className="fixed bottom-0 left-0 right-0 bg-background/80 backdrop-blur-sm border-t p-4">
-        <div className="container mx-auto">
-          <FileUploader
-            onFilesSelected={handleNewFolders}
-            accept={{ "image/*": [] }}
-            maxFiles={1000}
-            directory={true}
-            className="h-16"
-          >
-            <div className="flex items-center justify-center gap-2 text-sm">
-              <Upload className="h-4 w-4" /> Drop folders here to upload more
-              images
-            </div>
-          </FileUploader>
         </div>
-      </div>
-    </motion.div>
+      </motion.div>
+    </>
   );
 }
