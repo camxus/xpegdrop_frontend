@@ -15,13 +15,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/hooks/api/useAuth";
+import { useToast } from "@/hooks/use-toast";
 
 export default function LoginPage() {
+  const { toast } = useToast();
   const [formData, setFormData] = useState({ username: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
-  const { login, isLoggingIn, error } = useAuth();
+  const { login, isLoggingIn, user } = useAuth();
   const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -35,7 +36,11 @@ export default function LoginPage() {
       await login({ username: formData.username, password: formData.password });
       router.push("/upload"); // or wherever after login
     } catch {
-      // error handled in useAuth hook
+      toast({
+        title: "Login failed",
+        description: "Please check your credentials and try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -55,12 +60,6 @@ export default function LoginPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
-              {error && (
-                <Alert variant="destructive">
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-
               <div className="space-y-2">
                 <Label htmlFor="username" className="text-white">
                   Username
