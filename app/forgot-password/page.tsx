@@ -16,10 +16,10 @@ import {
 import { useAuth } from "@/hooks/api/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import * as yup from "yup";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 
 export const confirmPasswordSchema = yup.object().shape({
-  email: yup.string().email("Invalid email").required("Email is required"),
+  username: yup.string().required("Username is required"),
   code: yup.string().required("Confirmation code is required"),
   newPassword: yup
     .string()
@@ -39,8 +39,8 @@ export default function ForgotPasswordPage() {
   const router = useRouter();
   const { forgotPassword, confirmPassword } = useAuth();
 
-  const [step, setStep] = useState<"email" | "code">("email");
-  const [email, setEmail] = useState("");
+  const [step, setStep] = useState<"request" | "confirm">("request");
+  const [username, setUsername] = useState("");
   const [confirmationCode, setConfirmationCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [verifyPassword, setVerifyPassword] = useState("");
@@ -51,12 +51,12 @@ export default function ForgotPasswordPage() {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      await forgotPassword(email);
+      await forgotPassword(username);
       toast({
         title: "Reset email sent",
         description: "Check your inbox for the confirmation code.",
       });
-      setStep("code");
+      setStep("confirm");
     } catch (err: any) {
       toast({
         title: "Error",
@@ -73,11 +73,11 @@ export default function ForgotPasswordPage() {
     setIsSubmitting(true);
     try {
       await confirmPasswordSchema.validate(
-        { email, code: confirmationCode, newPassword, verifyPassword },
+        { username, code: confirmationCode, newPassword, verifyPassword },
         { abortEarly: false }
       );
 
-      await confirmPassword(email, confirmationCode, newPassword);
+      await confirmPassword(username, confirmationCode, newPassword);
 
       toast({
         title: "Password reset successful",
@@ -104,7 +104,7 @@ export default function ForgotPasswordPage() {
   };
 
   switch (step) {
-    case "email":
+    case "request":
       return (
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-black to-slate-900 flex items-center justify-center p-4">
           <motion.div
@@ -118,24 +118,24 @@ export default function ForgotPasswordPage() {
                   Forgot Password
                 </CardTitle>
                 <CardDescription className="text-gray-300">
-                  Enter your email to receive a reset code.
+                  Enter your username to receive a reset code.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSendCode} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="email" className="text-white">
-                      Email
+                      Username
                     </Label>
                     <Input
-                      id="email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      id="username"
+                      type="username"
+                      value={username}
+                      onChange={(e) => setUsername(e.target.value)}
                       required
                       disabled={isSubmitting}
                       className="bg-white/10 text-white border-white/20 placeholder:text-gray-400"
-                      placeholder="you@example.com"
+                      placeholder="johndoe"
                     />
                   </div>
                   <Button
@@ -143,7 +143,7 @@ export default function ForgotPasswordPage() {
                     className="w-full bg-white/20 hover:bg-white/30 text-white border-white/20"
                     disabled={isSubmitting}
                   >
-                    {isSubmitting ? "Sending..." : "Send Reset Email"}
+                    Send Reset Email
                   </Button>
                 </form>
                 <div className="mt-6 text-center">
@@ -163,7 +163,7 @@ export default function ForgotPasswordPage() {
         </div>
       );
 
-    case "code":
+    case "confirm":
       return (
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-black to-slate-900 flex items-center justify-center p-4">
           <motion.div
@@ -242,13 +242,13 @@ export default function ForgotPasswordPage() {
                     className="w-full bg-white/20 hover:bg-white/30 text-white border-white/20"
                     disabled={isSubmitting}
                   >
-                    {isSubmitting ? "Resetting..." : "Reset Password"}
+                    Reset Password
                   </Button>
                   <div className="mt-2 text-center">
                     <Button
                       type="button"
                       variant="link"
-                      onClick={() => setStep("email")}
+                      onClick={() => setStep("request")}
                       className="text-white underline hover:text-gray-200"
                     >
                       Back

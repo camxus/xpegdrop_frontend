@@ -19,11 +19,14 @@ import { useAuth } from "@/hooks/api/useAuth";
 import { useToast } from "@/hooks/use-toast";
 
 export default function LoginPage() {
-  const { toast } = useToast();
-  const [formData, setFormData] = useState({ username: "", password: "" });
-  const [showPassword, setShowPassword] = useState(false);
-  const { login, isLoggingIn, user } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
+  const { login, user } = useAuth()
+  
+  const [formData, setFormData] = useState({ username: "", password: "" });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -32,15 +35,22 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true); // <-- start submitting
     try {
       await login({ username: formData.username, password: formData.password });
-      router.push("/upload"); // or wherever after login
+      toast({
+        title: "Login successful",
+        description: "Redirecting...",
+      });
+      router.push("/upload");
     } catch {
       toast({
         title: "Login failed",
         description: "Please check your credentials and try again.",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false); // <-- reset submitting
     }
   };
 
@@ -67,12 +77,13 @@ export default function LoginPage() {
                 <Input
                   id="username"
                   name="username"
-                  type="username"
+                  type="text"
                   value={formData.username}
                   onChange={handleChange}
                   required
                   className="bg-white/10 text-white border-white/20 placeholder:text-gray-400"
                   placeholder="johndoe"
+                  disabled={isSubmitting} // <-- disable input while submitting
                 />
               </div>
 
@@ -90,6 +101,7 @@ export default function LoginPage() {
                     required
                     className="bg-white/10 text-white border-white/20 placeholder:text-gray-400 pr-10"
                     placeholder="Password"
+                    disabled={isSubmitting} // <-- disable input while submitting
                   />
                   <Button
                     type="button"
@@ -97,6 +109,7 @@ export default function LoginPage() {
                     size="sm"
                     className="absolute right-0 top-0 h-full px-3 text-white/70 hover:text-white"
                     onClick={() => setShowPassword(!showPassword)}
+                    disabled={isSubmitting} // <-- disable toggle while submitting
                   >
                     {showPassword ? (
                       <EyeOff className="h-4 w-4" />
@@ -118,9 +131,9 @@ export default function LoginPage() {
               <Button
                 type="submit"
                 className="w-full bg-white/20 hover:bg-white/30 text-white border-white/20"
-                disabled={isLoggingIn}
+                disabled={isSubmitting} // <-- disable submit while submitting
               >
-                {isLoggingIn ? "Signing in..." : "Sign In"}
+                Sign In
               </Button>
             </form>
 
