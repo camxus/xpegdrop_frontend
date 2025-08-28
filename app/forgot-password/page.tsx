@@ -19,7 +19,7 @@ import * as yup from "yup";
 import { useRouter } from "next/navigation";
 
 export const confirmPasswordSchema = yup.object().shape({
-  username: yup.string().required("Username is required"),
+  email: yup.string().email().required("Email is required"),
   code: yup.string().required("Confirmation code is required"),
   newPassword: yup
     .string()
@@ -40,7 +40,7 @@ export default function ForgotPasswordPage() {
   const { forgotPassword, confirmPassword } = useAuth();
 
   const [step, setStep] = useState<"request" | "confirm">("request");
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [confirmationCode, setConfirmationCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [verifyPassword, setVerifyPassword] = useState("");
@@ -51,7 +51,7 @@ export default function ForgotPasswordPage() {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      await forgotPassword(username);
+      await forgotPassword(email);
       toast({
         title: "Reset email sent",
         description: "Check your inbox for the confirmation code.",
@@ -73,11 +73,11 @@ export default function ForgotPasswordPage() {
     setIsSubmitting(true);
     try {
       await confirmPasswordSchema.validate(
-        { username, code: confirmationCode, newPassword, verifyPassword },
+        { email, code: confirmationCode, newPassword, verifyPassword },
         { abortEarly: false }
       );
 
-      await confirmPassword(username, confirmationCode, newPassword);
+      await confirmPassword(email, confirmationCode, newPassword);
 
       toast({
         title: "Password reset successful",
@@ -118,20 +118,19 @@ export default function ForgotPasswordPage() {
                   Forgot Password
                 </CardTitle>
                 <CardDescription className="text-gray-300">
-                  Enter your username to receive a reset code.
+                  Enter your email to receive a reset code.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSendCode} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="email" className="text-white">
-                      Username
+                      email
                     </Label>
                     <Input
-                      id="username"
-                      type="username"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
+                      id="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                       required
                       disabled={isSubmitting}
                       className="bg-white/10 text-white border-white/20 placeholder:text-gray-400"
