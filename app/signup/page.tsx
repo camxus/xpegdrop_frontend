@@ -23,6 +23,7 @@ import ConnectDropboxPage from "../page";
 import { useUser } from "@/hooks/api/useUser";
 import imageCompression from "browser-image-compression";
 import * as yup from "yup";
+import Image from "next/image";
 
 export type FormData = {
   first_name: string;
@@ -71,7 +72,7 @@ const fullSchema = yup.object().shape({
     .oneOf([yup.ref("password")])
     .required(),
   bio: yup.string().optional(),
-  avatar_file: yup.mixed().required(),
+  // avatar_file: yup.mixed().optional(),
   dropbox: yup.object({
     access_token: yup.string().required(),
     refresh_token: yup.string().required(),
@@ -201,6 +202,7 @@ export function SignUpPageContent() {
       err.inner?.forEach((e: any) => {
         if (e.path) errors[e.path] = e.message;
       });
+      console.log(errors);
       setFormErrors(errors);
     }
   };
@@ -411,6 +413,7 @@ export function SignUpPageContent() {
 
                     <Button
                       type="button"
+                      disabled={usernameAvailable === false}
                       className="w-full bg-white/20 hover:bg-white/30 text-white border-white/20"
                       onClick={goNext}
                     >
@@ -447,7 +450,7 @@ export function SignUpPageContent() {
                           </FileUploader>
                         ) : (
                           <div className="relative">
-                            <img
+                            <Image
                               className="w-40 h-40 rounded-lg object-cover"
                               src={
                                 URL.createObjectURL(avatarFile) ||
