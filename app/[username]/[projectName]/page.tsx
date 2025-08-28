@@ -51,6 +51,9 @@ export default function PublicProjectPage() {
   const [images, setImages] = useState<
     (ImageFile & { preview_url?: string })[]
   >([]);
+  const [filteredImages, setFilteredImages] = useState<
+    (ImageFile & { preview_url?: string })[]
+  >([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
   const [isCarouselOpen, setIsCarouselOpen] = useState(false);
@@ -203,14 +206,20 @@ export default function PublicProjectPage() {
     userIds: string[];
     ratingValues: number[];
   }) => {
-    setFilteredRatings(
-      Object.entries(foreignRatings)
-        .filter(([uid, r]) => {
-          const userMatch = !userIds.length || userIds.includes(uid);
-          const ratingMatch = !ratingValues.length || ratingValues.includes(r.value);
-          return userMatch && ratingMatch;
-        })
-        .map(([_, r]) => r) // convert back to array
+    const filteredRatings = Object.values(ratings).filter((r) => {
+      const userMatch = userIds.length === 0 || userIds.includes(r.user_id);
+      const ratingMatch =
+        ratingValues.length === 0 || ratingValues.includes(r.value);
+      return userMatch && ratingMatch;
+    });
+
+    setFilteredRatings(filteredRatings);
+
+    // Step 2: Filter images based on the filtered ratings
+    setFilteredImages(
+      images.filter((image) =>
+        filteredRatings.some((rating) => rating.image_name === image.name)
+      )
     );
   };
 
@@ -273,13 +282,13 @@ export default function PublicProjectPage() {
             </div>
 
             <ImagesFilter
-              foreignRatings={foreignRatings}
+              ratings={ratings}
               onFilterChange={hanldeFilterChange}
             />
 
             <PinterestGrid
               ratingDisabled={!project}
-              images={images}
+              images={filteredImages}
               ratings={ratings}
               onImageClick={(i) => {
                 setCarouselStartIndex(i);

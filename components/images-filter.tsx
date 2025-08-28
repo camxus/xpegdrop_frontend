@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { useAuth } from "@/hooks/api/useAuth";
 
 interface ImagesFilterProps {
-  foreignRatings: Rating[];
+  ratings: Rating[];
   onFilterChange: (filters: {
     userIds: string[];
     ratingValues: number[];
@@ -18,11 +18,11 @@ interface ImagesFilterProps {
 }
 
 export function ImagesFilter({
-  foreignRatings,
+  ratings,
   onFilterChange,
 }: ImagesFilterProps) {
   const { user } = useAuth();
-  const usersQueries = useUsers(foreignRatings.map((rating) => rating.user_id));
+  const usersQueries = useUsers(ratings.map((rating) => rating.user_id));
 
   const foreignUsers = usersQueries.map((user) => user.data);
 
@@ -39,28 +39,29 @@ export function ImagesFilter({
   }, [selectedUserIds, selectedRatingValues]);
 
   return (
-    <div className="flex flex-wrap gap-4 mb-4 items-center">
+    <div className="flex flex-wrap gap-4 mb-4">
       {/* Rated by */}
-      <div className="flex-1 min-w-[200px]">
+      <div className="flex-1 min-w-[100px]">
         <MultiSelect
           className="opacity-[0.5]"
           disabled={!foreignUsers.length}
           options={foreignUsers.map((user) => ({
             label: (
               <div className="flex items-center gap-2">
-                <Avatar className="h-10 w-10">
+                <Avatar className="h-6 w-6">
                   <AvatarImage src={user?.avatar as string} />
                   <AvatarFallback className="text-lg">
-                    {getInitials(user?.first_name || "", user?.last_name || "")}
+                    {getInitials(user?.first_name || "", "")}
                   </AvatarFallback>
                 </Avatar>
+                {user?.username}
               </div>
             ),
             value: user?.user_id || "",
           }))}
           value={selectedUserIds}
           onChange={setSelectedUserIds}
-          placeholder="Rated by"
+          placeholder="Rated by All"
         />
       </div>
 
@@ -86,7 +87,7 @@ export function ImagesFilter({
           }))}
           value={selectedRatingValues.map(String)}
           onChange={(vals) => setSelectedRatingValues(vals.map(Number))}
-          placeholder="Ratings"
+          placeholder="All Ratings"
         />
       </div>
     </div>

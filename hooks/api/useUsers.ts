@@ -19,7 +19,10 @@ export function useUser() {
   const getUserById = (userId?: string) =>
     useQuery<User, Error>({
       queryKey: ["user", userId],
-      queryFn: () => userApi.getUserById(userId),
+      queryFn: () =>
+        userId && userId.includes("anonymous")
+          ? Promise.resolve(new AnonymousUser(userId))
+          : userApi.getUserById(userId!),
       enabled: !!userId,
     });
 
@@ -95,15 +98,39 @@ export function useUser() {
   };
 }
 
+export class AnonymousUser implements User {
+  user_id: string;
+  username: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  bio?: string | undefined;
+  avatar?: string | undefined;
+  dropbox?: { access_token?: string; refresh_token?: string } | undefined;
+  created_at: string;
+  updated_at?: string | undefined;
 
-export function useUsers(
-  userIds: string[]
-) {
+  constructor(userId: string) {
+    this.user_id = userId;
+    this.username = "Anonymous";
+    this.email = "";
+    this.first_name = "Anonymous";
+    this.last_name = "User";
+    this.bio = "";
+    this.avatar = "";
+    this.created_at = new Date().toISOString();
+  }
+}
+
+export function useUsers(userIds: string[]) {
   const queries = useQueries({
     queries: userIds.map((userId) => ({
       queryKey: ["profile", userId],
-      queryFn: () => userApi.getUserById(userId),
-      enabled: !!userId
+      queryFn: () =>
+        userId.includes("anonymous")
+          ? Promise.resolve(new AnonymousUser(userId))
+          : userApi.getUserById(userId),
+      enabled: !!userId,
     })),
   });
 
