@@ -6,6 +6,7 @@ import { jwtDecode } from "jwt-decode";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { dropboxApi } from "@/lib/api/dropboxApi";
+import { useAuth } from "./useAuth";
 
 interface DropboxTokenPayload {
   access_token: string;
@@ -14,15 +15,25 @@ interface DropboxTokenPayload {
   exp?: number;
 }
 
+export interface DropboxStorageStats {
+  storage: {
+    used: number;
+    allocated: number;
+    used_percent: number;
+  };
+}
+
 export function useDropbox() {
   const searchParams = useSearchParams();
   const { toast } = useToast();
+  const { user } = useAuth()
 
   const [token, setToken] = useState<{
     access_token: string;
     refresh_token: string;
   }>();
 
+  // Extract token from URL if available
   useEffect(() => {
     const tokenFromUrl = searchParams.get("dropbox_token");
 
@@ -60,14 +71,22 @@ export function useDropbox() {
     }
   }, [searchParams, toast]);
 
-  const getDropboxAuthUrl = () =>
-    useQuery({
-      queryKey: ["dropbox", "auth-url"],
-      queryFn: () => dropboxApi.getAuthUrl(),
-    });
+  // Query for Dropbox auth URL
+  const authUrl = useQuery({
+    queryKey: ["dropbox", "auth-url"],
+    queryFn: () => dropboxApi.getAuthUrl(),
+  });
+
+  // Query for Dropbox storage stats
+  const stats = useQuery<DropboxStorageStats>({
+    queryKey: ["dropbox", "stats"],
+    queryFn: () => dropboxApi.getStats(),
+    enabled: !!user?.user_id,
+  });
 
   return {
     dropboxToken: token,
-    getDropboxAuthUrl,
+    stats,
+    authUrl,
   };
 }

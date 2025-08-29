@@ -6,7 +6,6 @@ import { DropletIcon as Dropbox } from "lucide-react";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { useDropbox } from "@/hooks/api/useDropbox";
 import Link from "next/link";
-import { PinterestGridBackground } from "@/components/pinterest-grid-background";
 
 export default function HomePageWrapper() {
   return (
@@ -17,11 +16,10 @@ export default function HomePageWrapper() {
 }
 
 export function ConnectDropboxPage() {
-  const { getDropboxAuthUrl } = useDropbox();
+  const {
+    authUrl: { data: authUrl },
+  } = useDropbox();
 
-  const { data: authUrl } = getDropboxAuthUrl();
-
-  // Motion values for mouse position, default center 50%
   const x = useMotionValue(50);
   const y = useMotionValue(50);
 
@@ -31,24 +29,20 @@ export function ConnectDropboxPage() {
   const springBgX = useSpring(bgX, { damping: 40, stiffness: 100 });
   const springBgY = useSpring(bgY, { damping: 40, stiffness: 100 });
 
-  // Smooth animated spring following the mouse
   const springX = useSpring(x, { damping: 40, stiffness: 100 });
   const springY = useSpring(y, { damping: 40, stiffness: 100 });
 
-  // Animate gradient size and opacity (handle hover effect)
-  const [isAnyImageHovered, setIsAnyImageHovered] = useState(false);
   const [buttonIsHovered, setButtonIsHovered] = useState(false);
   const buttonRef = useRef(null);
 
-  const gradientSize = useMotionValue(250); // Base size in px
-  const gradientOpacity = useMotionValue(0.05); // Base opacity
+  const gradientSize = useMotionValue(250);
+  const gradientOpacity = useMotionValue(0.05);
   const springSize = useSpring(gradientSize, { stiffness: 150, damping: 30 });
   const springOpacity = useSpring(gradientOpacity, {
     stiffness: 150,
     damping: 30,
   });
 
-  // Compose the gradient string from animated values
   const gradient = useTransform(
     [springX, springY, springSize, springOpacity],
     ([latestX, latestY, latestSize, latestOpacity]) =>
@@ -57,7 +51,6 @@ export function ConnectDropboxPage() {
       }) 50%, transparent 100%)`
   );
 
-  // Global mousemove updates motion values directly
   const handleGlobalMouseMove = useCallback(
     (e: React.MouseEvent<any>) => {
       const rect = e.currentTarget.getBoundingClientRect();
@@ -82,7 +75,7 @@ export function ConnectDropboxPage() {
 
   return (
     <motion.div
-      className="min-h-screen bg-background relative overflow-hidden flex items-center justify-center"
+      className="min-h-screen bg-background relative overflow-hidden flex flex-col items-center justify-center"
       onMouseMove={handleGlobalMouseMove}
       style={{
         backgroundColor: "var(--background)",
@@ -103,9 +96,7 @@ export function ConnectDropboxPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
         >
-          {/* <PinterestGridBackground /> */}
-
-          {/* Your existing Link + Button */}
+          {/* Sign Up button */}
           <Link href={authUrl?.url ?? ""} passHref legacyBehavior>
             <a>
               <button
@@ -150,14 +141,14 @@ export function ConnectDropboxPage() {
                 />
                 <div className="relative z-20 flex items-center gap-3">
                   <span className="bg-gradient-to-br from-white via-[#d3e4f1] to-[#a9cce3] bg-clip-text text-transparent drop-shadow-[0_1px_1px_rgba(255,255,255,0.3)]">
-                    Connect Dropbox
+                    Sign Up
                   </span>
                 </div>
               </button>
             </a>
           </Link>
 
-          {/* New login prompt below the button */}
+          {/* Login prompt */}
           <p className="text-sm text-muted-foreground">
             Already have an account?{" "}
             <Link href="/login" legacyBehavior>
@@ -176,6 +167,11 @@ export function ConnectDropboxPage() {
             <p>Secure connection • Your data stays private</p>
           </motion.div>
         </motion.div>
+      </div>
+
+      {/* Footer */}
+      <div className="absolute bottom-4 text-xs text-muted-foreground">
+        Powered by Dropbox
       </div>
     </motion.div>
   );

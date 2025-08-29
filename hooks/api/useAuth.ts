@@ -14,6 +14,7 @@ import { getCookieClient, removeCookieClient, setCookieClient } from "@/lib/cook
 import { getLocalStorage, setLocalStorage } from "@/lib/localStorage";
 import { User } from "@/types/user";
 import { isTokenExpired } from "@/middleware";
+import { jwtDecode } from "jwt-decode";
 
 const AUTH_USER_KEY = "user";
 
@@ -26,9 +27,13 @@ export function useAuth() {
   const { data: user } = useQuery<User | null>({
     queryKey: ["auth", "profile"],
     queryFn: async () => {
-      if (isTokenExpired(JSON.parse(await getCookieClient(TOKEN_KEY) || "{}").accessToken))
-        // Intentionally empty — won't run unless refetched
-        return getLocalStorage(AUTH_USER_KEY);
+      const tokens = JSON.parse(await getCookieClient(TOKEN_KEY) || "{}")
+      if (isTokenExpired(jwtDecode(tokens.accessToken))) {
+        authApi.refreshToken(tokens.refreshToken)
+        return null
+      }
+      // Intentionally empty — won't run unless refetched
+      return getLocalStorage(AUTH_USER_KEY);
     },
     // enabled: false, // prevents auto-fetch
   });

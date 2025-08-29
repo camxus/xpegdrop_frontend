@@ -18,6 +18,7 @@ import {
   Search,
   Folder,
   X,
+  PlusSquare,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -27,16 +28,18 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/api/useAuth";
 import { useRouter } from "next/navigation";
-import { getInitials } from "@/lib/utils";
+import { cn, getInitials } from "@/lib/utils";
 import { Button } from "../ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { useProjects } from "@/hooks/api/useProjects";
 import DeleteProjectDialogView from "./delete-project-dialog";
 import { useDialog } from "@/hooks/use-dialog";
+import { useDropbox } from "@/hooks/api/useDropbox";
+import { Progress } from "../ui/progress";
 
 interface SiteHeaderProps {
   children: ReactNode;
@@ -44,7 +47,6 @@ interface SiteHeaderProps {
 
 export function SiteHeader({ children }: SiteHeaderProps) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
-  const router = useRouter();
 
   const pathname = usePathname();
   const { user, logout } = useAuth();
@@ -53,16 +55,25 @@ export function SiteHeader({ children }: SiteHeaderProps) {
     projects: { data: projects = [] },
     deleteProject: { mutateAsync: deleteProject },
   } = useProjects();
+  const {
+    stats: { data: stats },
+  } = useDropbox();
 
   const isActive = (path: string) => pathname === path;
 
   const sidebarItems =
-    projects?.map((project) => ({
-      id: project.project_id,
-      icon: Folder,
-      href: project.share_url,
-      label: project.name,
-    })) || [];
+    projects
+      ?.sort((a, b) => {
+        return (
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+      })
+      .map((project) => ({
+        id: project.project_id,
+        icon: Folder,
+        href: project.share_url,
+        label: project.name,
+      })) || [];
 
   const handleDeleteProject = (projectId: string) => {
     const project = projects.find(
@@ -104,7 +115,10 @@ export function SiteHeader({ children }: SiteHeaderProps) {
       {/* Sidebar */}
       <motion.div
         initial={{ width: 0, opacity: 0 }}
-        animate={{ opacity: 1, width: isSidebarCollapsed ? 64 : 256 }}
+        animate={{
+          opacity: 1,
+          width: isSidebarCollapsed ? 64 : 256,
+        }}
         className="bg-transparent border-r border-gray-800 flex flex-col overflow-hidden w-[256px]"
       >
         <div className="p-4">
@@ -152,9 +166,10 @@ export function SiteHeader({ children }: SiteHeaderProps) {
           {/* Scrollable sidebar items */}
           <div className="flex-1 overflow-y-auto">
             {sidebarItems.map((item, index) => (
-              <div
+              <Link
                 key={item.href}
-                className={`group relative flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all cursor-pointer ${
+                href={item.href}
+                className={`group relative flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all ${
                   isActive(item.href)
                     ? "bg-white/5 text-white"
                     : "text-white/80 hover:bg-white/10"
@@ -174,7 +189,6 @@ export function SiteHeader({ children }: SiteHeaderProps) {
                       display: "block",
                       transition: {
                         opacity: { duration: 0.1, delay: i * 0.15 },
-                        display: { delay: 0 },
                       },
                     }),
                     hidden: {
@@ -182,7 +196,6 @@ export function SiteHeader({ children }: SiteHeaderProps) {
                       display: "none",
                       transition: {
                         opacity: { duration: 0.1 },
-                        display: { delay: 0 },
                       },
                     },
                   }}
@@ -193,19 +206,53 @@ export function SiteHeader({ children }: SiteHeaderProps) {
                   {item.label}
                 </motion.span>
 
-                {/* X Button on Hover */}
+                {/* X Button (prevents Link navigation) */}
                 <motion.button
-                  onClick={() => handleDeleteProject(item.id)}
-                  className="cursor-pointer opacity-0 group-hover:opacity-100 ml-auto text-white/60 hover:text-red-500 transition-[opacity, colors] duration-200"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleDeleteProject(item.id);
+                  }}
+                  className={cn(
+                    "cursor-pointer absolute right-3 opacity-0 group-hover:opacity-100 text-white/60 hover:text-red-500 transition-[opacity,colors] duration-200",
+                    isSidebarCollapsed ? "hidden" : "block"
+                  )}
                 >
                   <X className="w-4 h-4" />
                 </motion.button>
-              </div>
+              </Link>
             ))}
           </div>
-
           {/* Avatar at the bottom */}
           <div className="mt-4 pt-4 border-t border-white/10 place-items-start">
+            <Link href={"/upload"}>
+              <Button className="mb-4 ml-1">
+                <PlusSquare />
+                <motion.span
+                  variants={{
+                    visible: (i: number) => ({
+                      opacity: 1,
+                      display: "block",
+                      transition: {
+                        opacity: { duration: 0.1, delay: i * 0.15 },
+                      },
+                    }),
+                    hidden: {
+                      opacity: 0,
+                      display: "none",
+                      transition: {
+                        opacity: { duration: 0.1 },
+                      },
+                    },
+                  }}
+                  initial="visible"
+                  animate={isSidebarCollapsed ? "hidden" : "visible"}
+                  className="whitespace-nowrap overflow-hidden flex-1"
+                >
+                  New Project
+                </motion.span>
+              </Button>
+            </Link>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -214,7 +261,7 @@ export function SiteHeader({ children }: SiteHeaderProps) {
                 >
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={user?.avatar as string} />
-                    <AvatarFallback className="text-lg">
+                    <AvatarFallback className="text-sm">
                       {getInitials(
                         user?.first_name || "",
                         user?.last_name || ""
@@ -256,7 +303,50 @@ export function SiteHeader({ children }: SiteHeaderProps) {
       </motion.div>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="relative flex-1 flex flex-col overflow-hidden">
+        <AnimatePresence>
+          {!isSidebarCollapsed && stats?.storage && (
+            <motion.div
+              className="absolute inset-0 bg-black/50 z-40 flex items-end justify-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5 }}
+              onClick={() => setIsSidebarCollapsed(true)}
+            >
+              <motion.div
+                className="flex flex-col space-y-2 items-center w-[80%] mb-8 pointer-events-auto"
+                initial={{ filter: "blur(20px)", opacity: 0, y: 30 }}
+                animate={{ filter: "blur(0px)", opacity: 1, y: 0 }}
+                exit={{ filter: "blur(20px)", opacity: 0, y: 30 }}
+                transition={{ delay: 0.5, duration: 0.5 }}
+                onClick={(e) => e.stopPropagation()} // Prevent closing when clicking storage
+              >
+                <span className="text-xs text-muted-foreground">
+                  Storage{" "}
+                  {stats.storage.used_percent >= 90
+                    ? "Full"
+                    : stats.storage.used_percent >= 70
+                    ? "Almost Full"
+                    : `${stats.storage.used_percent.toFixed(0)}%`}
+                </span>
+
+                <Progress
+                  value={stats.storage.used_percent}
+                  color={
+                    stats.storage.used_percent >= 90
+                      ? "red"
+                      : stats.storage.used_percent >= 70
+                      ? "amber"
+                      : "white"
+                  }
+                  className={cn("w-full h-1 rounded-full")}
+                />
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <main className="flex-1 overflow-y-auto">{children}</main>
       </div>
     </div>
