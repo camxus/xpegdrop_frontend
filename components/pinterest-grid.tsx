@@ -10,6 +10,14 @@ import { useAuth } from "@/hooks/api/useAuth";
 import { getLocalStorage } from "@/lib/localStorage";
 import { LOCAL_RATINGS_STORAGE_KEY } from "@/hooks/api/useRatings";
 import { motion } from "framer-motion";
+import {
+  ContextMenu,
+  ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuTrigger,
+  ContextMenuContent,
+} from "./ui/context-menu";
+import { EditImageView } from "./edit-image";
 
 interface PinterestGridProps {
   ratingDisabled?: boolean;
@@ -114,7 +122,6 @@ export function PinterestGrid({
   );
 }
 
-// ✅ Memoized PinterestImage sub-component
 const PinterestImage = memo(function PinterestImage({
   disabled,
   image,
@@ -140,52 +147,32 @@ const PinterestImage = memo(function PinterestImage({
   onLoad: () => void;
   onRatingChange: (value: number, ratingId?: string) => void;
 }) {
+  const [editOpen, setEditOpen] = useState(false);
+
   return (
-    <motion.div
-      className="mb-4 break-inside-avoid"
-      onMouseEnter={onHover}
-      onMouseLeave={onLeave}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: index * 0.05 }}
-    >
-      <div
-        className="group relative overflow-hidden rounded-lg bg-muted cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
-        onClick={onClick}
+    <>
+      <motion.div
+        className="mb-4 break-inside-avoid"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: index * 0.05 }}
       >
-        <div
-          className={cn(
-            "absolute inset-0 border-2 border-transparent transition-all duration-300 rounded-lg z-20 pointer-events-none",
-            isHovered && "border-white shadow-[0_0_20px_rgba(255,255,255,0.5)]"
-          )}
+        <p className="mt-2 truncate text-sm text-muted-foreground group-hover:text-foreground transition-colors">
+          {image.name}
+        </p>
+        <StarRatingSlider
+          disabled={disabled}
+          value={rating.value || 0}
+          onRatingChange={(value) => onRatingChange(value, rating.rating_id)}
+          className="w-full flex justify-center mt-1"
         />
-        <Image
-          src={image.url || "/placeholder.svg"}
-          alt={image.name}
-          width={300}
-          height={400}
-          loading="lazy"
-          onLoad={onLoad}
-          className={cn(
-            "h-auto w-full object-cover transition-all duration-300",
-            isLoaded ? "opacity-100" : "opacity-0",
-            isHovered && "brightness-105"
-          )}
-          sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
+
+        <EditImageView
+          image={image}
+          isOpen={editOpen}
+          onClose={() => setEditOpen(false)}
         />
-        {!isLoaded && (
-          <div className="absolute inset-0 animate-pulse bg-muted" />
-        )}
-      </div>
-      <p className="mt-2 truncate text-sm text-muted-foreground group-hover:text-foreground transition-colors">
-        {image.name}
-      </p>
-      <StarRatingSlider
-        disabled={disabled}
-        value={rating.value || 0}
-        onRatingChange={(value) => onRatingChange(value, rating.rating_id)}
-        className="w-full flex justify-center mt-1"
-      />
-    </motion.div>
+      </motion.div>
+    </>
   );
 });

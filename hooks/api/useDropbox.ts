@@ -13,6 +13,9 @@ interface DropboxTokenPayload {
   refresh_token: string;
   account_id: string;
   exp?: number;
+  email: string;
+  first_name: string;
+  last_name: string;
 }
 
 export interface DropboxStorageStats {
@@ -28,6 +31,7 @@ export function useDropbox() {
   const { toast } = useToast();
   const { user } = useAuth()
 
+  const [dropboxUserInfo, setDropboxUserInfo] = useState<Partial<DropboxTokenPayload>>()
   const [token, setToken] = useState<{
     access_token: string;
     refresh_token: string;
@@ -56,6 +60,8 @@ export function useDropbox() {
           return;
         }
 
+        setDropboxUserInfo({email: decoded.email, first_name: decoded.first_name, last_name: decoded.last_name})
+
         setToken({
           access_token: decoded.access_token,
           refresh_token: decoded.refresh_token,
@@ -75,6 +81,7 @@ export function useDropbox() {
   const authUrl = useQuery({
     queryKey: ["dropbox", "auth-url"],
     queryFn: () => dropboxApi.getAuthUrl(),
+    enabled: false,
   });
 
   // Query for Dropbox storage stats
@@ -85,6 +92,7 @@ export function useDropbox() {
   });
 
   return {
+    dropboxUserInfo,
     dropboxToken: token,
     stats,
     authUrl,

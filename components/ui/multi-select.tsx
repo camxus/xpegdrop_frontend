@@ -105,11 +105,12 @@ export function MultiSelect({
       </div>
 
       <SelectContent>
-        {options.map((option) => {
+        {options.map((option,index) => {
           const isSelected = value.includes(option.value);
 
           return (
             <div
+              key={index}
               className="flex w-full justify-between hover:bg-gray-200/10 transition-colors duration-150 cursor-pointer relative  select-none items-center rounded-sm p-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
               onClick={(e) => {
                 e.preventDefault();

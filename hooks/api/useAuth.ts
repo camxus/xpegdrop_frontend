@@ -32,6 +32,14 @@ export function useAuth() {
         authApi.refreshToken(tokens.refreshToken)
         return null
       }
+
+      const user = getLocalStorage(AUTH_USER_KEY)
+
+      if (!user) {
+        removeCookieClient(TOKEN_KEY)
+        router.push("/login")
+        return
+      }
       // Intentionally empty — won't run unless refetched
       return getLocalStorage(AUTH_USER_KEY);
     },

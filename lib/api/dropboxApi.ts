@@ -11,7 +11,7 @@ export interface DropboxStorageStats {
 
 export const dropboxApi = {
   getAuthUrl: async () => {
-    return await api.get<{ url: string }>("/dropbox/auth-url");
+    return await api.get<{ url: string }>("/dropbox/auth-url", { withCredentials: false });
   },
 
   getStats: async () => {

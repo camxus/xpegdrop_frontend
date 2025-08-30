@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import CurvesAdjustment from "./curves-adjustment";
 import { Button } from "./ui/button";
 import _ from "lodash";
+import RetouchingTools from "./retouching-tools";
 
 interface EditImageViewProps {
   image: ImageFile;
@@ -31,33 +32,46 @@ const fragmentShaderSrc = `
 precision mediump float;
 varying vec2 v_texCoord;
 uniform sampler2D u_image;
-
-// Texture size for effects
 uniform vec2 u_texSize;
 
-// Basic adjustments
-uniform float u_brightness; // -1.0 - 1.0
-uniform float u_contrast;   // 0.0 - 2.0
-uniform float u_saturation; // 0.0 - 2.0
-uniform float u_highlights; // -1.0 - 1.0
-uniform float u_shadows;    // -1.0 - 1.0
-uniform float u_whites;     // -1.0 - 1.0
-uniform float u_blacks;     // -1.0 - 1.0
-uniform float u_gamma;      // 0.1 - 5.0
-uniform float u_warmth;     // -1.0 - 1.0
-uniform float u_tint;       // -1.0 - 1.0
+// -------------------
+// Adjustments
+// -------------------
+uniform float u_brightness;
+uniform float u_contrast;
+uniform float u_saturation;
+uniform float u_highlights;
+uniform float u_shadows;
+uniform float u_whites;
+uniform float u_blacks;
+uniform float u_gamma;
+uniform float u_warmth;
+uniform float u_tint;
 
 // Effects
-uniform float u_sharpening;        // 0.0 - 2.0
-uniform float u_noiseReduction;    // 0.0 - 1.0
-uniform float u_colorNoiseReduction; // 0.0 - 1.0
-uniform float u_vignette;          // 0.0 - 1.0
-uniform float u_dehaze;            // 0.0 - 1.0
-uniform float u_grain;             // 0.0 - 1.0
+uniform float u_sharpening;
+uniform float u_noiseReduction;
+uniform float u_colorNoiseReduction;
+uniform float u_vignette;
+uniform float u_dehaze;
+uniform float u_grain;
 
 // Color adjustments
-uniform float u_hue;        // -180.0 - 180.0
-uniform float u_luminance;  // 0.0 - 2.0
+uniform float u_hue;
+uniform float u_luminance;
+
+// Curves
+uniform sampler2D u_curveRGB;
+uniform sampler2D u_curveR;
+uniform sampler2D u_curveG;
+uniform sampler2D u_curveB;
+
+// -------------------
+// Brush
+// -------------------
+uniform vec2 u_brushPos;   // fragCoord space
+uniform float u_brushRadius;
+uniform float u_brushOpacity;
 
 // -------------------
 // Helper functions
@@ -79,130 +93,97 @@ vec3 adjustHue(vec3 color, float hue) {
     return clamp(hueRotation * color, 0.0, 1.0);
 }
 
-vec3 adjustGamma(vec3 color, float gammaVal) {
-    return pow(color, vec3(1.0 / gammaVal));
-}
+vec3 adjustGamma(vec3 color, float gammaVal) { return pow(color, vec3(1.0 / gammaVal)); }
+vec3 adjustWarmth(vec3 color, float warmth) { color.r += warmth*0.1; color.b -= warmth*0.1; return clamp(color,0.0,1.0); }
+vec3 adjustTint(vec3 color, float tint) { color.g += tint*0.1; return clamp(color,0.0,1.0); }
+vec3 adjustShadowsHighlights(vec3 color, float shadows, float highlights) { color += shadows; color += highlights; return clamp(color,0.0,1.0); }
+vec3 adjustWhitesBlacks(vec3 color, float whites, float blacks) { color += whites; color += blacks; return clamp(color,0.0,1.0); }
 
-vec3 adjustWarmth(vec3 color, float warmth) {
-    color.r += warmth * 0.1;
-    color.b -= warmth * 0.1;
-    return clamp(color, 0.0, 1.0);
-}
-
-vec3 adjustTint(vec3 color, float tint) {
-    color.g += tint * 0.1;
-    return clamp(color, 0.0, 1.0);
-}
-
-vec3 adjustShadowsHighlights(vec3 color, float shadows, float highlights) {
-    color += shadows;
-    color += highlights;
-    return clamp(color, 0.0, 1.0);
-}
-
-vec3 adjustWhitesBlacks(vec3 color, float whites, float blacks) {
-    color += whites;
-    color += blacks;
-    return clamp(color, 0.0, 1.0);
-}
-
-vec3 applySharpening(sampler2D image, vec2 uv, vec2 texSize, float amount) {
+vec3 applySharpening(sampler2D image, vec2 uv, vec2 texSize, float amount){
     vec2 px = 1.0 / texSize;
-    vec3 c = texture2D(image, uv).rgb * (1.0 + 4.0 * amount);
-    c -= texture2D(image, uv + vec2(px.x, 0.0)).rgb * amount;
-    c -= texture2D(image, uv - vec2(px.x, 0.0)).rgb * amount;
-    c -= texture2D(image, uv + vec2(0.0, px.y)).rgb * amount;
-    c -= texture2D(image, uv - vec2(0.0, px.y)).rgb * amount;
-    return clamp(c, 0.0, 1.0);
+    vec3 c = texture2D(image, uv).rgb * (1.0 + 4.0*amount);
+    c -= texture2D(image, uv+vec2(px.x,0)).rgb*amount;
+    c -= texture2D(image, uv-vec2(px.x,0)).rgb*amount;
+    c -= texture2D(image, uv+vec2(0,px.y)).rgb*amount;
+    c -= texture2D(image, uv-vec2(0,px.y)).rgb*amount;
+    return clamp(c,0.0,1.0);
 }
 
-vec3 applyNoiseReduction(sampler2D image, vec2 uv, vec2 texSize, float amount) {
+vec3 applyNoiseReduction(sampler2D image, vec2 uv, vec2 texSize, float amount){
     vec2 px = 1.0 / texSize;
     vec3 sum = texture2D(image, uv).rgb;
-    sum += texture2D(image, uv + vec2(px.x, 0.0)).rgb;
-    sum += texture2D(image, uv - vec2(px.x, 0.0)).rgb;
-    sum += texture2D(image, uv + vec2(0.0, px.y)).rgb;
-    sum += texture2D(image, uv - vec2(0.0, px.y)).rgb;
+    sum += texture2D(image, uv+vec2(px.x,0)).rgb;
+    sum += texture2D(image, uv-vec2(px.x,0)).rgb;
+    sum += texture2D(image, uv+vec2(0,px.y)).rgb;
+    sum += texture2D(image, uv-vec2(0,px.y)).rgb;
     sum /= 5.0;
     return mix(texture2D(image, uv).rgb, sum, amount);
 }
 
-vec3 applyColorNoiseReduction(vec3 color, float amount) {
-    float gray = dot(color, vec3(0.299, 0.587, 0.114));
+vec3 applyColorNoiseReduction(vec3 color, float amount){
+    float gray = dot(color, vec3(0.299,0.587,0.114));
     return mix(color, vec3(gray), amount);
 }
 
-vec3 applyVignette(vec3 color, vec2 uv, float amount) {
+vec3 applyVignette(vec3 color, vec2 uv, float amount){
     vec2 center = vec2(0.5);
     float dist = distance(uv, center);
-    float vign = smoothstep(0.8, 0.5, dist) * amount;
-    return color * (1.0 - vign);
+    float vign = smoothstep(0.8,0.5,dist)*amount;
+    return color*(1.0 - vign);
 }
 
-vec3 applyDehaze(vec3 color, float amount) {
-    float darkChannel = min(min(color.r, color.g), color.b) * amount;
-    return clamp(color + vec3(darkChannel), 0.0, 1.0);
+vec3 applyDehaze(vec3 color, float amount){
+    float darkChannel = min(min(color.r,color.g),color.b)*amount;
+    return clamp(color+vec3(darkChannel),0.0,1.0);
 }
 
-float rand(vec2 co){
-    return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
-}
+float rand(vec2 co){ return fract(sin(dot(co.xy,vec2(12.9898,78.233)))*43758.5453); }
+vec3 applyGrain(vec3 color, vec2 uv, float amount){ float g=(rand(uv)-0.5)*amount; return clamp(color+vec3(g),0.0,1.0); }
 
-vec3 applyGrain(vec3 color, vec2 uv, float amount) {
-    float g = (rand(uv) - 0.5) * amount;
-    return clamp(color + vec3(g), 0.0, 1.0);
-}
-
-
-uniform sampler2D u_curveRGB;
-uniform sampler2D u_curveR;
-uniform sampler2D u_curveG;
-uniform sampler2D u_curveB;
-
-vec3 applyCurves(vec3 color) {
-    // per-channel curves
-    float r = texture2D(u_curveR, vec2(color.r, 0.0)).r;
-    float g = texture2D(u_curveG, vec2(color.g, 0.0)).g;
-    float b = texture2D(u_curveB, vec2(color.b, 0.0)).b;
-
-    vec3 perChannel = vec3(r, g, b);
-
-    // global curve: sampled per channel, not just averaged
-    float gr = texture2D(u_curveRGB, vec2(perChannel.r, 0.0)).r;
-    float gg = texture2D(u_curveRGB, vec2(perChannel.g, 0.0)).g;
-    float gb = texture2D(u_curveRGB, vec2(perChannel.b, 0.0)).b;
-
-    return vec3(gr, gg, gb);
+vec3 applyCurves(vec3 color){
+    float r = texture2D(u_curveR, vec2(color.r,0.0)).r;
+    float g = texture2D(u_curveG, vec2(color.g,0.0)).g;
+    float b = texture2D(u_curveB, vec2(color.b,0.0)).b;
+    vec3 perChannel = vec3(r,g,b);
+    float gr = texture2D(u_curveRGB, vec2(perChannel.r,0.0)).r;
+    float gg = texture2D(u_curveRGB, vec2(perChannel.g,0.0)).g;
+    float gb = texture2D(u_curveRGB, vec2(perChannel.b,0.0)).b;
+    return vec3(gr,gg,gb);
 }
 
 // -------------------
 // Main
 // -------------------
-void main() {
+void main(){
     vec4 color = texture2D(u_image, v_texCoord);
-    color.rgb += applySharpening(u_image, v_texCoord, u_texSize, u_sharpening);
-    color.rgb = applyNoiseReduction(u_image, v_texCoord, u_texSize, u_noiseReduction);
-
-    color.rgb = applyCurves(color.rgb);
-
-
-    // Basic adjustments
-    color.rgb = adjustSaturation(color.rgb, u_saturation);
-    color.rgb = (color.rgb - 0.5) * u_contrast + 0.5 + u_brightness;
-    color.rgb = adjustShadowsHighlights(color.rgb, u_shadows, u_highlights);
-    color.rgb = adjustWhitesBlacks(color.rgb, u_whites, u_blacks);
-    color.rgb = adjustGamma(color.rgb, u_gamma);
-    color.rgb = adjustWarmth(color.rgb, u_warmth);
-    color.rgb = adjustTint(color.rgb, u_tint);
-    color.rgb = adjustHue(color.rgb, u_hue);
-    color.rgb *= u_luminance;
 
     // Effects
-    color.rgb = applyColorNoiseReduction(color.rgb, u_colorNoiseReduction);
-    color.rgb = applyVignette(color.rgb, v_texCoord, u_vignette);
-    color.rgb = applyDehaze(color.rgb, u_dehaze);
-    color.rgb = applyGrain(color.rgb, v_texCoord, u_grain);
-    
+    color.rgb += applySharpening(u_image,v_texCoord,u_texSize,u_sharpening);
+    color.rgb = applyNoiseReduction(u_image,v_texCoord,u_texSize,u_noiseReduction);
+    color.rgb = applyCurves(color.rgb);
+    color.rgb = adjustSaturation(color.rgb,u_saturation);
+    color.rgb = (color.rgb-0.5)*u_contrast+0.5+u_brightness;
+    color.rgb = adjustShadowsHighlights(color.rgb,u_shadows,u_highlights);
+    color.rgb = adjustWhitesBlacks(color.rgb,u_whites,u_blacks);
+    color.rgb = adjustGamma(color.rgb,u_gamma);
+    color.rgb = adjustWarmth(color.rgb,u_warmth);
+    color.rgb = adjustTint(color.rgb,u_tint);
+    color.rgb = adjustHue(color.rgb,u_hue);
+    color.rgb *= u_luminance;
+    color.rgb = applyColorNoiseReduction(color.rgb,u_colorNoiseReduction);
+    color.rgb = applyVignette(color.rgb,v_texCoord,u_vignette);
+    color.rgb = applyDehaze(color.rgb,u_dehaze);
+    color.rgb = applyGrain(color.rgb,v_texCoord,u_grain);
+
+    // -------------------
+    // Brush overlay
+    // -------------------
+    vec2 fragPos = v_texCoord * u_texSize;
+    float dist = distance(fragPos, u_brushPos);
+    if(dist < u_brushRadius){
+        float alpha = u_brushOpacity * (1.0 - dist/u_brushRadius);
+        color.rgb = mix(color.rgb, vec3(1.0), alpha); // White brush
+    }
 
     gl_FragColor = color;
 }
@@ -922,6 +903,7 @@ export const EditImageView: React.FC<EditImageViewProps> = ({
             onChange={(points) => handleCurves(points, "b")}
           />
         </div>
+        <RetouchingTools glRef={glRef} canvasRef={canvasRef} />
       </div>
     </div>
   );

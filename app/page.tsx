@@ -1,6 +1,12 @@
 "use client";
 
-import React, { Suspense, useCallback, useRef, useState } from "react";
+import React, {
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { Button } from "@/components/ui/button";
 import { DropletIcon as Dropbox } from "lucide-react";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
@@ -17,7 +23,7 @@ export default function HomePageWrapper() {
 
 export function ConnectDropboxPage() {
   const {
-    authUrl: { data: authUrl },
+    authUrl: { data: authUrl, refetch: fetchAuthUrl },
   } = useDropbox();
 
   const x = useMotionValue(50);
@@ -72,6 +78,10 @@ export function ConnectDropboxPage() {
     },
     [bgX, bgY]
   );
+
+  useEffect(() => {
+    fetchAuthUrl();
+  }, []);
 
   return (
     <motion.div

@@ -115,10 +115,22 @@ export function SignUpPageContent() {
       data: foundUser,
     },
   } = useUser();
-  const { dropboxToken } = useDropbox();
+  const { dropboxToken, dropboxUserInfo } = useDropbox();
   const router = useRouter();
 
   // Sync Dropbox token
+  useEffect(() => {
+    if (!dropboxUserInfo) return;
+    setFormData((prev) => ({
+      ...prev,
+      ...{
+        email: dropboxUserInfo.email || "",
+        first_name: dropboxUserInfo.first_name || "",
+        last_name: dropboxUserInfo.last_name || "",
+      },
+    }));
+  }, [dropboxUserInfo]);
+
   useEffect(() => {
     if (!dropboxToken) return;
     setFormData((prev) => ({ ...prev, dropbox: dropboxToken }));
