@@ -26,8 +26,7 @@ export interface DropboxStorageStats {
   };
 }
 
-export function useDropbox() {
-  const searchParams = useSearchParams();
+export function useDropbox(tokenFromUrl?: string) {
   const { toast } = useToast();
   const { user } = useAuth()
 
@@ -39,8 +38,6 @@ export function useDropbox() {
 
   // Extract token from URL if available
   useEffect(() => {
-    const tokenFromUrl = searchParams.get("dropbox_token");
-
     if (tokenFromUrl) {
       try {
         const decoded = jwtDecode<DropboxTokenPayload>(tokenFromUrl);
@@ -60,7 +57,7 @@ export function useDropbox() {
           return;
         }
 
-        setDropboxUserInfo({email: decoded.email, first_name: decoded.first_name, last_name: decoded.last_name})
+        setDropboxUserInfo({ email: decoded.email, first_name: decoded.first_name, last_name: decoded.last_name })
 
         setToken({
           access_token: decoded.access_token,
@@ -75,7 +72,7 @@ export function useDropbox() {
         });
       }
     }
-  }, [searchParams, toast]);
+  }, [tokenFromUrl, toast]);
 
   // Query for Dropbox auth URL
   const authUrl = useQuery({

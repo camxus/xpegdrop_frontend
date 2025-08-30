@@ -1,7 +1,7 @@
 "use client";
 
 import React, { Suspense, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
 import { FolderOpen, Eye, EyeOff, Upload } from "lucide-react";
@@ -88,6 +88,9 @@ export default function SignUpPageWrapper() {
 }
 
 export function SignUpPageContent() {
+  const searchParams = useSearchParams();
+  const tokenFromUrl = searchParams.get("dropbox_token");
+
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<FormData>({
     first_name: "",
@@ -115,7 +118,7 @@ export function SignUpPageContent() {
       data: foundUser,
     },
   } = useUser();
-  const { dropboxToken, dropboxUserInfo } = useDropbox();
+  const { dropboxToken, dropboxUserInfo } = useDropbox(tokenFromUrl || "");
   const router = useRouter();
 
   // Sync Dropbox token
