@@ -50,7 +50,7 @@ const step1Schema = yup.object().shape({
     .min(6, "Password must be at least 6 characters")
     .matches(/[A-Z]/, "Password must contain at least one uppercase letter")
     .matches(
-      /[!@#$%^&*(),.?":{}|<>]/,
+      /[!@#$%^&*(),.?":{}|<>\-]/,
       "Password must contain at least one special character"
     )
     .required("Password is required"),
@@ -325,7 +325,15 @@ export function SignUpPageContent() {
                         id="username"
                         name="username"
                         value={formData.username}
-                        onChange={handleChange}
+                        onChange={(e) =>
+                          handleChange({
+                            ...e,
+                            target: {
+                              ...e.target,
+                              value: e.target.value.toLowerCase(),
+                            },
+                          })
+                        }
                         className="bg-white/10 text-white border-white/20 placeholder:text-gray-400"
                         placeholder="johndoe"
                       />
