@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FileUploader } from "@/components/ui/file-uploader";
@@ -26,8 +26,27 @@ import {
   FolderPreviewContent,
 } from "@/components/folder-preview-dialog";
 import { GlobalFileUploader } from "@/components/global-file-uploader";
+import { useDropbox } from "@/hooks/api/useDropbox";
+import { useAuth } from "@/hooks/api/useAuth";
+import GlowingButton from "@/components/glowing-button";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
-export default function FolderImageGallery() {
+export default function UploadViewWrapper() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <UploadView />
+    </Suspense>
+  );
+}
+
+export function UploadView() {
+  const searchParams = useSearchParams();
+  const tokenFromUrl = searchParams.get("dropbox_token");
+
+  const { user } = useAuth();
+
+  const { authUrl } = useDropbox(tokenFromUrl || "");
   const { uploadFiles, isUploading: isUploadingToS3 } = useS3();
   const { toast } = useToast();
   const { show, hide } = useDialog();
@@ -248,6 +267,32 @@ export default function FolderImageGallery() {
   useEffect(() => {
     if (currentProject?.project_id) getRatings(currentProject.project_id);
   }, [currentProject]);
+
+  if (
+    !user?.dropbox?.access_token ||
+    (authUrl.data && !user?.dropbox?.access_token)
+  ) {
+    return (
+      <motion.div
+        className={cn("min-h-screen bg-background relative overflow-hidden")}
+        onMouseMove={handleGlobalMouseMove}
+        style={{
+          backgroundColor: "var(--background)",
+          backgroundImage: gradient,
+          backgroundAttachment: "fixed",
+          backgroundPosition: `${springX.get()}% ${springY.get()}%`,
+          backgroundSize: "cover",
+          backgroundRepeat: "no-repeat",
+        }}
+      >
+        <div className="w-full min-h-screen flex items-center justify-center">
+          <Link href={authUrl.data?.url || ""}>
+            <GlowingButton>Connect Dropbox</GlowingButton>
+          </Link>
+        </div>
+      </motion.div>
+    );
+  }
 
   return (
     <>

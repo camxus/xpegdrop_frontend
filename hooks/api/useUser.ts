@@ -4,6 +4,8 @@ import { useQuery, useMutation, useQueryClient, useQueries } from "@tanstack/rea
 import { userApi } from "@/lib/api/usersApi";
 import type { User } from "@/types/user";
 import { useToast } from "@/hooks/use-toast";
+import { setLocalStorage } from "@/lib/localStorage";
+import { AUTH_USER_KEY } from "./useAuth";
 
 export function useUser() {
   const queryClient = useQueryClient();
@@ -34,7 +36,8 @@ export function useUser() {
   // ✅ Update user info + avatar with toast
   const updateUser = useMutation({
     mutationFn: userApi.updateUser,
-    onSuccess: () => {
+    onSuccess: (data) => {
+      setLocalStorage(AUTH_USER_KEY, data.user);
       toast({
         title: "Profile updated",
         description: "Your profile was successfully updated.",

@@ -12,7 +12,7 @@ function isPublicPath(pathname: string): boolean {
     pathname
   );
 
-  return isUsernameRoute && !authorizedRoutes.includes(pathname)|| publicRoutes.includes(pathname);
+  return isUsernameRoute && !authorizedRoutes.includes(pathname) || publicRoutes.includes(pathname);
 }
 
 // Helper function to decode JWT token
@@ -71,7 +71,9 @@ export function middleware(request: NextRequest) {
   const isAuthenticated = token && payload && !isTokenExpired(payload);
 
   if (isAuthRoute && isAuthenticated) {
-    return NextResponse.redirect(new URL("/upload", request.url));
+    const url = request.nextUrl.clone();
+    url.pathname = "/upload"; // keep qs intact
+    return NextResponse.redirect(url);
   }
 
   return NextResponse.next({

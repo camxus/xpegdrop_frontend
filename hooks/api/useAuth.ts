@@ -15,8 +15,9 @@ import { getLocalStorage, setLocalStorage } from "@/lib/localStorage";
 import { User } from "@/types/user";
 import { isTokenExpired } from "@/middleware";
 import { jwtDecode } from "jwt-decode";
+import { userApi } from "@/lib/api/usersApi";
 
-const AUTH_USER_KEY = "user";
+export const AUTH_USER_KEY = "user";
 
 export function useAuth() {
   const queryClient = useQueryClient();
@@ -44,6 +45,16 @@ export function useAuth() {
       return getLocalStorage(AUTH_USER_KEY);
     },
     // enabled: false, // prevents auto-fetch
+  });
+
+  const refetchUser = useMutation({
+    mutationFn: () => userApi.getUserById(user?.user_id),
+    onSuccess: (user) => {
+      setLocalStorage(AUTH_USER_KEY, user);
+    },
+    onError: (error: any) => {
+      setError(error.message || "Failed to create account");
+    },
   });
 
   // Signup mutation
@@ -205,6 +216,7 @@ export function useAuth() {
 
   return {
     user,
+    refetchUser,
     error,
 
     signup,

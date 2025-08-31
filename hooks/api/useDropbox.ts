@@ -7,6 +7,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { dropboxApi } from "@/lib/api/dropboxApi";
 import { useAuth } from "./useAuth";
+import { useUser } from "./useUser";
+import { User } from "@/types/user";
 
 interface DropboxTokenPayload {
   access_token: string;
@@ -29,6 +31,7 @@ export interface DropboxStorageStats {
 export function useDropbox(tokenFromUrl?: string) {
   const { toast } = useToast();
   const { user } = useAuth()
+  const { updateUser: { mutateAsync: updateUser } } = useUser()
 
   const [dropboxUserInfo, setDropboxUserInfo] = useState<Partial<DropboxTokenPayload>>()
   const [token, setToken] = useState<{
@@ -63,6 +66,13 @@ export function useDropbox(tokenFromUrl?: string) {
           access_token: decoded.access_token,
           refresh_token: decoded.refresh_token,
         });
+
+        user && updateUser({
+          dropbox: {
+            access_token: decoded.access_token,
+            refresh_token: decoded.refresh_token,
+          }
+        })
       } catch (err) {
         console.error("Invalid Dropbox token", err);
         toast({
@@ -78,7 +88,7 @@ export function useDropbox(tokenFromUrl?: string) {
   const authUrl = useQuery({
     queryKey: ["dropbox", "auth-url"],
     queryFn: () => dropboxApi.getAuthUrl(),
-    enabled: false,
+    enabled: !user?.dropbox?.access_token,
   });
 
   // Query for Dropbox storage stats
@@ -92,6 +102,6 @@ export function useDropbox(tokenFromUrl?: string) {
     dropboxUserInfo,
     dropboxToken: token,
     stats,
-    authUrl,
+    authUrl
   };
 }
