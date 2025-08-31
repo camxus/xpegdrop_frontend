@@ -33,12 +33,6 @@ export type FormData = {
   confirmPassword: string;
   username: string;
   bio: string;
-  dropbox:
-    | {
-        access_token: string;
-        refresh_token: string;
-      }
-    | undefined;
 };
 
 const step1Schema = yup.object().shape({
@@ -73,10 +67,6 @@ const fullSchema = yup.object().shape({
     .required(),
   bio: yup.string().optional(),
   // avatar_file: yup.mixed().optional(),
-  dropbox: yup.object({
-    access_token: yup.string().required(),
-    refresh_token: yup.string().required(),
-  }),
 });
 
 export default function SignUpPageWrapper() {
@@ -88,9 +78,6 @@ export default function SignUpPageWrapper() {
 }
 
 export function SignUpPageContent() {
-  const searchParams = useSearchParams();
-  const tokenFromUrl = searchParams.get("dropbox_token");
-
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<FormData>({
     first_name: "",
@@ -100,7 +87,6 @@ export function SignUpPageContent() {
     confirmPassword: "",
     username: "",
     bio: "",
-    dropbox: { access_token: "", refresh_token: "" },
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [avatarFile, setAvatarFile] = useState<File>();
@@ -118,26 +104,7 @@ export function SignUpPageContent() {
       data: foundUser,
     },
   } = useUser();
-  const { dropboxToken, dropboxUserInfo } = useDropbox(tokenFromUrl || "");
   const router = useRouter();
-
-  // Sync Dropbox token
-  useEffect(() => {
-    if (!dropboxUserInfo) return;
-    setFormData((prev) => ({
-      ...prev,
-      ...{
-        email: dropboxUserInfo.email || "",
-        first_name: dropboxUserInfo.first_name || "",
-        last_name: dropboxUserInfo.last_name || "",
-      },
-    }));
-  }, [dropboxUserInfo]);
-
-  useEffect(() => {
-    if (!dropboxToken) return;
-    setFormData((prev) => ({ ...prev, dropbox: dropboxToken }));
-  }, [dropboxToken]);
 
   // Debounce username input
   useEffect(() => {
@@ -208,7 +175,6 @@ export function SignUpPageContent() {
         password: formData.password,
         username: formData.username,
         bio: formData.bio || undefined,
-        dropbox: formData.dropbox,
         avatar_file: avatarFile,
       });
       router.push("/login");
@@ -221,8 +187,6 @@ export function SignUpPageContent() {
       setFormErrors(errors);
     }
   };
-
-  if (!dropboxToken) return <ConnectDropboxPage />;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-black to-slate-900 flex items-center justify-center p-4">
