@@ -450,7 +450,7 @@ export function SignUpPageContent() {
                   >
                     <div className="space-y-2">
                       <Label htmlFor="avatar" className="text-white">
-                        Profile Image
+                        Profile Image <span className="text-muted-foreground">optional</span>
                       </Label>
                       <div className="flex w-full justify-center">
                         {!avatarFile ? (
