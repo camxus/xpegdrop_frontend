@@ -71,7 +71,17 @@ const fullSchema = yup.object().shape({
 
 export default function SignUpPageWrapper() {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <Suspense
+      fallback={
+        <div className="w-full h-full">
+          <div className="flex items-center justify-center h-[80vh]">
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+            </div>
+          </div>
+        </div>
+      }
+    >
       <SignUpPageContent />
     </Suspense>
   );
@@ -414,7 +424,8 @@ export function SignUpPageContent() {
                   >
                     <div className="space-y-2">
                       <Label htmlFor="avatar" className="text-white">
-                        Profile Image <span className="text-muted-foreground">optional</span>
+                        Profile Image{" "}
+                        <span className="text-muted-foreground">optional</span>
                       </Label>
                       <div className="flex w-full justify-center">
                         {!avatarFile ? (
