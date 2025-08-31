@@ -325,15 +325,10 @@ export function SignUpPageContent() {
                         id="username"
                         name="username"
                         value={formData.username}
-                        onChange={(e) =>
-                          handleChange({
-                            ...e,
-                            target: {
-                              ...e.target,
-                              value: e.target.value.toLowerCase(),
-                            },
-                          })
-                        }
+                        onChange={(e) => {
+                          e.target.value = e.target.value.toLowerCase();
+                          handleChange(e);
+                        }}
                         className="bg-white/10 text-white border-white/20 placeholder:text-gray-400"
                         placeholder="johndoe"
                       />
