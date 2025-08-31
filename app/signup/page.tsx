@@ -234,8 +234,7 @@ export function SignUpPageContent() {
         <Card className="w-full max-w-md bg-white/10 border-white/20 backdrop-blur-sm">
           <CardHeader className="text-center">
             <div className="flex items-center justify-center mb-4">
-              <FolderOpen className="h-8 w-8 text-white mr-2" />
-              <CardTitle className="text-2xl text-white">Gallery</CardTitle>
+              <CardTitle className="text-2xl text-white">fframess</CardTitle>
             </div>
             <CardDescription className="text-gray-300">
               Create your account
