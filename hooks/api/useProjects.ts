@@ -22,7 +22,7 @@ export function useProjects() {
 
   // Get single project by id
   const getProject = async (projectId: string) =>
-    useQuery<Project[], Error>({
+    useQuery<Project, Error>({
       queryKey: ["projects", projectId],
       queryFn: () => projectsApi.getProject(projectId),
       enabled: !!projectId,

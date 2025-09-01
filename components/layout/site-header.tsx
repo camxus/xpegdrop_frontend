@@ -63,6 +63,7 @@ export function SiteHeader({ children }: SiteHeaderProps) {
 
   const sidebarItems =
     projects
+      .filter((project) => project.status === "created")
       ?.sort((a, b) => {
         return (
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime()

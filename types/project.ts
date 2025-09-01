@@ -11,4 +11,5 @@ export interface Project {
   approved_emails: string[];
   can_download: boolean;
   updated_at?: string;
+  status: "created" | "initiated"
 }
