@@ -135,7 +135,11 @@ export function SignUpPageContent() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    let newValue = value;
+    if (["username", "email"].includes(value)) {
+      newValue = newValue.toLowerCase();
+    }
+    setFormData((prev) => ({ ...prev, [name]: newValue }));
   };
 
   const handleAvatarUpload = async (files: File[]) => {
@@ -298,10 +302,7 @@ export function SignUpPageContent() {
                         id="username"
                         name="username"
                         value={formData.username}
-                        onChange={(e) => {
-                          e.target.value = e.target.value.toLowerCase();
-                          handleChange(e);
-                        }}
+                        onChange={handleChange}
                         className="bg-white/10 text-white border-white/20 placeholder:text-gray-400"
                         placeholder="johndoe"
                       />
