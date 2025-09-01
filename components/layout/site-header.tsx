@@ -119,7 +119,7 @@ export function SiteHeader({ children }: SiteHeaderProps) {
           opacity: 1,
           width: isSidebarCollapsed ? 64 : 256,
         }}
-        className="bg-transparent border-r border-gray-800 flex flex-col overflow-hidden w-[256px]"
+        className="bg-transparent border-r border-gray-800 flex flex-col overflow-hidden w-full"
       >
         <div className="p-4">
           <div className="flex items-center justify-between gap-2">
@@ -224,15 +224,35 @@ export function SiteHeader({ children }: SiteHeaderProps) {
                 </Link>
               ))
             ) : (
-              <p className="text-sm text-white/60 px-3 py-2">
-                No projects
-              </p>
+              <motion.span
+                variants={{
+                  visible: (i: number) => ({
+                    opacity: 1,
+                    display: "block",
+                    transition: {
+                      opacity: { duration: 0.1, delay: i * 0.15 },
+                    },
+                  }),
+                  hidden: {
+                    opacity: 0,
+                    display: "none",
+                    transition: {
+                      opacity: { duration: 0.1 },
+                    },
+                  },
+                }}
+                initial="visible"
+                animate={isSidebarCollapsed ? "hidden" : "visible"}
+                className="whitespace-nowrap text-center text-muted-foreground"
+              >
+                No projects added
+              </motion.span>
             )}
           </div>
           {/* Avatar at the bottom */}
           <div className="mt-4 pt-4 border-t border-white/10 place-items-start">
             <Link href={"/upload"}>
-              <Button className="mb-4 ml-1">
+              <Button className="mb-4 ml-1 w-full">
                 <PlusSquare />
                 <motion.span
                   variants={{
@@ -253,7 +273,7 @@ export function SiteHeader({ children }: SiteHeaderProps) {
                   }}
                   initial="visible"
                   animate={isSidebarCollapsed ? "hidden" : "visible"}
-                  className="whitespace-nowrap overflow-hidden flex-1 w-full"
+                  className="whitespace-nowrap overflow-hidden flex-1"
                 >
                   New Project
                 </motion.span>
