@@ -145,9 +145,9 @@ axiosInstance.interceptors.request.use(
           config.headers.Authorization = `Bearer ${accessToken}`;
         }
 
-        if (idToken) {
-          config.headers["x-id-token"] = idToken;
-        }
+        // if (idToken) {
+        //   config.headers["x-id-token"] = idToken;
+        // }
       }
     }
 
