@@ -27,12 +27,12 @@ export default function HomePageWrapper() {
         </div>
       }
     >
-      <ConnectDropboxPage />
+      <HomePage />
     </Suspense>
   );
 }
 
-export function ConnectDropboxPage() {
+export function HomePage() {
   const {
     authUrl: { data: authUrl, refetch: fetchAuthUrl },
   } = useDropbox();

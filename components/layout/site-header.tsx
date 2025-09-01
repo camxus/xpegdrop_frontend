@@ -165,63 +165,69 @@ export function SiteHeader({ children }: SiteHeaderProps) {
         <nav className="flex flex-1 flex-col px-2 overflow-hidden">
           {/* Scrollable sidebar items */}
           <div className="flex-1 overflow-y-auto">
-            {sidebarItems.map((item, index) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`group relative flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all ${
-                  isActive(item.href)
-                    ? "bg-white/5 text-white"
-                    : "text-white/80 hover:bg-white/10"
-                }`}
-              >
-                {/* Icon */}
-                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                  <item.icon width={20} height={20} />
-                </motion.div>
-
-                {/* Label */}
-                <motion.span
-                  custom={index}
-                  variants={{
-                    visible: (i: number) => ({
-                      opacity: 1,
-                      display: "block",
-                      transition: {
-                        opacity: { duration: 0.1, delay: i * 0.15 },
-                      },
-                    }),
-                    hidden: {
-                      opacity: 0,
-                      display: "none",
-                      transition: {
-                        opacity: { duration: 0.1 },
-                      },
-                    },
-                  }}
-                  initial="visible"
-                  animate={isSidebarCollapsed ? "hidden" : "visible"}
-                  className="whitespace-nowrap overflow-hidden flex-1"
+            {!!sidebarItems.length ? (
+              sidebarItems.map((item, index) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`group relative flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all ${
+                    isActive(item.href)
+                      ? "bg-white/5 text-white"
+                      : "text-white/80 hover:bg-white/10"
+                  }`}
                 >
-                  {item.label}
-                </motion.span>
+                  {/* Icon */}
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                    <item.icon width={20} height={20} />
+                  </motion.div>
 
-                {/* X Button (prevents Link navigation) */}
-                <motion.button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    handleDeleteProject(item.id);
-                  }}
-                  className={cn(
-                    "cursor-pointer absolute right-3 opacity-0 group-hover:opacity-100 text-white/60 hover:text-red-500 transition-[opacity,colors] duration-200",
-                    isSidebarCollapsed ? "hidden" : "block"
-                  )}
-                >
-                  <X className="w-4 h-4" />
-                </motion.button>
-              </Link>
-            ))}
+                  {/* Label */}
+                  <motion.span
+                    custom={index}
+                    variants={{
+                      visible: (i: number) => ({
+                        opacity: 1,
+                        display: "block",
+                        transition: {
+                          opacity: { duration: 0.1, delay: i * 0.15 },
+                        },
+                      }),
+                      hidden: {
+                        opacity: 0,
+                        display: "none",
+                        transition: {
+                          opacity: { duration: 0.1 },
+                        },
+                      },
+                    }}
+                    initial="visible"
+                    animate={isSidebarCollapsed ? "hidden" : "visible"}
+                    className="whitespace-nowrap overflow-hidden flex-1"
+                  >
+                    {item.label}
+                  </motion.span>
+
+                  {/* X Button (prevents Link navigation) */}
+                  <motion.button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleDeleteProject(item.id);
+                    }}
+                    className={cn(
+                      "cursor-pointer absolute right-3 opacity-0 group-hover:opacity-100 text-white/60 hover:text-red-500 transition-[opacity,colors] duration-200",
+                      isSidebarCollapsed ? "hidden" : "block"
+                    )}
+                  >
+                    <X className="w-4 h-4" />
+                  </motion.button>
+                </Link>
+              ))
+            ) : (
+              <p className="text-sm text-white/60 px-3 py-2">
+                No projects
+              </p>
+            )}
           </div>
           {/* Avatar at the bottom */}
           <div className="mt-4 pt-4 border-t border-white/10 place-items-start">
@@ -247,7 +253,7 @@ export function SiteHeader({ children }: SiteHeaderProps) {
                   }}
                   initial="visible"
                   animate={isSidebarCollapsed ? "hidden" : "visible"}
-                  className="whitespace-nowrap overflow-hidden flex-1"
+                  className="whitespace-nowrap overflow-hidden flex-1 w-full"
                 >
                   New Project
                 </motion.span>

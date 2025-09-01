@@ -302,9 +302,16 @@ export function UploadView() {
           backgroundRepeat: "no-repeat",
         }}
       >
-        <div className="w-full min-h-screen flex items-center justify-center">
+        <div className="w-full min-h-screen flex flex-col items-center justify-center text-center px-4 space-y-6">
+          <h1 className="text-3xl font-bold text-foreground">
+            Connect your Dropbox
+          </h1>
+          <p className="text-lg text-muted-foreground max-w-md">
+            To continue, please connect your Dropbox account. This allows us to
+            securely store and manage your files.
+          </p>
           <Link href={authUrl.data?.url || ""}>
-            <GlowingButton>Connect Dropbox</GlowingButton>
+            <GlowingButton>Connect</GlowingButton>
           </Link>
         </div>
       </motion.div>

@@ -19,7 +19,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/hooks/api/useAuth";
 import { FileUploader } from "@/components/ui/file-uploader";
 import { useDropbox } from "@/hooks/api/useDropbox";
-import ConnectDropboxPage from "../page";
 import { useUser } from "@/hooks/api/useUser";
 import imageCompression from "browser-image-compression";
 import * as yup from "yup";
