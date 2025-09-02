@@ -40,44 +40,48 @@ export function StarRatingSlider({
 
   return (
     <div
-      ref={containerRef}
       className={cn(
         "flex items-center gap-1 cursor-pointer select-none py-1 transition-opacity",
         className,
-        disabled && "opacity-50 pointer-events-none",
+        disabled && "opacity-50 pointer-events-none"
       )}
-      onMouseMove={handleMouseMove}
-      onMouseLeave={handleMouseLeave}
-      onMouseDown={handleClick}
     >
-      {Array.from({ length: STAR_AMOUNT }, (_, i) => i + 1).map((star) => (
-        <div key={star}>
-          {star <= displayRating ? (
-            <Star
-              className={cn(
-                "w-3 h-3 transition-colors duration-150",
-                "fill-white text-white"
-              )}
-            />
-          ) : showBullets ? (
-            <Dot
-              width={10}
-              height={10}
-              className={cn(
-                "w-3 h-3 rounded-full transition-colors duration-150",
-                "fill-white"
-              )}
-            />
-          ) : (
-            <Star
-              className={cn(
-                "w-3 h-3 transition-colors duration-150",
-                "text-muted-foreground/30"
-              )}
-            />
-          )}
-        </div>
-      ))}
+      <div
+        ref={containerRef}
+        className="w-fit"
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+        onMouseDown={handleClick}
+      >
+        {Array.from({ length: STAR_AMOUNT }, (_, i) => i + 1).map((star) => (
+          <div key={star}>
+            {star <= displayRating ? (
+              <Star
+                className={cn(
+                  "w-3 h-3 transition-colors duration-150",
+                  "fill-white text-white"
+                )}
+              />
+            ) : showBullets ? (
+              <Dot
+                width={10}
+                height={10}
+                className={cn(
+                  "w-3 h-3 rounded-full transition-colors duration-150",
+                  "fill-white"
+                )}
+              />
+            ) : (
+              <Star
+                className={cn(
+                  "w-3 h-3 transition-colors duration-150",
+                  "text-muted-foreground/30"
+                )}
+              />
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
