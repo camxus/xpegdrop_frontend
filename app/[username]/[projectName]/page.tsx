@@ -192,6 +192,7 @@ export default function PublicProjectPage() {
 
   const handleShare = () => {
     if (!project) return;
+    if (!isCurrentUser) return;
     show({
       content: () => <ShareDialog project={project} onClose={hide} />,
     });

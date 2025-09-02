@@ -46,6 +46,7 @@ const step1Schema = yup.object().shape({
       /[!@#$%^&*(),.?":{}|<>\-]/,
       "Password must contain at least one special character"
     )
+    .matches(/^\S+$/, "Password cannot contain spaces")
     .required("Password is required"),
   confirmPassword: yup
     .string()
