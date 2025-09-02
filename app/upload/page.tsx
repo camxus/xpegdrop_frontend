@@ -278,7 +278,7 @@ export function UploadView() {
     if (currentProject?.project_id) getRatings(currentProject.project_id);
   }, [currentProject]);
 
-  if (!user?.dropbox?.access_token) {
+  if (!authUrl.data && !user?.dropbox?.access_token) {
     return (
       <div className="flex items-center justify-center h-[80vh]">
         <div className="absolute inset-0 flex items-center justify-center">
