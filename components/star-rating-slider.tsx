@@ -41,14 +41,14 @@ export function StarRatingSlider({
   return (
     <div
       className={cn(
-        "flex items-center gap-1 cursor-pointer select-none py-1 transition-opacity",
+        "py-1 transition-opacity w-full",
         className,
         disabled && "opacity-50 pointer-events-none"
       )}
     >
       <div
         ref={containerRef}
-        className="w-fit"
+        className="w-fit flex items-center gap-1 cursor-pointer select-none"
         onMouseMove={handleMouseMove}
         onMouseLeave={handleMouseLeave}
         onMouseDown={handleClick}
