@@ -362,10 +362,10 @@ export function SiteHeader({ children }: SiteHeaderProps) {
                   value={stats.storage.used_percent}
                   color={
                     stats.storage.used_percent >= 90
-                      ? "red"
+                      ? "bg-red-400"
                       : stats.storage.used_percent >= 70
-                      ? "amber"
-                      : "white"
+                      ? "bg-amber-400"
+                      : "bg-white"
                   }
                   className={cn("w-full h-1 rounded-full")}
                 />

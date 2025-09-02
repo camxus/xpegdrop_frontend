@@ -253,7 +253,7 @@ export default function PublicProjectPage() {
           </div>
         ) : project ? (
           <>
-            <div className="mb-6 flex items-center justify-between">
+            <div className="mb-6 block md:flex items-center justify-between">
               <div className="mb-6 space-y-2">
                 <EditableTitle
                   title={project.name}
@@ -267,7 +267,7 @@ export default function PublicProjectPage() {
                   Created on {new Date(project.created_at).toLocaleDateString()}
                 </p>
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 md:ml-0 ml-auto w-fit">
                 {(project.can_download || isCurrentUser) && (
                   <Button onClick={handleDownload}>
                     <Download className="h-4 w-4" />
