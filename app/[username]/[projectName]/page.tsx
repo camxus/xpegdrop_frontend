@@ -215,9 +215,9 @@ export default function PublicProjectPage() {
     const filteredRatings = Object.values(ratings).filter(
       ({ user_id, value }) => {
         const userMatch = !!userIds.length || userIds.includes(user_id);
-        const valueMatch =
+        const ratingMatch =
           !!ratingValues.length || ratingValues.includes(value);
-        return userMatch && valueMatch;
+        return userMatch || ratingMatch;
       }
     );
 
