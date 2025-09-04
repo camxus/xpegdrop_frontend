@@ -22,6 +22,8 @@ import { ShareDialog } from "@/components/share-dialog";
 import { Download, Share2 } from "lucide-react";
 import { Rating } from "@/lib/api/ratingsApi";
 import { ImagesFilter } from "@/components/images-filter";
+import { useS3 } from "@/hooks/api/useS3";
+import { S3Location } from "@/types/user";
 
 export default function PublicProjectPage() {
   const { username, projectName } = useParams<{
@@ -35,10 +37,14 @@ export default function PublicProjectPage() {
   const { toast } = useToast();
   const { show, hide } = useDialog();
 
+  const { uploadFile } = useS3();
+
   const {
     getProjectByShareUrl,
     updateProject: { mutateAsync: updateProject },
+    addProjectFiles: { mutateAsync: addProjectFiles },
   } = useProjects();
+
   const {
     ratings,
     foreignRatings,
@@ -215,9 +221,10 @@ export default function PublicProjectPage() {
     const filteredRatings = Object.values(ratings).filter(
       ({ user_id, value }) => {
         const userMatch = !!userIds.length ? userIds.includes(user_id) : true;
-        const ratingMatch =
-          !!ratingValues.length ? ratingValues.includes(value) : true;
-          
+        const ratingMatch = !!ratingValues.length
+          ? ratingValues.includes(value)
+          : true;
+
         return userMatch && ratingMatch;
       }
     );
@@ -229,11 +236,42 @@ export default function PublicProjectPage() {
     setFilteredImages(filteredImages);
   };
 
-  const handleDuplicateImage = () => {
-    if (!isCurrentUser) return
+  const handleDuplicateImage = async (image: ImageFile) => {
+    if (!isCurrentUser || !project) return;
 
-    // updateProject({projectId: project?.project_id, })
-  }
+    const existingImage = images.find((i) => i.name === image.name);
+    if (!existingImage?.preview_url) return;
+
+    try {
+      const response = await axios.get(existingImage.preview_url, {
+        responseType: "blob",
+      });
+      const blob = response.data as Blob;
+      const file = new File([blob], image.name, { type: blob.type });
+
+      const location = (await uploadFile(file)) as S3Location;
+
+      // 2. Use the addProjectFiles mutation to re-upload
+      await addProjectFiles({
+        projectId: project.project_id,
+        file_locations: [location],
+      });
+
+      toast({
+        title: "Image duplicated",
+        description: `${image.name} has been added again.`,
+      });
+
+      loadProject()
+    } catch (err: any) {
+      console.error("Failed to duplicate image:", err);
+      toast({
+        title: "Error",
+        description: "Could not duplicate image.",
+        variant: "destructive",
+      });
+    }
+  };
 
   useEffect(() => {
     loadProject();

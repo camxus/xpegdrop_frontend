@@ -31,13 +31,15 @@ export function useS3() {
   const { toast } = useToast();
 
   const uploadSingleFile = async (file: File, options?: UploadFileOptions) => {
-    setIsUploading(true)
-    await uploadFile(file, options);
-    setIsUploading(false)
+    setIsUploading(true);
+    const s3Location = await uploadFile(file, options);
+    setIsUploading(false);
     toast({
       title: "Upload successful",
       description: `${file.name} uploaded successfully.`,
     });
+    
+    return s3Location;
   };
 
   const uploadFile = async (file: File, options?: UploadFileOptions) => {

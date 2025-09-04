@@ -56,4 +56,31 @@ export const projectsApi = {
       { params: { email: email } }
     );
   },
+
+  addProjectFiles: async (
+    projectId: string,
+    formData: { files?: File[]; file_locations?: S3Location[] }
+  ) => {
+    const data = new FormData();
+
+    if (formData.file_locations) {
+      data.append("file_locations", JSON.stringify(formData.file_locations));
+    }
+
+    if (formData.files) {
+      formData.files.forEach((file) => {
+        data.append("files", file);
+      });
+    }
+
+    return await api.post(`/projects/${projectId}/files`, data, {
+      headers: { "Content-Type": "multipart/form-data" },
+      timeout: 120000, // 2 minutes
+    });
+  },
+
+  // Remove a single file from a project by file name
+  removeProjectFile: async (projectId: string, file_name: string) => {
+    return await api.delete(`/projects/${projectId}/files/${encodeURIComponent(file_name)}`);
+  },
 };

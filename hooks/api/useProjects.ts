@@ -118,6 +118,51 @@ export function useProjects() {
     },
   });
 
+  const addProjectFiles = useMutation({
+    mutationFn: (payload: {
+      projectId: string;
+      files?: File[];
+      file_locations?: S3Location[];
+    }) => projectsApi.addProjectFiles(payload.projectId, {
+      files: payload.files,
+      file_locations: payload.file_locations,
+    }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      toast({
+        title: "Files added",
+        description: "Files have been successfully added.",
+      });
+    },
+    onError: (err: any) => {
+      toast({
+        title: "Failed to add files",
+        description: err?.message || "Something went wrong.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Mutation: Remove a file from a project
+  const removeProjectFile = useMutation({
+    mutationFn: (payload: { projectId: string; file_name: string }) =>
+      projectsApi.removeProjectFile(payload.projectId, payload.file_name),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      toast({
+        title: "File removed",
+        description: "The file has been successfully removed.",
+      });
+    },
+    onError: (err: any) => {
+      toast({
+        title: "Failed to remove file",
+        description: err?.message || "Something went wrong.",
+        variant: "destructive",
+      });
+    },
+  });
+
   return {
     projects,
     getProject,
@@ -125,5 +170,7 @@ export function useProjects() {
     createProject,
     updateProject,
     deleteProject,
+    addProjectFiles,
+    removeProjectFile
   };
 }

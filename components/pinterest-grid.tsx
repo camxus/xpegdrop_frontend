@@ -27,6 +27,7 @@ interface PinterestGridProps {
   onImageClick?: (imageIndex: number) => void;
   onImageHoverChange?: (isHovering: boolean) => void;
   onRatingChange?: (imageId: string, value: number, ratingId?: string) => void;
+  onDuplicateImage?: (image: ImageFile) => void;
 }
 
 export function PinterestGrid({
@@ -37,6 +38,7 @@ export function PinterestGrid({
   onImageClick,
   onImageHoverChange,
   onRatingChange,
+  onDuplicateImage
 }: PinterestGridProps) {
   const { user } = useAuth();
   const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
@@ -82,6 +84,13 @@ export function PinterestGrid({
     [onRatingChange]
   );
 
+    const handleDuplicateImage = useCallback(
+    (image: ImageFile) => {
+      onDuplicateImage?.(image);
+    },
+    [onDuplicateImage]
+  );
+
   const localRatings =
     ratings?.[0]?.project_id &&
     (getLocalStorage(LOCAL_RATINGS_STORAGE_KEY) || {})[ratings?.[0].project_id];
@@ -116,6 +125,7 @@ export function PinterestGrid({
           onRatingChange={(value, ratingId) =>
             handleRatingChange(image.name, value, ratingId)
           }
+          onDuplicateImage={handleDuplicateImage}
         />
       ))}
     </div>
@@ -134,6 +144,7 @@ const PinterestImage = memo(function PinterestImage({
   onClick,
   onLoad,
   onRatingChange,
+  onDuplicateImage
 }: {
   disabled: boolean;
   rating: Rating;
@@ -146,6 +157,7 @@ const PinterestImage = memo(function PinterestImage({
   onClick: () => void;
   onLoad: () => void;
   onRatingChange: (value: number, ratingId?: string) => void;
+  onDuplicateImage: (image: ImageFile) => void
 }) {
   const [editOpen, setEditOpen] = useState(false);
 
@@ -157,37 +169,53 @@ const PinterestImage = memo(function PinterestImage({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: index * 0.05 }}
       >
-        <div
-          className="group relative overflow-hidden rounded-lg bg-muted cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
-          onMouseEnter={onHover}
-          onMouseLeave={onLeave}
-          onClick={onClick}
-        >
-          <div
-            className={cn(
-              "absolute inset-0 border-2 border-transparent transition-all duration-300 rounded-lg z-20 pointer-events-none",
-              isHovered &&
-                "border-white shadow-[0_0_20px_rgba(255,255,255,0.5)]"
-            )}
-          />
-          <Image
-            src={image.url || "/placeholder.svg"}
-            alt={image.name}
-            width={300}
-            height={400}
-            loading="lazy"
-            onLoad={onLoad}
-            className={cn(
-              "h-auto w-full object-cover transition-all duration-300",
-              isLoaded ? "opacity-100" : "opacity-0",
-              isHovered && "brightness-105"
-            )}
-            sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
-          />
-          {!isLoaded && (
-            <div className="absolute inset-0 animate-pulse bg-muted" />
-          )}
-        </div>
+        <ContextMenu>
+          <ContextMenuTrigger asChild>
+            <div
+              className="group relative overflow-hidden rounded-lg bg-muted cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
+              onMouseEnter={onHover}
+              onMouseLeave={onLeave}
+              onClick={onClick}
+            >
+              <div
+                className={cn(
+                  "absolute inset-0 border-2 border-transparent transition-all duration-300 rounded-lg z-20 pointer-events-none",
+                  isHovered &&
+                    "border-white shadow-[0_0_20px_rgba(255,255,255,0.5)]"
+                )}
+              />
+              <Image
+                src={image.url || "/placeholder.svg"}
+                alt={image.name}
+                width={300}
+                height={400}
+                loading="lazy"
+                onLoad={onLoad}
+                className={cn(
+                  "h-auto w-full object-cover transition-all duration-300",
+                  isLoaded ? "opacity-100" : "opacity-0",
+                  isHovered && "brightness-105"
+                )}
+                sizes="(max-width: 640px) 50vw, (max-width: 768px) 33vw, (max-width: 1024px) 25vw, 20vw"
+              />
+              {!isLoaded && (
+                <div className="absolute inset-0 animate-pulse bg-muted" />
+              )}
+            </div>
+          </ContextMenuTrigger>
+          <ContextMenuContent>
+            {/* <ContextMenuItem onClick={() => setEditOpen(true)}>
+              Edit
+            </ContextMenuItem> */}
+            <ContextMenuItem onClick={() => onDuplicateImage(image)}>
+              Duplicate (beta)
+            </ContextMenuItem>
+            {/* <ContextMenuItem onClick={() => console.log("Delete", image.id)}>
+            Delete
+          </ContextMenuItem> */}
+            {/* <ContextMenuSeparator /> */}
+          </ContextMenuContent>
+        </ContextMenu>
 
         <p className="mt-2 truncate text-sm text-muted-foreground group-hover:text-foreground transition-colors">
           {image.name}
