@@ -24,6 +24,7 @@ import { Rating } from "@/lib/api/ratingsApi";
 import { ImagesFilter } from "@/components/images-filter";
 import { useS3 } from "@/hooks/api/useS3";
 import { S3Location } from "@/types/user";
+import { useDownload } from "@/hooks/useDownload";
 
 export default function PublicProjectPage() {
   const { username, projectName } = useParams<{
@@ -38,6 +39,7 @@ export default function PublicProjectPage() {
   const { show, hide } = useDialog();
 
   const { uploadFile } = useS3();
+  const { downloadFiles, isDownloading } = useDownload();
 
   const {
     getProjectByShareUrl,
@@ -160,27 +162,14 @@ export default function PublicProjectPage() {
 
   const handleDownload = async () => {
     if (!project || images.length === 0) return;
-    const JSZip = (await import("jszip")).default;
-    const { saveAs } = await import("file-saver");
-    const zip = new JSZip();
-    const folder = zip.folder(project.name) || zip;
 
-    const fetchPromises = images.map(async (img, index) => {
-      try {
-        if (!img.preview_url) return;
-        const response = await axios.get(img.preview_url, {
-          responseType: "blob",
-        });
-        folder.file(`${img.name}`, response?.data);
-      } catch (err) {
-        console.error(`Failed to fetch ${img.url}`, err);
-      }
-    });
-
-    await Promise.all(fetchPromises);
-
-    const content = await zip.generateAsync({ type: "blob" });
-    saveAs(content, `${project.name}.zip`);
+    downloadFiles(
+      images.map((image) => ({
+        name: image.name,
+        url: image.preview_url || "",
+      })),
+      `${project.name}.zip`
+    );
   };
 
   const handleUpdateProject = async (newName: string) => {
@@ -262,7 +251,7 @@ export default function PublicProjectPage() {
         description: `${image.name} has been added again.`,
       });
 
-      loadProject()
+      loadProject();
     } catch (err: any) {
       console.error("Failed to duplicate image:", err);
       toast({
@@ -315,7 +304,7 @@ export default function PublicProjectPage() {
               </div>
               <div className="flex gap-2 md:ml-0 ml-auto w-fit">
                 {(project.can_download || isCurrentUser) && (
-                  <Button onClick={handleDownload}>
+                  <Button disabled={isDownloading} onClick={handleDownload}>
                     <Download className="h-4 w-4" />
                     Download
                   </Button>
