@@ -214,10 +214,11 @@ export default function PublicProjectPage() {
 
     const filteredRatings = Object.values(ratings).filter(
       ({ user_id, value }) => {
-        const userMatch = !!userIds.length || userIds.includes(user_id);
+        const userMatch = !!userIds.length ? userIds.includes(user_id) : true;
         const ratingMatch =
-          !!ratingValues.length || ratingValues.includes(value);
-        return userMatch || ratingMatch;
+          !!ratingValues.length ? ratingValues.includes(value) : true;
+          
+        return userMatch && ratingMatch;
       }
     );
 
@@ -227,6 +228,12 @@ export default function PublicProjectPage() {
 
     setFilteredImages(filteredImages);
   };
+
+  const handleDuplicateImage = () => {
+    if (!isCurrentUser) return
+
+    // updateProject({projectId: project?.project_id, })
+  }
 
   useEffect(() => {
     loadProject();
@@ -301,6 +308,7 @@ export default function PublicProjectPage() {
               }}
               onRatingChange={handleRatingChange}
               onImageHoverChange={(hover) => setIsHovered(hover)}
+              onDuplicateImage={handleDuplicateImage}
             />
             <ImageCarousel
               images={filteredImages}
