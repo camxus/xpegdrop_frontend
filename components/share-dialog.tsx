@@ -22,10 +22,12 @@ export function ShareDialog({ project, onClose }: ShareDialogProps) {
     updateProject: { mutateAsync: updateProject },
   } = useProjects();
   const [copied, setCopied] = useState(false);
-  const [emails, setEmails] = useState<string[]>([]);
+  const [emails, setEmails] = useState<string[]>(project.approved_emails || []);
   const [newEmail, setNewEmail] = useState("");
-  const [isPublic, setIsPublic] = useState(true);
-  const [canDownload, setCanDownload] = useState(true);
+  const [isPublic, setIsPublic] = useState<boolean>(project.is_public || true);
+  const [canDownload, setCanDownload] = useState<boolean>(
+    project.can_download || true
+  );
   const { toast } = useToast();
 
   const handleCopyToClipboard = async () => {
@@ -93,8 +95,16 @@ export function ShareDialog({ project, onClose }: ShareDialogProps) {
       }
     };
 
+    if (
+      isPublic === project.is_public &&
+      emails === project.approved_emails &&
+      canDownload === project.can_download
+    )
+      return;
+
     update();
   }, [isPublic, emails, canDownload]);
+  
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
