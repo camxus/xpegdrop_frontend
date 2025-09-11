@@ -10,7 +10,7 @@ const DeleteProjectDialogView = ({ project }: { project: Project }) => {
           <DeleteIcon className="h-6 w-6 text-primary" />
         </div>
         <div>
-          <h3 className="text-lg font-semibold">Delte {project.name}</h3>
+          <h3 className="text-lg font-semibold">Delete {project.name}</h3>
         </div>
       </div>
 
