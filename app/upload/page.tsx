@@ -111,15 +111,12 @@ export function UploadView() {
   );
 
   const currentFolder = folders[currentFolderIndex];
-  const currentProject = createdProjects.find(
-    (p) => p.name === currentFolder?.name
-  );
+  const currentProject = createdProjects[currentFolderIndex]
 
   const handleNewFolders = useCallback(
     async (files: File[]) => {
       if (files.length === 0) return;
-      const newFolders = processFolderUpload(files);
-      console.log(newFolders);
+      const newFolders = await processFolderUpload(files);
       if (newFolders.length === 0) {
         toast({
           title: "No Images Found",
@@ -138,12 +135,12 @@ export function UploadView() {
             newFolders[folderIndex].name = newName;
           },
           onCancel: hide,
-          onUpload: async (confirmedFolders: Folder[]) => {
+          onUpload: async (confirmedFolders: Folder[], currentFolderIndex: number) => {
             setFolders((prev) => [...prev, ...confirmedFolders]);
             setCurrentFolderIndex(confirmedFolders.length ? 0 : 0);
             Promise.all(
               confirmedFolders.map(
-                async (folder) => await handleUploadToDropbox(folder)
+                async (folder) => await handleUploadToDropbox(folder, currentFolderIndex)
               )
             );
             hide();
@@ -204,7 +201,7 @@ export function UploadView() {
   const handleNextFolder = () =>
     setCurrentFolderIndex((prev) => Math.min(folders.length - 1, prev + 1));
 
-  const handleUploadToDropbox = async (folder?: Folder) => {
+  const handleUploadToDropbox = async (folder: Folder, folderIndex = 0) => {
     const uploadFolder = currentFolder || folder;
     if (!uploadFolder) return;
     try {
@@ -220,7 +217,11 @@ export function UploadView() {
         )
       );
       setQueuedRatings([]);
-      setCreatedProjects((projects) => [...projects, project]);
+      setCreatedProjects((projects) => {
+        const updatedProjects = [...projects];
+        updatedProjects[folderIndex] = project;
+        return updatedProjects;
+      });
     } catch {}
   };
 
@@ -368,7 +369,7 @@ export function UploadView() {
                           onClick={
                             currentProject?.share_url
                               ? handleShare
-                              : () => handleUploadToDropbox()
+                              : () => handleUploadToDropbox(currentFolder, currentFolderIndex)
                           }
                           disabled={isUploading}
                           className="cursor-pointer flex items-center gap-2"

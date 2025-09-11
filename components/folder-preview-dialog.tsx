@@ -1,15 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { EditableTitle } from "@/components/editable-title";
 import type { Folder } from "@/types";
 import { Button } from "@/components/ui/button";
+import { useDialog } from "@/hooks/use-dialog";
 
 interface FolderPreviewContentProps {
   folders: Folder[];
   onRename: (folderIndex: number, newName: string) => void;
-  editableTitle?: boolean
+  editableTitle?: boolean;
 }
 
 export function FolderPreviewContent({
@@ -17,8 +18,14 @@ export function FolderPreviewContent({
   onRename,
   editableTitle,
 }: FolderPreviewContentProps) {
+  const { updateProps } = useDialog();
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const currentFolder = folders[currentIndex];
+
+  useEffect(() => {
+    updateProps({ currentIndex });
+  }, [currentIndex]);
 
   if (!currentFolder) return null;
 
@@ -34,10 +41,7 @@ export function FolderPreviewContent({
       {/* Images list */}
       <div className="flex flex-col divide-y divide-gray-800 max-h-[400px] overflow-y-auto">
         {currentFolder.images.map((img) => (
-          <div
-            key={img.id}
-            className="flex h-16 items-center gap-4 py-2 px-1"
-          >
+          <div key={img.id} className="flex h-16 items-center gap-4 py-2 px-1">
             <Image
               src={URL.createObjectURL(img.file)}
               alt={img.file.name}
@@ -79,18 +83,24 @@ export function FolderPreviewContent({
 }
 
 interface FolderPreviewActionsProps {
+  currentIndex: number,
   folders: Folder[];
   onCancel: () => void;
-  onUpload: (folders: Folder[]) => void;
+  onUpload: (folders: Folder[], currentIndex: number) => void;
 }
 
-export function FolderPreviewActions({ folders, onCancel, onUpload }: FolderPreviewActionsProps) {
+export function FolderPreviewActions({
+  currentIndex,
+  folders,
+  onCancel,
+  onUpload,
+}: FolderPreviewActionsProps) {
   return (
     <>
       <Button variant="outline" onClick={onCancel}>
         Cancel
       </Button>
-      <Button onClick={() => onUpload(folders)}>
+      <Button onClick={() => onUpload(folders, currentIndex)}>
         Upload {folders.length > 1 ? `${folders.length} Folders` : "Folder"}
       </Button>
     </>

@@ -18,27 +18,41 @@ export function createImageFile(file: File, folder: string): ImageFile {
   }
 }
 
-export function processFolderUpload(files: File[]): Folder[] {
-  const folderMap = new Map<string, File[]>()
+function isImageCorrupted(file: File): Promise<boolean> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve(false);  // loaded successfully → not corrupted
+    img.onerror = () => resolve(true);  // failed to load → corrupted
+    img.src = URL.createObjectURL(file);
+  });
+}
 
-  files.forEach((file) => {
-    if (!isImageFile(file)) return
+export async function processFolderUpload(files: File[]): Promise<Folder[]> {
+  const folderMap = new Map<string, File[]>()
+  for (const file of files) {
+    if (!isImageFile(file)) continue;
+
+    const corrupted = await isImageCorrupted(file);
+    if (corrupted) {
+      console.warn(`Corrupted image skipped: ${file.name}`);
+      continue;
+    }
 
     const getFolderName = (file: any) => {
       const rel = file.relativePath || file.webkitRelativePath || "";
       const parts = rel.split("/").filter(Boolean);
-      if (parts[0] === ".") return "Untitled Folder"
+      if (parts[0] === ".") return "Untitled Folder";
       return parts.length ? parts[0] : "Untitled Folder";
     };
 
-    // Use relativePath instead of webkitRelativePath
-    const folderName = getFolderName(file)
+    const folderName = getFolderName(file);
 
     if (!folderMap.has(folderName)) {
-      folderMap.set(folderName, [])
+      folderMap.set(folderName, []);
     }
-    folderMap.get(folderName)!.push(file)
-  })
+    folderMap.get(folderName)!.push(file);
+  }
+
 
   return Array.from(folderMap.entries()).map(([folderName, folderFiles]) => ({
     id: `folder-${folderName}-${Date.now()}`,
