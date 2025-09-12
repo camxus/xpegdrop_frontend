@@ -10,7 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { RotateCcw } from "lucide-react"; // retry icon
 
-const BATCH_SIZE = 5;
+export const BATCH_SIZE = 5;
 
 type UploadFileOptions = {
   onProgress?: (progress: number) => void;

@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Project } from "@/types/project";
 import { ApiError } from "@/lib/api/client";
-import { b64ToFile, createImageFile } from "@/lib/utils/file-utils";
+import { b64ToFile, createImageFile, urlToFile } from "@/lib/utils/file-utils";
 import { useAuth } from "@/hooks/api/useAuth";
 import axios from "axios";
 import { EditableTitle } from "@/components/editable-title";
@@ -22,7 +22,7 @@ import { ShareDialog } from "@/components/share-dialog";
 import { Download, Share2 } from "lucide-react";
 import { Rating } from "@/lib/api/ratingsApi";
 import { ImagesFilter } from "@/components/images-filter";
-import { useS3 } from "@/hooks/api/useS3";
+import { BATCH_SIZE, useS3 } from "@/hooks/api/useS3";
 import { S3Location } from "@/types/user";
 import { useDownload } from "@/hooks/useDownload";
 
@@ -101,16 +101,48 @@ export default function PublicProjectPage() {
     try {
       const data = await getProjectByShareUrl(username, projectName, email);
       setProject(data?.project || null);
-      setImages(
-        data.images.map((i: { preview_url: string; thumbnail_url: string }) => {
-          const thumbnailFile = b64ToFile(i.thumbnail_url);
 
-          return {
-            ...createImageFile(thumbnailFile, projectName),
-            preview_url: i.preview_url,
-          };
-        })
-      );
+      async function processImagesInBatches(images: typeof data.images) {
+        const result: ReturnType<
+          typeof createImageFile & { preview_url: string }
+        >[] = [];
+
+        for (let i = 0; i < images.length; i += BATCH_SIZE) {
+          const batch = images.slice(i, i + BATCH_SIZE);
+
+          const processedBatch = await Promise.all(
+            batch.map(
+              async (img: {
+                thumbnail_url: string;
+                name: string | undefined;
+                preview_url: any;
+              }) => {
+                const thumbnailFile = await urlToFile(
+                  img.thumbnail_url,
+                  img.name
+                );
+                return {
+                  ...createImageFile(thumbnailFile, projectName),
+                  preview_url: img.preview_url,
+                };
+              }
+            )
+          );
+
+          // Add batch to overall result
+          result.push(...processedBatch);
+
+          // Update state progressively
+          setImages((prev) => [...prev, ...processedBatch]);
+          setIsLoading(false);
+        }
+
+        return result;
+      }
+
+      // Usage
+      await processImagesInBatches(data.images);
+
       if (data.project?.project_id) await getRatings(data.project.project_id);
       hide();
     } catch (error: any) {

@@ -105,3 +105,9 @@ export function b64ToFile(base64: string): File {
 
   return new File([u8arr], filename, { type: mime });
 }
+
+export async function urlToFile(url: string, filename = "thumbnail.jpg") {
+  const res = await fetch(url);
+  const blob = await res.blob();
+  return new File([blob], filename, { type: blob.type });
+}
