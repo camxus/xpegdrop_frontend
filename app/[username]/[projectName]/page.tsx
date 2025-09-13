@@ -102,10 +102,36 @@ export default function PublicProjectPage() {
       const data = await getProjectByShareUrl(username, projectName, email);
       setProject(data?.project || null);
 
+      function createEmptyImage(
+        name: string | undefined,
+        folder: string,
+        url?: string
+      ): ImageFile & { preview_url: string } {
+        return {
+          id: `${folder}-${name || "empty"}-${Date.now()}`,
+          name: name || "empty",
+          url: url || "", // no blob URL yet
+          file: new File([], name || "empty"), // empty File placeholder
+          folder,
+          preview_url: "", // will be replaced later
+        };
+      }
+
       async function processImagesInBatches(images: typeof data.images) {
-        const result: ReturnType<
-          typeof createImageFile & { preview_url: string }
-        >[] = [];
+        // 1. create placeholder array with same length
+        const placeholders = images.map(
+          (img: { name: string | undefined; thumbnail_url: string }) =>
+            createEmptyImage(img.name, projectName, img.thumbnail_url)
+        );
+
+        // set placeholders immediately so UI knows number of slots
+        setImages(placeholders);
+        setFilteredImages(placeholders);
+
+        // 2. progressively fill them batch by batch
+        const result: (ImageFile & { preview_url: string })[] = [
+          ...placeholders,
+        ];
 
         for (let i = 0; i < images.length; i += BATCH_SIZE) {
           const batch = images.slice(i, i + BATCH_SIZE);
@@ -129,19 +155,21 @@ export default function PublicProjectPage() {
             )
           );
 
-          // Add batch to overall result
-          result.push(...processedBatch);
-
-          // Update state progressively
-          setImages((prev) => [...prev, ...processedBatch]);
-          setIsLoading(false);
+          // replace the placeholders at the correct indices
+          processedBatch.forEach((processed, index) => {
+            result[i + index] = processed;
+          });
         }
 
         return result;
       }
 
-      // Usage
-      await processImagesInBatches(data.images);
+      // usage
+      const result = await processImagesInBatches(data.images);
+
+      setImages([...result]);
+      setFilteredImages([...result]);
+      setIsLoading(false);
 
       if (data.project?.project_id) await getRatings(data.project.project_id);
       hide();
@@ -225,37 +253,40 @@ export default function PublicProjectPage() {
     });
   };
 
-  const handleFilterChange = ({
-    userIds,
-    ratingValues,
-  }: {
-    userIds: string[];
-    ratingValues: number[];
-  }) => {
-    const isFiltering = !!userIds.length || !!ratingValues.length;
+  const handleFilterChange = useCallback(
+    ({
+      userIds,
+      ratingValues,
+    }: {
+      userIds: string[];
+      ratingValues: number[];
+    }) => {
+      const isFiltering = !!userIds.length || !!ratingValues.length;
 
-    if (!isFiltering) {
-      setFilteredImages(images);
-      return;
-    }
-
-    const filteredRatings = Object.values(ratings).filter(
-      ({ user_id, value }) => {
-        const userMatch = !!userIds.length ? userIds.includes(user_id) : true;
-        const ratingMatch = !!ratingValues.length
-          ? ratingValues.includes(value)
-          : true;
-
-        return userMatch && ratingMatch;
+      if (!isFiltering) {
+        setFilteredImages(images);
+        return;
       }
-    );
 
-    const filteredImages = images.filter((image) =>
-      filteredRatings.some((rating) => rating.image_name === image.name)
-    );
+      const filteredRatings = Object.values(ratings).filter(
+        ({ user_id, value }) => {
+          const userMatch = userIds.length ? userIds.includes(user_id) : true;
+          const ratingMatch = ratingValues.length
+            ? ratingValues.includes(value)
+            : true;
 
-    setFilteredImages(filteredImages);
-  };
+          return userMatch && ratingMatch;
+        }
+      );
+
+      const filteredImages = images.filter((image) =>
+        filteredRatings.some((rating) => rating.image_name === image.name)
+      );
+
+      setFilteredImages(filteredImages);
+    },
+    [images, ratings] // deps
+  );
 
   const handleDuplicateImage = async (image: ImageFile) => {
     if (!isCurrentUser || !project) return;
