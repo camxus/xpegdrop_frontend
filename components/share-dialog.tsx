@@ -122,7 +122,7 @@ export function ShareDialog({ project, onClose }: ShareDialogProps) {
 
       {/* Share link */}
       <div className="space-y-2">
-        <Label htmlFor="share-url">Dropbox Share Link</Label>
+        <Label htmlFor="share-url">Share Link</Label>
         <div className="flex gap-2">
           <Input
             id="share-url"
@@ -235,10 +235,10 @@ export function ShareDialog({ project, onClose }: ShareDialogProps) {
 
       {/* Actions */}
       <div className="flex gap-3 pt-4">
-        <Button onClick={handleOpenLink} className="flex-1 gap-2">
+        {/* <Button onClick={handleOpenLink} className="flex-1 gap-2">
           <ExternalLink className="h-4 w-4" />
           Open in Dropbox
-        </Button>
+        </Button> */}
         <Button
           variant="outline"
           onClick={onClose}
