@@ -31,6 +31,7 @@ export default function PublicProjectPage() {
     username: string;
     projectName: string;
   }>();
+  
   const { user } = useAuth();
 
   const isCurrentUser = user?.username === username;
@@ -45,11 +46,11 @@ export default function PublicProjectPage() {
     getProjectByShareUrl,
     updateProject: { mutateAsync: updateProject },
     addProjectFiles: { mutateAsync: addProjectFiles },
+    getProject: { mutateAsync: getProject },
   } = useProjects();
 
   const {
     ratings,
-    foreignRatings,
     getRatings: { mutateAsync: getRatings },
     createRating: { mutateAsync: createRating },
     updateRating: { mutateAsync: updateRating },
@@ -232,14 +233,20 @@ export default function PublicProjectPage() {
     );
   };
 
-  const handleUpdateProject = async (newName: string) => {
+  const handleUpdateProject = async (value: Partial<Project>) => {
     if (!project || !isCurrentUser) return;
     try {
-      const updated = await updateProject({
+      setProject({ ...project, ...value });
+      await updateProject({
         projectId: project.project_id,
-        data: { name: newName },
+        data: value,
       });
+
+      const updated = await getProject(project.project_id);
       setProject({ ...project, ...updated });
+      if (typeof window !== "undefined") {
+        window.history.replaceState(null, "", `/${username}/${updated.name}`);
+      }
     } catch (e) {
       console.error(e);
     }
@@ -355,7 +362,7 @@ export default function PublicProjectPage() {
               <div className="mb-6 space-y-2">
                 <EditableTitle
                   title={project.name}
-                  onSave={handleUpdateProject}
+                  onSave={(value) => handleUpdateProject({ name: value })}
                   editable={isCurrentUser}
                 />
                 {project.description && (

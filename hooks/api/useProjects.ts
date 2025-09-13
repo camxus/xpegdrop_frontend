@@ -21,12 +21,12 @@ export function useProjects() {
     });
 
   // Get single project by id
-  const getProject = async (projectId: string) =>
-    useQuery<Project, Error>({
-      queryKey: ["projects", projectId],
-      queryFn: () => projectsApi.getProject(projectId),
-      enabled: !!projectId,
-    });
+  const getProject = useMutation({
+    mutationFn: (projectId: string) => projectsApi.getProject(projectId),
+    onSuccess: (data: Project) => {
+      queryClient.setQueryData(["projects", data.project_id], data); // cache the project
+    },
+  });
 
   // Get single project by share URL (public route)
   const getProjectByShareUrl = async (

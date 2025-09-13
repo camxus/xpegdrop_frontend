@@ -68,6 +68,7 @@ export function UploadView() {
       data: project,
     },
     updateProject: { mutateAsync: updateProject },
+    getProject: { mutateAsync: getProject },
   } = useProjects();
 
   const {
@@ -111,7 +112,7 @@ export function UploadView() {
   );
 
   const currentFolder = folders[currentFolderIndex];
-  const currentProject = createdProjects[currentFolderIndex]
+  const currentProject = createdProjects[currentFolderIndex];
 
   const handleNewFolders = useCallback(
     async (files: File[]) => {
@@ -135,12 +136,16 @@ export function UploadView() {
             newFolders[folderIndex].name = newName;
           },
           onCancel: hide,
-          onUpload: async (confirmedFolders: Folder[], currentFolderIndex: number) => {
+          onUpload: async (
+            confirmedFolders: Folder[],
+            currentFolderIndex: number
+          ) => {
             setFolders((prev) => [...prev, ...confirmedFolders]);
             setCurrentFolderIndex(confirmedFolders.length ? 0 : 0);
             Promise.all(
               confirmedFolders.map(
-                async (folder) => await handleUploadToDropbox(folder, currentFolderIndex)
+                async (folder) =>
+                  await handleUploadToDropbox(folder, currentFolderIndex)
               )
             );
             hide();
@@ -168,12 +173,15 @@ export function UploadView() {
     async (newName: string) => {
       if (!currentProject) return;
       try {
-        const updatedProject = await updateProject({
+        await updateProject({
           projectId: currentProject.project_id,
           data: {
             name: newName,
           },
         });
+        
+        const updatedProject = await getProject(currentProject.project_id);
+
         setCreatedProjects((prev) =>
           prev.map((proj) =>
             proj.project_id === updatedProject.project_id
@@ -369,7 +377,11 @@ export function UploadView() {
                           onClick={
                             currentProject?.share_url
                               ? handleShare
-                              : () => handleUploadToDropbox(currentFolder, currentFolderIndex)
+                              : () =>
+                                  handleUploadToDropbox(
+                                    currentFolder,
+                                    currentFolderIndex
+                                  )
                           }
                           disabled={isUploading}
                           className="cursor-pointer flex items-center gap-2"
