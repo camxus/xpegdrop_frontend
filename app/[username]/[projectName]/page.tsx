@@ -25,13 +25,14 @@ import { ImagesFilter } from "@/components/images-filter";
 import { BATCH_SIZE, useS3 } from "@/hooks/api/useS3";
 import { S3Location } from "@/types/user";
 import { useDownload } from "@/hooks/useDownload";
+import { Progress } from "@/components/ui/progress";
 
 export default function PublicProjectPage() {
   const { username, projectName } = useParams<{
     username: string;
     projectName: string;
   }>();
-  
+
   const { user } = useAuth();
 
   const isCurrentUser = user?.username === username;
@@ -67,6 +68,7 @@ export default function PublicProjectPage() {
   const [isHovered, setIsHovered] = useState(false);
   const [isCarouselOpen, setIsCarouselOpen] = useState(false);
   const [carouselStartIndex, setCarouselStartIndex] = useState(0);
+  const [projectLoadProgress, setProjectLoadProgress] = useState(0);
 
   const x = useMotionValue(50);
   const y = useMotionValue(50);
@@ -125,7 +127,6 @@ export default function PublicProjectPage() {
             createEmptyImage(img.name, projectName, img.thumbnail_url)
         );
 
-        // set placeholders immediately so UI knows number of slots
         setImages(placeholders);
         setFilteredImages(placeholders);
 
@@ -133,6 +134,8 @@ export default function PublicProjectPage() {
         const result: (ImageFile & { preview_url: string })[] = [
           ...placeholders,
         ];
+
+        let processedCount = 0;
 
         for (let i = 0; i < images.length; i += BATCH_SIZE) {
           const batch = images.slice(i, i + BATCH_SIZE);
@@ -159,7 +162,11 @@ export default function PublicProjectPage() {
           // replace the placeholders at the correct indices
           processedBatch.forEach((processed, index) => {
             result[i + index] = processed;
+            processedCount++;
           });
+
+          // update progress based on processed items
+          setProjectLoadProgress((processedCount / placeholders.length) * 100);
         }
 
         return result;
@@ -204,6 +211,7 @@ export default function PublicProjectPage() {
 
   const handleEmailSubmit = async (email: string) => {
     setIsLoading(true);
+    console.log("trigger 2");
     await loadProject(email);
   };
 
@@ -321,6 +329,7 @@ export default function PublicProjectPage() {
         description: `${image.name} has been added again.`,
       });
 
+      console.log("trigger 2");
       loadProject();
     } catch (err: any) {
       console.error("Failed to duplicate image:", err);
@@ -352,9 +361,18 @@ export default function PublicProjectPage() {
       <div className="container mx-auto px-4 py-8">
         {isLoading ? (
           <div className="flex items-center justify-center h-[80vh]">
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-            </div>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="w-50"
+            >
+              <Progress
+                className="h-2"
+                value={projectLoadProgress}
+                color="white"
+              />
+            </motion.div>
           </div>
         ) : project ? (
           <>

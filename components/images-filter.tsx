@@ -17,14 +17,13 @@ interface ImagesFilterProps {
   }) => void;
 }
 
-export function ImagesFilter({
-  ratings,
-  onFilterChange,
-}: ImagesFilterProps) {
+export function ImagesFilter({ ratings, onFilterChange }: ImagesFilterProps) {
   const { user } = useAuth();
   const usersQueries = useUsers(ratings.map((rating) => rating.user_id));
 
-  const foreignUsers = usersQueries.map((user) => user.data);
+  const uniqueUsers = Array.from(
+    new Map(usersQueries.map((user) => [user.data?.user_id, user.data])).values()
+  );
 
   const [selectedUserIds, setSelectedUserIds] = React.useState<string[]>([]);
   const [selectedRatingValues, setSelectedRatingValues] = React.useState<
@@ -44,8 +43,8 @@ export function ImagesFilter({
       <div className="flex-1 min-w-[100px]">
         <MultiSelect
           className="opacity-[0.5]"
-          disabled={!foreignUsers.length}
-          options={foreignUsers.map((user) => ({
+          disabled={!uniqueUsers.length}
+          options={uniqueUsers.map((user) => ({
             label: (
               <div className="flex items-center gap-2">
                 <Avatar className="h-6 w-6">
