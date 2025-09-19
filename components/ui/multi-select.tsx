@@ -10,7 +10,7 @@ import * as SelectPrimitive from "@radix-ui/react-select";
 import { Check, ChevronDown, X } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 
 type MultiSelectProps = Omit<SelectPrimitive.SelectProps, "value"> & {
   options: { label: string | ReactNode; value: string }[];
@@ -29,6 +29,22 @@ export function MultiSelect({
   className,
   ...props
 }: MultiSelectProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isOverflowing, setIsOverflowing] = useState(false);
+
+  useEffect(() => {
+    const checkOverflow = () => {
+      if (containerRef.current) {
+        const el = containerRef.current;
+        console.log(el)
+        setIsOverflowing(el.scrollWidth > el.clientWidth);
+      }
+    };
+    checkOverflow();
+    window.addEventListener("resize", checkOverflow);
+    return () => window.removeEventListener("resize", checkOverflow);
+  }, [value]);
+
   return (
     <Select
       {...props}
@@ -45,15 +61,17 @@ export function MultiSelect({
       <div className="relative">
         <AnimatePresence>
           <motion.div
-            key={(!!value.length).toString()}
+            ref={containerRef}
+            key={JSON.stringify(value)}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             className={cn(
-              "absolute top-0 bottom-0 flex flex-wrap gap-1 p-2 z-10",
+              "absolute top-0 bottom-0 flex gap-1 p-2 z-10 overflow-hidden",
               className
             )}
+            style={{ width: "calc(100% - 16px - 1rem)" }}
           >
             {value.length > 0 ? (
               value.map((val) => {
@@ -95,6 +113,15 @@ export function MultiSelect({
                 {placeholder}
               </span>
             )}
+            {isOverflowing && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-black/80 to-transparent pointer-events-none"
+              />
+            )}
           </motion.div>
         </AnimatePresence>
         <SelectTrigger className="relative min-h-[40px]">
@@ -105,7 +132,7 @@ export function MultiSelect({
       </div>
 
       <SelectContent>
-        {options.map((option,index) => {
+        {options.map((option, index) => {
           const isSelected = value.includes(option.value);
 
           return (
