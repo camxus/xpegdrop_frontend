@@ -67,7 +67,7 @@ export function GlobalFileUploader({
             accept={{ "image/*": [] }}
             maxFiles={1000}
             directory={directory}
-            className="h-screen w-screen border-2 border-dashed border-primary flex items-center justify-center"
+            className="h-dvh w-screen border-2 border-dashed border-primary flex items-center justify-center"
           >
             <p className="text-lg font-semibold text-center">
               Drop files or folders here

@@ -45,10 +45,6 @@ export function ShareDialog({ project, onClose }: ShareDialogProps) {
     }
   };
 
-  const handleOpenLink = () => {
-    window.open(project.share_url, "_blank", "noopener,noreferrer");
-  };
-
   const handleAddEmail = () => {
     if (!newEmail.trim()) return;
     if (!/\S+@\S+\.\S+/.test(newEmail)) {
@@ -104,7 +100,6 @@ export function ShareDialog({ project, onClose }: ShareDialogProps) {
 
     update();
   }, [isPublic, emails, canDownload]);
-  
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
@@ -235,10 +230,6 @@ export function ShareDialog({ project, onClose }: ShareDialogProps) {
 
       {/* Actions */}
       <div className="flex gap-3 pt-4">
-        {/* <Button onClick={handleOpenLink} className="flex-1 gap-2">
-          <ExternalLink className="h-4 w-4" />
-          Open in Dropbox
-        </Button> */}
         <Button
           variant="outline"
           onClick={onClose}

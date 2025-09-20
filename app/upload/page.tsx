@@ -300,7 +300,7 @@ export function UploadView() {
   if (authUrl.data && !user?.dropbox?.access_token) {
     return (
       <motion.div
-        className={cn("min-h-screen bg-background relative overflow-hidden")}
+        className={cn("min-h-dvh bg-background relative overflow-hidden")}
         onMouseMove={handleGlobalMouseMove}
         style={{
           backgroundColor: "var(--background)",
@@ -311,7 +311,7 @@ export function UploadView() {
           backgroundRepeat: "no-repeat",
         }}
       >
-        <div className="w-full min-h-screen flex flex-col items-center justify-center text-center px-4 space-y-6">
+        <div className="w-full min-h-dvh flex flex-col items-center justify-center text-center px-4 space-y-6">
           <h1 className="text-3xl font-bold text-foreground">
             Connect your Dropbox
           </h1>
@@ -330,7 +330,7 @@ export function UploadView() {
   return (
     <>
       <motion.div
-        className={cn("min-h-screen bg-background relative overflow-hidden")}
+        className={cn("min-h-dvh bg-background relative overflow-hidden")}
         onMouseMove={handleGlobalMouseMove}
         style={{
           backgroundColor: "var(--background)",
@@ -433,7 +433,7 @@ export function UploadView() {
                     accept={{ "image/*": [] }}
                     maxFiles={1000}
                     directory={true}
-                    className="h-screen w-screen max-w-full max-h-full flex items-center justify-center"
+                    className="h-dvh w-screen max-w-full max-h-full flex items-center justify-center"
                   >
                     <div className="text-center space-y-4">
                       <FolderOpen className="h-12 w-12 mx-auto text-muted-foreground" />

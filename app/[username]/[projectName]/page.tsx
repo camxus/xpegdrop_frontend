@@ -347,7 +347,7 @@ export default function PublicProjectPage() {
 
   return (
     <motion.div
-      className="min-h-screen bg-background relative overflow-hidden"
+      className="min-h-dvh bg-background relative overflow-hidden"
       onMouseMove={handleMouseMove}
       style={{
         backgroundColor: "var(--background)",

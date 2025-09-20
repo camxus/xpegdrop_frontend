@@ -76,7 +76,7 @@ export function HomePage() {
 
   return (
     <motion.div
-      className="min-h-screen bg-background relative overflow-hidden flex flex-col items-center justify-center"
+      className="min-h-dvh bg-background relative overflow-hidden flex flex-col items-center justify-center"
       onMouseMove={handleGlobalMouseMove}
       style={{
         backgroundColor: "var(--background)",

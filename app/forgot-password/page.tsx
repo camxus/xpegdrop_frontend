@@ -106,7 +106,7 @@ export default function ForgotPasswordPage() {
   switch (step) {
     case "request":
       return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-black to-slate-900 flex items-center justify-center p-4">
+        <div className="min-h-dvh bg-gradient-to-br from-slate-900 via-black to-slate-900 flex items-center justify-center p-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -164,7 +164,7 @@ export default function ForgotPasswordPage() {
 
     case "confirm":
       return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-black to-slate-900 flex items-center justify-center p-4">
+        <div className="min-h-dvh bg-gradient-to-br from-slate-900 via-black to-slate-900 flex items-center justify-center p-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}

@@ -112,7 +112,7 @@ export function SiteHeader({ children }: SiteHeaderProps) {
   if (!user?.user_id) return <>{children}</>;
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-dvh">
       {/* Sidebar */}
       <motion.div
         initial={{ width: 0, opacity: 0 }}
