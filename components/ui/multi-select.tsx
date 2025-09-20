@@ -36,7 +36,6 @@ export function MultiSelect({
     const checkOverflow = () => {
       if (containerRef.current) {
         const el = containerRef.current;
-        console.log(el)
         setIsOverflowing(el.scrollWidth > el.clientWidth);
       }
     };
@@ -69,9 +68,10 @@ export function MultiSelect({
             transition={{ duration: 0.2 }}
             className={cn(
               "absolute top-0 bottom-0 flex gap-1 p-2 z-10 overflow-hidden",
+              !value.length && "w-full pointer-events-none",
               className
             )}
-            style={{ width: "calc(100% - 16px - 1rem)" }}
+            style={{ maxWidth: "calc(100% - 16px - 1rem)" }}
           >
             {value.length > 0 ? (
               value.map((val) => {
