@@ -4,8 +4,8 @@ import { useState, memo, useCallback, useEffect } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import type { ImageFile } from "@/types";
-import { StarRatingSlider } from "./star-rating-slider";
-import { Rating } from "@/lib/api/ratingsApi";
+import StarRatingSlider from "./star-rating-slider";
+import { Rating, ratingsApi } from "@/lib/api/ratingsApi";
 import { useAuth } from "@/hooks/api/useAuth";
 import { getLocalStorage } from "@/lib/localStorage";
 import { LOCAL_RATINGS_STORAGE_KEY } from "@/hooks/api/useRatings";
@@ -38,7 +38,7 @@ export function PinterestGrid({
   onImageClick,
   onImageHoverChange,
   onRatingChange,
-  onDuplicateImage
+  onDuplicateImage,
 }: PinterestGridProps) {
   const { user } = useAuth();
   const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
@@ -84,7 +84,7 @@ export function PinterestGrid({
     [onRatingChange]
   );
 
-    const handleDuplicateImage = useCallback(
+  const handleDuplicateImage = useCallback(
     (image: ImageFile) => {
       onDuplicateImage?.(image);
     },
@@ -94,6 +94,8 @@ export function PinterestGrid({
   const localRatings =
     ratings?.[0]?.project_id &&
     (getLocalStorage(LOCAL_RATINGS_STORAGE_KEY) || {})[ratings?.[0].project_id];
+  const imageRatings = (image: ImageFile) =>
+    ratings?.filter((rating) => rating.image_name === image.name) || [];
 
   const rating = (image: ImageFile) =>
     (ratings?.find(
@@ -113,6 +115,7 @@ export function PinterestGrid({
         <PinterestImage
           disabled={ratingDisabled}
           key={image.id}
+          ratings={imageRatings(image)}
           rating={rating(image)}
           image={image}
           index={index}
@@ -138,15 +141,17 @@ const PinterestImage = memo(function PinterestImage({
   index,
   isHovered,
   isLoaded,
+  ratings,
   rating,
   onHover,
   onLeave,
   onClick,
   onLoad,
   onRatingChange,
-  onDuplicateImage
+  onDuplicateImage,
 }: {
   disabled: boolean;
+  ratings: Rating[];
   rating: Rating;
   image: ImageFile;
   index: number;
@@ -157,7 +162,7 @@ const PinterestImage = memo(function PinterestImage({
   onClick: () => void;
   onLoad: () => void;
   onRatingChange: (value: number, ratingId?: string) => void;
-  onDuplicateImage: (image: ImageFile) => void
+  onDuplicateImage: (image: ImageFile) => void;
 }) {
   const [editOpen, setEditOpen] = useState(false);
 
@@ -223,6 +228,7 @@ const PinterestImage = memo(function PinterestImage({
         <StarRatingSlider
           disabled={disabled}
           value={rating.value || 0}
+          ratings={ratings}
           onRatingChange={(value) => onRatingChange(value, rating.rating_id)}
           className="w-full flex justify-center mt-1"
         />
