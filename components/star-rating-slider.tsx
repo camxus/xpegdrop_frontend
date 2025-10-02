@@ -9,15 +9,16 @@ import {
   AvatarImage,
   AvatarFallback,
   AvatarGroup,
-} from "@/components/ui/avatar"; // adjust path
+} from "@/components/ui/avatar";
 import { useUsers } from "@/hooks/api/useUser";
 import { Rating } from "@/lib/api/ratingsApi";
 import { useAuth } from "@/hooks/api/useAuth";
+import { AnimatePresence, motion } from "framer-motion";
 
 interface RatingSliderProps {
   value: number;
   onRatingChange: (rating: number) => void;
-  ratings?: Rating[]; // pass userIds here instead of JSX
+  ratings?: Rating[];
   showBullets?: boolean;
   className?: string;
   disabled?: boolean;
@@ -34,11 +35,10 @@ export default function StarRatingWithAvatars({
   disabled,
 }: RatingSliderProps) {
   const { user } = useAuth();
-
   const [hoverRating, setHoverRating] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // fetch users
+  // fetch users excluding current user
   const queries = useUsers(
     ratings
       ?.map((rating) => rating.user_id)
@@ -46,7 +46,7 @@ export default function StarRatingWithAvatars({
   );
 
   const users = Array.from(
-    new Map(queries.map((user) => [user.data?.user_id, user.data])).values()
+    new Map(queries.map((u) => [u.data?.user_id, u.data])).values()
   );
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -62,6 +62,50 @@ export default function StarRatingWithAvatars({
 
   const displayRating = hoverRating || value;
 
+  // group users by star rating
+  const usersByStar = Array.from(
+    { length: STAR_AMOUNT },
+    (_, i) => STAR_AMOUNT - i
+  ).map((starRating) => ({
+    starRating,
+    users: users.filter((user) =>
+      ratings?.some(
+        (r) => r.user_id === user?.user_id && r.value === starRating
+      )
+    ),
+  }));
+
+  function renderStars(ratingValue: number, showBullets = true) {
+    return (
+      <div className="flex items-center gap-1">
+        {Array.from({ length: STAR_AMOUNT }, (_, i) => i + 1).map((star) => {
+          const isFilled = star <= ratingValue;
+
+          return (
+            <AnimatePresence mode="popLayout" key={star}>
+              <motion.div
+                key={`${star}-${isFilled ? "filled" : "empty"}`}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                transition={{ duration: 0.25 }}
+                className="flex items-center"
+              >
+                {isFilled ? (
+                  <Star className="w-3 h-3 fill-white text-white" />
+                ) : showBullets ? (
+                  <Dot className="w-3 h-3 rounded-full fill-white" />
+                ) : (
+                  <Star className="w-4 h-4 text-muted-foreground/30" />
+                )}
+              </motion.div>
+            </AnimatePresence>
+          );
+        })}
+      </div>
+    );
+  }
+  
   return (
     <div
       className={cn(
@@ -70,6 +114,7 @@ export default function StarRatingWithAvatars({
         disabled && "opacity-50 pointer-events-none"
       )}
     >
+      {/* Star rating */}
       <div
         ref={containerRef}
         className="flex items-center gap-1 cursor-pointer select-none"
@@ -77,29 +122,10 @@ export default function StarRatingWithAvatars({
         onMouseLeave={handleMouseLeave}
         onMouseDown={handleClick}
       >
-        {Array.from({ length: STAR_AMOUNT }, (_, i) => i + 1).map((star) => (
-          <div key={star}>
-            {star <= displayRating ? (
-              <Star
-                className={cn(
-                  "w-3 h-3 transition-colors duration-150",
-                  "fill-white text-white"
-                )}
-              />
-            ) : showBullets ? (
-              <Dot
-                width={10}
-                height={10}
-                className="w-3 h-3 rounded-full fill-white transition-colors duration-150"
-              />
-            ) : (
-              <Star className="w-4 h-4 text-muted-foreground/30 transition-colors duration-150" />
-            )}
-          </div>
-        ))}
+        {renderStars(displayRating, showBullets)}
       </div>
 
-      {/* Avatars to the right */}
+      {/* AvatarGroup with tooltip showing users per star */}
       {!!users.length && (
         <AvatarGroup
           size="xs"
@@ -113,61 +139,30 @@ export default function StarRatingWithAvatars({
           }))}
           tooltipContent={() => (
             <div className="flex flex-col p-2 space-y-2 bg-black/90 rounded-md">
-              {Array.from({ length: STAR_AMOUNT }, (_, i) => i + 1)
-                .reverse()
-                .map((starRating) => {
-                  const usersForStar = users.filter((user) =>
-                    ratings?.some(
-                      (r) =>
-                        r.user_id === user?.user_id && r.value === starRating
-                    )
-                  );
+              {usersByStar.map(({ starRating, users }) => {
+                if (!users.length) return null;
 
-                  if (!usersForStar.length) return null;
-
-                  return (
-                    <div key={starRating} className="flex flex-col space-y-1">
-                      <div className="flex items-center space-x-2">
-                        <div className="flex">
-                          {Array.from(
-                            { length: STAR_AMOUNT },
-                            (_, i) => i + 1
-                          ).map((star) => (
-                            <div key={star}>
-                              {star <= starRating ? (
-                                <Star
-                                  className={cn(
-                                    "w-3 h-3 transition-colors duration-150",
-                                    "fill-white text-white"
-                                  )}
-                                />
-                              ) : showBullets ? (
-                                <Dot
-                                  width={10}
-                                  height={10}
-                                  className="w-3 h-3 rounded-full fill-white transition-colors duration-150"
-                                />
-                              ) : (
-                                <Star className="w-4 h-4 text-muted-foreground/30 transition-colors duration-150" />
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                        <AvatarGroup
-                          size="xs"
-                          users={usersForStar.map((user) => ({
-                            id: user?.user_id || "",
-                            name: getInitials(
-                              user?.first_name || "",
-                              user?.last_name || ""
-                            ),
-                            src: user?.avatar as string,
-                          }))}
-                        />
+                return (
+                  <div key={starRating} className="flex flex-col space-y-1">
+                    <div className="flex items-center space-x-2">
+                      <div className="flex">
+                        {renderStars(starRating, showBullets)}
                       </div>
+                      <AvatarGroup
+                        size="xs"
+                        users={users.map((user) => ({
+                          id: user?.user_id || "",
+                          name: getInitials(
+                            user?.first_name || "",
+                            user?.last_name || ""
+                          ),
+                          src: user?.avatar as string,
+                        }))}
+                      />
                     </div>
-                  );
-                })}
+                  </div>
+                );
+              })}
             </div>
           )}
         />
