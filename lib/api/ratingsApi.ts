@@ -20,7 +20,7 @@ export const ratingsApi = {
 
   // Get all ratings for a project
   getRatings: async (projectId: string) => {
-    return await api.get<{ ratings: Rating[]; total: number }>(
+    return await api.get<{ ratings: Rating[]}>(
       `/ratings/${projectId}`
     );
   },

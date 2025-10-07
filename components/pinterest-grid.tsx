@@ -18,8 +18,11 @@ import {
   ContextMenuContent,
 } from "./ui/context-menu";
 import { EditImageView } from "./edit-image";
+import { useModal } from "@/hooks/use-modal";
+import { NotesModal } from "./notes-modal";
 
 interface PinterestGridProps {
+  projectId: string;
   ratingDisabled?: boolean;
   images: ImageFile[];
   ratings?: Rating[];
@@ -31,6 +34,7 @@ interface PinterestGridProps {
 }
 
 export function PinterestGrid({
+  projectId,
   ratingDisabled = false,
   images,
   ratings,
@@ -41,6 +45,7 @@ export function PinterestGrid({
   onDuplicateImage,
 }: PinterestGridProps) {
   const { user } = useAuth();
+
   const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
   const [hoveredImage, setHoveredImage] = useState<string | null>(null);
 
@@ -113,6 +118,7 @@ export function PinterestGrid({
     >
       {images.map((image: ImageFile, index: number) => (
         <PinterestImage
+          projectId={projectId}
           disabled={ratingDisabled}
           key={image.id}
           ratings={imageRatings(image)}
@@ -136,6 +142,7 @@ export function PinterestGrid({
 }
 
 const PinterestImage = memo(function PinterestImage({
+  projectId,
   disabled,
   image,
   index,
@@ -150,6 +157,7 @@ const PinterestImage = memo(function PinterestImage({
   onRatingChange,
   onDuplicateImage,
 }: {
+  projectId: string;
   disabled: boolean;
   ratings: Rating[];
   rating: Rating;
@@ -164,7 +172,20 @@ const PinterestImage = memo(function PinterestImage({
   onRatingChange: (value: number, ratingId?: string) => void;
   onDuplicateImage: (image: ImageFile) => void;
 }) {
+  const { show } = useModal();
+
   const [editOpen, setEditOpen] = useState(false);
+
+  const handleShowNotes = (image: ImageFile) => {
+    show({
+      title: `Notes`,
+      content: () => (
+        <NotesModal projectId={projectId} imageName={image.name} />
+      ),
+      height: "400px",
+      width: "500px",
+    });
+  };
 
   return (
     <>
@@ -215,10 +236,14 @@ const PinterestImage = memo(function PinterestImage({
             <ContextMenuItem onClick={() => onDuplicateImage(image)}>
               Duplicate (beta)
             </ContextMenuItem>
+            <ContextMenuSeparator />
+            <ContextMenuItem onClick={() => handleShowNotes(image)}>
+              Show Notes
+            </ContextMenuItem>
+            {/* <ContextMenuSeparator /> */}
             {/* <ContextMenuItem onClick={() => console.log("Delete", image.id)}>
             Delete
           </ContextMenuItem> */}
-            {/* <ContextMenuSeparator /> */}
           </ContextMenuContent>
         </ContextMenu>
 

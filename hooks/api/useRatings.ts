@@ -35,7 +35,7 @@ export function useRatings() {
   const getRatings = useMutation({
     mutationFn: async (projectId?: string) => {
       if (!projectId) return [];
-      const data = await api.get(`/ratings/${projectId}`);
+      const data = await ratingsApi.getRatings(projectId);
       return data;
     },
     onSuccess: (data, projectId) => {
@@ -45,7 +45,9 @@ export function useRatings() {
 
       const localData = getLocalStorage(LOCAL_RATINGS_STORAGE_KEY) || {};
 
-      return setRatings([...data.ratings, ...(localData[projectId] || [])].filter(
+      const ratingsArray: Rating[] = Array.isArray(data) ? data : data.ratings || [];
+
+      return setRatings([...ratingsArray, ...(localData[projectId] || [])].filter(
         (rating, index, self) =>
           index === self.findIndex((r) => r.rating_id === rating.rating_id)
       ));

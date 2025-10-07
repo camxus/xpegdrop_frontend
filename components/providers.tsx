@@ -7,6 +7,7 @@ import { useState } from "react";
 import { ThemeProvider } from "@/components/theme-provider";
 import { DialogProvider } from "@/components/dialog-provider";
 import { Toaster } from "./ui/toaster";
+import { ModalProvider } from "./modal-provider";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
@@ -19,7 +20,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
         enableSystem
         disableTransitionOnChange
       >
-        <DialogProvider>{children}</DialogProvider>
+        <ModalProvider>
+          <DialogProvider>{children}</DialogProvider>
+        </ModalProvider>
         <Toaster />
       </ThemeProvider>
     </QueryClientProvider>

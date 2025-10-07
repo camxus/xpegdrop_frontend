@@ -9,7 +9,7 @@ import { PinterestGrid } from "@/components/pinterest-grid";
 import { FolderNavigation } from "@/components/folder-navigation";
 import { EditableTitle } from "@/components/editable-title";
 import { useToast } from "@/hooks/use-toast";
-import { processFolderUpload } from "@/lib/utils/file-utils";
+import { createImageFile, processFolderUpload } from "@/lib/utils/file-utils";
 import { Upload, FolderOpen, Share2, UploadIcon } from "lucide-react";
 import type { Folder } from "@/types";
 import { ImageCarousel } from "@/components/image-carousel";
@@ -69,6 +69,7 @@ export function UploadView() {
     },
     updateProject: { mutateAsync: updateProject },
     getProject: { mutateAsync: getProject },
+    addProjectFiles: { mutateAsync: addProjectFiles },
   } = useProjects();
 
   const {
@@ -144,8 +145,62 @@ export function UploadView() {
             setCurrentFolderIndex(confirmedFolders.length ? 0 : 0);
             Promise.all(
               confirmedFolders.map(
+                async (folder) => await handleUpload(folder, currentFolderIndex)
+              )
+            );
+            hide();
+          },
+        },
+        actions: FolderPreviewActions,
+      });
+    },
+    [project, isUploading]
+  );
+
+  const handleAddNewFolders = useCallback(
+    async (files: File[]) => {
+      if (files.length === 0) {
+        toast({
+          title: "No Images Found",
+          description: "Please upload folders containing image files.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Using a Map instead of an object
+      const mockFolder = new Map<string, File[]>();
+      mockFolder.set(project?.name || "Untitled Project", files);
+
+      const folderArray = Array.from(mockFolder.entries()).map(
+        ([folderName, folderFiles]) => ({
+          id: `folder-${folderName}-${Date.now()}`,
+          name: folderName,
+          images: folderFiles.map((file) => createImageFile(file, folderName)),
+          createdAt: new Date(),
+        })
+      );
+
+      show({
+        title: "Review Folders",
+        content: FolderPreviewContent,
+        contentProps: {
+          editable: !!project || !isUploading,
+          folders: folderArray,
+          onRename: (folderIndex: number, newName: string) => {
+            folderArray[folderIndex].name = newName;
+          },
+          onCancel: hide,
+          onUpload: async (
+            confirmedFolders: Folder[],
+            currentFolderIndex: number
+          ) => {
+            setFolders((prev) => [...prev, ...confirmedFolders]);
+            setCurrentFolderIndex(confirmedFolders.length ? 0 : 0);
+            Promise.all(
+              confirmedFolders.map(
                 async (folder) =>
-                  await handleUploadToDropbox(folder, currentFolderIndex)
+                  await handleAddProjectFiles(folder, currentFolderIndex)
               )
             );
             hide();
@@ -179,7 +234,7 @@ export function UploadView() {
             name: newName,
           },
         });
-        
+
         const updatedProject = await getProject(currentProject.project_id);
 
         setCreatedProjects((prev) =>
@@ -209,8 +264,8 @@ export function UploadView() {
   const handleNextFolder = () =>
     setCurrentFolderIndex((prev) => Math.min(folders.length - 1, prev + 1));
 
-  const handleUploadToDropbox = async (folder: Folder, folderIndex = 0) => {
-    const uploadFolder = currentFolder || folder;
+  const handleUpload = async (folder: Folder, folderIndex = 0) => {
+    const uploadFolder = folder || currentFolder;
     if (!uploadFolder) return;
     try {
       const imageFiles = uploadFolder.images.map((img) => img.file);
@@ -230,6 +285,21 @@ export function UploadView() {
         updatedProjects[folderIndex] = project;
         return updatedProjects;
       });
+    } catch {}
+  };
+
+  const handleAddProjectFiles = async (folder: Folder, folderIndex = 0) => {
+    const uploadFolder = folder || currentFolder;
+    if (!uploadFolder || !project) return;
+    try {
+      const imageFiles = uploadFolder.images.map((img) => img.file);
+      const tempFileLocations = await uploadFiles(imageFiles);
+      await addProjectFiles({
+        projectId: project?.project_id,
+        file_locations: tempFileLocations,
+      });
+
+      await getProject(currentProject.project_id);
     } catch {}
   };
 
@@ -346,6 +416,11 @@ export function UploadView() {
             case true:
               return (
                 <>
+                  <GlobalFileUploader
+                    onFilesSelected={handleAddNewFolders}
+                    directory={true}
+                  />
+
                   <div className="container mx-auto px-4 py-8">
                     <div className="mb-8">
                       <div className="space-y-4">
@@ -378,7 +453,7 @@ export function UploadView() {
                             currentProject?.share_url
                               ? handleShare
                               : () =>
-                                  handleUploadToDropbox(
+                                  handleUpload(
                                     currentFolder,
                                     currentFolderIndex
                                   )
@@ -402,6 +477,7 @@ export function UploadView() {
                       </div>
 
                       <PinterestGrid
+                        projectId={project?.project_id || ""}
                         images={currentFolder.images}
                         ratings={ratings}
                         onImageClick={handleImageClick}

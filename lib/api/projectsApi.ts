@@ -35,7 +35,7 @@ export const projectsApi = {
   // Update project by ID
   updateProject: async (
     projectId: string,
-    data: Partial<{ name: string; description: string }>
+    data: Partial<Project>
   ) => {
     return await api.put(`/projects/${projectId}`, data);
   },

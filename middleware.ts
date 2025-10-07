@@ -4,7 +4,7 @@ import { TOKEN_KEY } from "./lib/api/token";
 
 // Define public routes that don't require authentication
 const publicRoutes = ["/", "/login", "/signup"];
-const authorizedRoutes = ["/upload"];
+const authorizedRoutes = ["/new"];
 
 function isPublicPath(pathname: string): boolean {
   // Dynamic username route match — adjust if you have stricter rules
@@ -72,7 +72,7 @@ export function middleware(request: NextRequest) {
 
   if (isAuthRoute && isAuthenticated) {
     const url = request.nextUrl.clone();
-    url.pathname = "/upload"; // keep qs intact
+    url.pathname = "/new"; // keep qs intact
     return NextResponse.redirect(url);
   }
 

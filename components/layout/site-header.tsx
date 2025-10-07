@@ -252,7 +252,7 @@ export function SiteHeader({ children }: SiteHeaderProps) {
           </div>
           {/* Avatar at the bottom */}
           <div className="mt-4 pt-4 border-t border-white/10 place-items-start">
-            <Link href={"/upload"}>
+            <Link href={"/new"}>
               <Button className="mb-4 ml-1 w-full">
                 <PlusSquare width={24} height={24}/>
                 <motion.span

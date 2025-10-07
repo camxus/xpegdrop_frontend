@@ -8,7 +8,7 @@ import { useProjects } from "@/hooks/api/useProjects";
 import { useRatings } from "@/hooks/api/useRatings";
 import { useToast } from "@/hooks/use-toast";
 import { useDialog } from "@/hooks/use-dialog";
-import type { ImageFile } from "@/types";
+import type { Folder, ImageFile } from "@/types";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -26,6 +26,11 @@ import { BATCH_SIZE, useS3 } from "@/hooks/api/useS3";
 import { S3Location } from "@/types/user";
 import { useDownload } from "@/hooks/useDownload";
 import { Progress } from "@/components/ui/progress";
+import { GlobalFileUploader } from "@/components/global-file-uploader";
+import {
+  FolderPreviewActions,
+  FolderPreviewContent,
+} from "@/components/folder-preview-dialog";
 
 export default function PublicProjectPage() {
   const { username, projectName } = useParams<{
@@ -56,6 +61,8 @@ export default function PublicProjectPage() {
     createRating: { mutateAsync: createRating },
     updateRating: { mutateAsync: updateRating },
   } = useRatings();
+
+  const { uploadFiles, isUploading: isUploadingToS3 } = useS3();
 
   const [project, setProject] = useState<Project | null>(null);
   const [images, setImages] = useState<
@@ -260,6 +267,74 @@ export default function PublicProjectPage() {
     }
   };
 
+  const handleAddProjectFiles = async (folder: Folder, folderIndex = 0) => {
+    const uploadFolder = folder;
+    if (!uploadFolder || !project) return;
+    try {
+      const imageFiles = uploadFolder.images.map((img) => img.file);
+      const tempFileLocations = await uploadFiles(imageFiles);
+      await addProjectFiles({
+        projectId: project?.project_id,
+        file_locations: tempFileLocations,
+      });
+
+      await getProject(project.project_id);
+    } catch {}
+  };
+
+  const handleAddNewFolders = useCallback(
+    async (files: File[]) => {
+      if (files.length === 0) {
+        toast({
+          title: "No Images Found",
+          description: "Please upload folders containing image files.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Using a Map instead of an object
+      const mockFolder = new Map<string, File[]>();
+      mockFolder.set(project?.name || "Untitled Project", files);
+
+      const folderArray = Array.from(mockFolder.entries()).map(
+        ([folderName, folderFiles]) => ({
+          id: `folder-${folderName}-${Date.now()}`,
+          name: folderName,
+          images: folderFiles.map((file) => createImageFile(file, folderName)),
+          createdAt: new Date(),
+        })
+      );
+
+      show({
+        title: "Review Folders",
+        content: FolderPreviewContent,
+        contentProps: {
+          editable: !!project,
+          folders: folderArray,
+          onRename: (folderIndex: number, newName: string) => {
+            folderArray[folderIndex].name = newName;
+          },
+          onCancel: hide,
+          onUpload: async (
+            confirmedFolders: Folder[],
+            currentFolderIndex: number
+          ) => {
+            Promise.all(
+              confirmedFolders.map(
+                async (folder) =>
+                  await handleAddProjectFiles(folder, currentFolderIndex)
+              )
+            );
+            hide();
+          },
+        },
+        actions: FolderPreviewActions,
+      });
+    },
+    [project]
+  );
+
   const handleShare = () => {
     if (!project) return;
     if (!isCurrentUser) return;
@@ -346,99 +421,110 @@ export default function PublicProjectPage() {
   }, []);
 
   return (
-    <motion.div
-      className="min-h-dvh bg-background relative overflow-hidden"
-      onMouseMove={handleMouseMove}
-      style={{
-        backgroundColor: "var(--background)",
-        backgroundImage: gradient,
-        backgroundAttachment: "fixed",
-        backgroundPosition: `${springX.get()}% ${springY.get()}%`,
-        backgroundSize: "cover",
-        backgroundRepeat: "no-repeat",
-      }}
-    >
-      <div className="container mx-auto px-4 py-8">
-        {isLoading ? (
-          <div className="flex items-center justify-center h-[80vh]">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
-              className="w-50"
-            >
-              <Progress
-                className="h-2"
-                value={projectLoadProgress}
-                color="white"
-              />
-            </motion.div>
-          </div>
-        ) : project ? (
-          <>
-            <div className="mb-6 block md:flex items-center justify-between">
-              <div className="mb-6 space-y-2">
-                <EditableTitle
-                  title={project.name}
-                  onSave={(value) => handleUpdateProject({ name: value })}
-                  editable={isCurrentUser}
+    <>
+      <GlobalFileUploader
+        onFilesSelected={handleAddNewFolders}
+        directory={true}
+      />
+
+      <motion.div
+        className="min-h-dvh bg-background relative overflow-hidden"
+        onMouseMove={handleMouseMove}
+        style={{
+          backgroundColor: "var(--background)",
+          backgroundImage: gradient,
+          backgroundAttachment: "fixed",
+          backgroundPosition: `${springX.get()}% ${springY.get()}%`,
+          backgroundSize: "cover",
+          backgroundRepeat: "no-repeat",
+        }}
+      >
+        <div className="container mx-auto px-4 py-8">
+          {isLoading ? (
+            <div className="flex items-center justify-center h-[80vh]">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+                className="w-50"
+              >
+                <Progress
+                  className="h-2"
+                  value={projectLoadProgress}
+                  color="white"
                 />
-                {project.description && (
-                  <p className="text-muted-foreground">{project.description}</p>
-                )}
-                <p className="text-sm text-muted-foreground">
-                  Created on {new Date(project.created_at).toLocaleDateString()}
-                </p>
-              </div>
-              <div className="flex gap-2 md:ml-0 ml-auto w-fit">
-                {(project.can_download || isCurrentUser) && (
-                  <Button disabled={isDownloading} onClick={handleDownload}>
-                    <Download className="h-4 w-4" />
-                    Download
-                  </Button>
-                )}
-                {project.share_url && isCurrentUser && (
-                  <Button
-                    onClick={handleShare}
-                    className="cursor-pointer flex items-center gap-2"
-                  >
-                    <Share2 className="h-4 w-4" /> Share
-                  </Button>
-                )}
-              </div>
+              </motion.div>
             </div>
+          ) : project ? (
+            <>
+              <div className="mb-6 block md:flex items-center justify-between">
+                <div className="mb-6 space-y-2">
+                  <EditableTitle
+                    title={project.name}
+                    onSave={(value) => handleUpdateProject({ name: value })}
+                    editable={isCurrentUser}
+                  />
+                  {project.description && (
+                    <p className="text-muted-foreground">
+                      {project.description}
+                    </p>
+                  )}
+                  <p className="text-sm text-muted-foreground">
+                    Created on{" "}
+                    {new Date(project.created_at).toLocaleDateString()}
+                  </p>
+                </div>
+                <div className="flex gap-2 md:ml-0 ml-auto w-fit">
+                  {(project.can_download || isCurrentUser) && (
+                    <Button disabled={isDownloading} onClick={handleDownload}>
+                      <Download className="h-4 w-4" />
+                      Download
+                    </Button>
+                  )}
+                  {project.share_url && isCurrentUser && (
+                    <Button
+                      onClick={handleShare}
+                      className="cursor-pointer flex items-center gap-2"
+                    >
+                      <Share2 className="h-4 w-4" /> Share
+                    </Button>
+                  )}
+                </div>
+              </div>
 
-            <ImagesFilter
-              ratings={ratings}
-              onFilterChange={handleFilterChange}
-            />
+              <ImagesFilter
+                ratings={ratings}
+                onFilterChange={handleFilterChange}
+              />
 
-            <PinterestGrid
-              ratingDisabled={!project}
-              images={filteredImages}
-              ratings={ratings}
-              onImageClick={(i) => {
-                setCarouselStartIndex(i);
-                setIsCarouselOpen(true);
-              }}
-              onRatingChange={handleRatingChange}
-              onImageHoverChange={(hover) => setIsHovered(hover)}
-              onDuplicateImage={handleDuplicateImage}
-            />
-            <ImageCarousel
-              images={filteredImages}
-              initialIndex={carouselStartIndex}
-              isOpen={isCarouselOpen}
-              onClose={() => setIsCarouselOpen(false)}
-            />
-          </>
-        ) : (
-          <div className="text-center text-muted-foreground">
-            Project not found
-          </div>
-        )}
-      </div>
-    </motion.div>
+              <PinterestGrid
+                projectId={project.project_id}
+                ratingDisabled={!project}
+                images={filteredImages}
+                ratings={ratings}
+                onImageClick={(i) => {
+                  setCarouselStartIndex(i);
+                  setIsCarouselOpen(true);
+                }}
+                onRatingChange={handleRatingChange}
+                onImageHoverChange={(hover) => setIsHovered(hover)}
+                onDuplicateImage={handleDuplicateImage}
+              />
+              <ImageCarousel
+                images={filteredImages}
+                initialIndex={carouselStartIndex}
+                isOpen={isCarouselOpen}
+                onClose={() => setIsCarouselOpen(false)}
+              />
+            </>
+          ) : (
+            <div className="text-center text-muted-foreground">
+              Project not found
+            </div>
+          )}
+        </div>
+      </motion.div>
+    </>
   );
 }
 
