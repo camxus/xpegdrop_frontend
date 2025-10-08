@@ -43,34 +43,24 @@ export function NotesModal({ projectId, imageName }: NotesViewProps) {
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
 
   useEffect(() => {
-    getNotes(imageName);
+    getNotes({ projectId, imageName });
   }, [imageName]);
 
   const handleCreateOrUpdate = async () => {
     if (!noteContent.trim()) return;
 
     if (editingNoteId) {
-      const updated = await updateNote({
+      await updateNote({
         noteId: editingNoteId,
         content: noteContent,
       });
-      // Update local state
-      setNotes((prev) =>
-        prev.map((note) =>
-          note.note_id === editingNoteId
-            ? { ...note, content: updated.content }
-            : note
-        )
-      );
       setEditingNoteId(null);
     } else {
-      const created = await createNote({
+      await createNote({
         project_id: projectId,
         image_name: imageName,
         content: noteContent,
       });
-      // Add new note to local state
-      setNotes((prev) => [...prev, created]);
     }
 
     setNoteContent("");

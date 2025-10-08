@@ -17,8 +17,8 @@ export const notesApi = {
   },
 
   // Get all notes for a project
-  getNotes: async (projectId: string) => {
-    return await api.get<{ notes: Note[]; total: number }>(`/notes/${projectId}`);
+  getNotes: async (projectId: string, imageName: string) => {
+    return await api.get<{ notes: Note[]; total: number }>(`/notes/${projectId}/${imageName}`);
   },
 
   // Update a note by ID

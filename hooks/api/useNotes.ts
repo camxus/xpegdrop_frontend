@@ -15,9 +15,9 @@ export function useNotes() {
   const [notes, setNotes] = useState<Note[]>([]);
   const { toast } = useToast();
 
-  const saveLocalNotes = (projectId: string, notes: Note[]) => {
+  const saveLocalNotes = (projectId: string, imageName: string, notes: Note[]) => {
     const localData = getLocalStorage(LOCAL_NOTES_STORAGE_KEY) || {};
-    localData[projectId] = notes;
+    localData[projectId][imageName] = notes;
     setLocalStorage(LOCAL_NOTES_STORAGE_KEY, localData);
   };
 
@@ -33,12 +33,12 @@ export function useNotes() {
 
   // Mutation: Get notes
   const getNotes = useMutation({
-    mutationFn: async (projectId?: string) => {
+    mutationFn: async ({ projectId, imageName }: { projectId: string, imageName: string }) => {
       if (!projectId) return [];
-      const data = await notesApi.getNotes(projectId);
-      return data;
+      const res = await notesApi.getNotes(projectId, imageName);
+      return res;
     },
-    onSuccess: (data, projectId) => {
+    onSuccess: (data, { projectId, imageName }) => {
       if (!data || !projectId) return;
 
       const localData = getLocalStorage(LOCAL_NOTES_STORAGE_KEY) || {};
@@ -47,7 +47,7 @@ export function useNotes() {
 
       setNotes([
         ...notesArray,
-        ...(localData[projectId] || [])
+        ...(localData[projectId][imageName || ""] || [])
       ].filter((note, index, self) =>
         index === self.findIndex((n) => n.note_id === note.note_id)
       ));
@@ -65,7 +65,7 @@ export function useNotes() {
       const updated = [...notes, data];
       setNotes(updated);
 
-      if (!user?.user_id && projectId) saveLocalNotes(projectId, updated);
+      if (!user?.user_id && projectId) saveLocalNotes(projectId, data.image_name, updated);
 
       queryClient.invalidateQueries({ queryKey: ["notes", projectId] });
       toast({
@@ -96,7 +96,7 @@ export function useNotes() {
       const updated = notes.map(n => (n.note_id === noteId ? { ...n, content: variables.content } : n));
       setNotes(updated);
 
-      if (!user?.user_id && updated[0]?.project_id) saveLocalNotes(updated[0].project_id, updated);
+      if (!user?.user_id && updated[0]?.project_id) saveLocalNotes(updated[0].project_id, updated[0].image_name, updated);
 
       queryClient.invalidateQueries({ queryKey: ["notes", updated[0]?.project_id] });
       toast({
