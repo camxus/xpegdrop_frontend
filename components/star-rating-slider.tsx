@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { cn, getInitials } from "@/lib/utils";
 import { Dot, Star } from "lucide-react";
 import {
@@ -14,6 +14,7 @@ import { useUsers } from "@/hooks/api/useUser";
 import { Rating } from "@/lib/api/ratingsApi";
 import { useAuth } from "@/hooks/api/useAuth";
 import { AnimatePresence, motion } from "framer-motion";
+import { useNotes } from "@/hooks/api/useNotes";
 
 interface RatingSliderProps {
   value: number;
@@ -35,6 +36,7 @@ export default function StarRatingWithAvatars({
   disabled,
 }: RatingSliderProps) {
   const { user } = useAuth();
+
   const [hoverRating, setHoverRating] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -105,7 +107,7 @@ export default function StarRatingWithAvatars({
       </div>
     );
   }
-  
+
   return (
     <div
       className={cn(

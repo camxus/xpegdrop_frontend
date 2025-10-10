@@ -31,6 +31,7 @@ import {
   FolderPreviewActions,
   FolderPreviewContent,
 } from "@/components/folder-preview-dialog";
+import { useNotes } from "@/hooks/api/useNotes";
 
 export default function PublicProjectPage() {
   const { username, projectName } = useParams<{
@@ -47,6 +48,11 @@ export default function PublicProjectPage() {
 
   const { uploadFile } = useS3();
   const { downloadFiles, isDownloading } = useDownload();
+
+  const {
+    projectNotes,
+    getProjectNotes: { mutateAsync: getProjectNotes },
+  } = useNotes();
 
   const {
     getProjectByShareUrl,
@@ -218,7 +224,6 @@ export default function PublicProjectPage() {
 
   const handleEmailSubmit = async (email: string) => {
     setIsLoading(true);
-    console.log("trigger 2");
     await loadProject(email);
   };
 
@@ -404,7 +409,6 @@ export default function PublicProjectPage() {
         description: `${image.name} has been added again.`,
       });
 
-      console.log("trigger 2");
       loadProject();
     } catch (err: any) {
       console.error("Failed to duplicate image:", err);
@@ -419,6 +423,10 @@ export default function PublicProjectPage() {
   useEffect(() => {
     loadProject();
   }, []);
+
+  useEffect(() => {
+    if (project) getProjectNotes(project.project_id);
+  }, [project]);
 
   return (
     <>
@@ -499,6 +507,7 @@ export default function PublicProjectPage() {
 
               <PinterestGrid
                 projectId={project.project_id}
+                projectNotes={projectNotes}
                 ratingDisabled={!project}
                 images={filteredImages}
                 ratings={ratings}

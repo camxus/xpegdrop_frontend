@@ -13,6 +13,7 @@ export function useNotes() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [notes, setNotes] = useState<Note[]>([]);
+  const [projectNotes, setProjectNotes] = useState<Note[]>([]);
   const { toast } = useToast();
 
   const saveLocalNotes = (projectId: string, imageName: string, notes: Note[]) => {
@@ -32,10 +33,26 @@ export function useNotes() {
     : [];
 
   // Mutation: Get notes
-  const getNotes = useMutation({
+  const getProjectNotes = useMutation({
+    mutationFn: async (projectId: string) => {
+      if (!projectId) return [];
+      const res = await notesApi.getProjectNotes(projectId);
+      return res;
+    },
+    onSuccess: (data, projectId) => {
+      if (!data || !projectId) return;
+
+      const notesArray: Note[] = Array.isArray(data) ? data : data.notes;
+
+      setProjectNotes(notesArray)
+    }
+  });
+
+  // Mutation: Get notes
+  const getImageNotes = useMutation({
     mutationFn: async ({ projectId, imageName }: { projectId: string, imageName: string }) => {
       if (!projectId) return [];
-      const res = await notesApi.getNotes(projectId, imageName);
+      const res = await notesApi.getImageNotes(projectId, imageName);
       return res;
     },
     onSuccess: (data, { projectId, imageName }) => {
@@ -134,10 +151,11 @@ export function useNotes() {
 
   return {
     notes,
-    setNotes,
+    projectNotes,
     userNotes,
     foreignNotes,
-    getNotes,
+    getProjectNotes,
+    getImageNotes,
     createNote,
     updateNote,
     deleteNote,

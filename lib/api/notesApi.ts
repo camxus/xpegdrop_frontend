@@ -17,7 +17,12 @@ export const notesApi = {
   },
 
   // Get all notes for a project
-  getNotes: async (projectId: string, imageName: string) => {
+  getProjectNotes: async (projectId: string) => {
+    return await api.get<{ notes: Note[]; total: number }>(`/notes/${projectId}`);
+  },
+
+  // Get all notes for a project
+  getImageNotes: async (projectId: string, imageName: string) => {
     return await api.get<{ notes: Note[]; total: number }>(`/notes/${projectId}/${imageName}`);
   },
 

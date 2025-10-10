@@ -20,9 +20,12 @@ import {
 import { EditImageView } from "./edit-image";
 import { useModal } from "@/hooks/use-modal";
 import { NotesModal } from "./notes-modal";
+import { Note } from "@/lib/api/notesApi";
+import { MessageSquareText } from "lucide-react";
 
 interface PinterestGridProps {
   projectId: string;
+  projectNotes: Note[];
   ratingDisabled?: boolean;
   images: ImageFile[];
   ratings?: Rating[];
@@ -35,6 +38,7 @@ interface PinterestGridProps {
 
 export function PinterestGrid({
   projectId,
+  projectNotes,
   ratingDisabled = false,
   images,
   ratings,
@@ -109,6 +113,9 @@ export function PinterestGrid({
       localRatings?.find((r: Rating) => r.image_name === image.name)) ||
     new Rating();
 
+  const imageNotes = (image: ImageFile) =>
+    projectNotes?.filter((note) => note.image_name === image.name) || [];
+
   return (
     <div
       className={cn(
@@ -119,6 +126,7 @@ export function PinterestGrid({
       {images.map((image: ImageFile, index: number) => (
         <PinterestImage
           projectId={projectId}
+          imageNotes={imageNotes(image)}
           disabled={ratingDisabled}
           key={image.id}
           ratings={imageRatings(image)}
@@ -143,6 +151,7 @@ export function PinterestGrid({
 
 const PinterestImage = memo(function PinterestImage({
   projectId,
+  imageNotes,
   disabled,
   image,
   index,
@@ -158,6 +167,7 @@ const PinterestImage = memo(function PinterestImage({
   onDuplicateImage,
 }: {
   projectId: string;
+  imageNotes: Note[];
   disabled: boolean;
   ratings: Rating[];
   rating: Rating;
@@ -257,6 +267,7 @@ const PinterestImage = memo(function PinterestImage({
           onRatingChange={(value) => onRatingChange(value, rating.rating_id)}
           className="w-full flex justify-center mt-1"
         />
+        {!!imageNotes.length && <MessageSquareText className="w-4 h-4" />}
 
         <EditImageView
           image={image}
