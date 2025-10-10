@@ -4,6 +4,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers"; // Import DialogProvider
 import { SiteHeader } from "@/components/layout/site-header";
+import { useServiceWorker } from "@/hooks/useServiceWorker";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -17,6 +18,8 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  useServiceWorker();
+
   return (
     <html lang="en">
       <body className={inter.className}>
