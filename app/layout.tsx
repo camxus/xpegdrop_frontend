@@ -18,8 +18,6 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  useServiceWorker();
-
   return (
     <html lang="en">
       <body className={inter.className}>

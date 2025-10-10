@@ -32,8 +32,10 @@ import {
   FolderPreviewContent,
 } from "@/components/folder-preview-dialog";
 import { useNotes } from "@/hooks/api/useNotes";
+import { useServiceWorker } from "@/hooks/useServiceWorker";
 
 export default function PublicProjectPage() {
+  useServiceWorker()
   const { username, projectName } = useParams<{
     username: string;
     projectName: string;
