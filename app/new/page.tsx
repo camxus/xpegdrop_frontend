@@ -31,6 +31,7 @@ import { useAuth } from "@/hooks/api/useAuth";
 import GlowingButton from "@/components/glowing-button";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { Rating } from "@/lib/api/ratingsApi";
 
 export default function UploadViewWrapper() {
   return (
@@ -82,9 +83,7 @@ export function UploadView() {
   const isUploading = isUploadingProject || isUploadingToS3;
 
   const [folders, setFolders] = useState<Folder[]>([]);
-  const [queuedRatings, setQueuedRatings] = useState<
-    { image_name: string; value: number }[]
-  >([]);
+  const [queuedRatings, setQueuedRatings] = useState<Rating[]>([]);
   const [createdProjects, setCreatedProjects] = useState<Project[]>([]);
   const [currentFolderIndex, setCurrentFolderIndex] = useState(0);
   const [isCarouselOpen, setIsCarouselOpen] = useState(false);
@@ -276,7 +275,11 @@ export function UploadView() {
       });
       await Promise.all(
         queuedRatings.map(async (rating) =>
-          createRating({ project_id: project.project_id, ...rating })
+          createRating({
+            project_id: project.project_id,
+            value: rating.value,
+            image_name: rating.image_name,
+          })
         )
       );
       setQueuedRatings([]);
@@ -309,16 +312,35 @@ export function UploadView() {
   }, []);
 
   const handleRatingChange = useCallback(
-    async (imageId: string, value: number, ratingId?: string) => {
-      const rating = { image_name: imageId, value };
+    async (imageName: string, value: number, ratingId?: string) => {
+      const rating = new Rating();
+      rating.image_name = imageName;
+      rating.value = value;
+      rating.rating_id = ratingId;
+
       if (!currentProject) {
-        setQueuedRatings((queued) => [...queued, rating]);
+        setQueuedRatings((queued) => {
+          const existingIndex = queued.findIndex(
+            (r) => r.image_name === rating.image_name
+          );
+
+          if (existingIndex !== -1) {
+            // Update existing rating
+            const updated = [...queued];
+            updated[existingIndex] = rating;
+            return updated;
+          }
+
+          // Add new rating if not found
+          return [...queued, rating];
+        });
         return;
       }
       if (!ratingId)
         return await createRating({
           project_id: currentProject.project_id,
-          ...rating,
+          image_name: rating.image_name,
+          value: rating.value,
         });
       return await updateRating({ ratingId, value });
     },
@@ -479,7 +501,7 @@ export function UploadView() {
                       <PinterestGrid
                         projectId={project?.project_id || ""}
                         images={currentFolder.images}
-                        ratings={ratings}
+                        ratings={[...queuedRatings, ...ratings]}
                         onImageClick={handleImageClick}
                         onRatingChange={handleRatingChange}
                         onImageHoverChange={handleImageHoverChange}
