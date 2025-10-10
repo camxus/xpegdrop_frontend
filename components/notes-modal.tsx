@@ -27,7 +27,7 @@ export function NotesModal({ projectId, imageName }: NotesViewProps) {
   const {
     notes,
     setNotes,
-    getNotes: { mutateAsync: getNotes },
+    getImageNotes: { mutateAsync: getImageNotes },
     createNote: { mutateAsync: createNote },
     updateNote: { mutateAsync: updateNote },
     deleteNote: { mutateAsync: deleteNote },
@@ -43,7 +43,7 @@ export function NotesModal({ projectId, imageName }: NotesViewProps) {
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
 
   useEffect(() => {
-    getNotes({ projectId, imageName });
+    getImageNotes({ projectId, imageName });
   }, [imageName]);
 
   const handleCreateOrUpdate = async () => {

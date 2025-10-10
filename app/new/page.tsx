@@ -505,6 +505,7 @@ export function UploadView() {
                         onImageClick={handleImageClick}
                         onRatingChange={handleRatingChange}
                         onImageHoverChange={handleImageHoverChange}
+                        projectNotes={[]}
                       />
                     </div>
 

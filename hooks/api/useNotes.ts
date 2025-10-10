@@ -151,6 +151,7 @@ export function useNotes() {
 
   return {
     notes,
+    setNotes,
     projectNotes,
     userNotes,
     foreignNotes,
