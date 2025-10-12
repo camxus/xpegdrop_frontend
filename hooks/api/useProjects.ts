@@ -145,8 +145,8 @@ export function useProjects() {
 
   // Mutation: Remove a file from a project
   const removeProjectFile = useMutation({
-    mutationFn: (payload: { projectId: string; file_name: string }) =>
-      projectsApi.removeProjectFile(payload.projectId, payload.file_name),
+    mutationFn: (payload: { projectId: string; fileName: string }) =>
+      projectsApi.removeProjectFile(payload.projectId, payload.fileName),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
       toast({

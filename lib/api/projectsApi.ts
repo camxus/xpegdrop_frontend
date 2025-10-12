@@ -80,7 +80,7 @@ export const projectsApi = {
   },
 
   // Remove a single file from a project by file name
-  removeProjectFile: async (projectId: string, file_name: string) => {
-    return await api.delete(`/projects/${projectId}/files/${encodeURIComponent(file_name)}`);
+  removeProjectFile: async (projectId: string, fileName: string) => {
+    return await api.delete(`/projects/${projectId}/files/${encodeURIComponent(fileName)}`);
   },
 };
