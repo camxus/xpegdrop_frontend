@@ -58,7 +58,7 @@ export interface ForgotPasswordRequest {
 }
 
 export interface ConfirmPasswordRequest {
-  email: string;
+  username: string;
   code: string;
   newPassword: string;
 }

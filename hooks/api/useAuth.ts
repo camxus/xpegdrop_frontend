@@ -196,7 +196,7 @@ export function useAuth() {
   const confirmPassword = async (email: string, code: string, newPassword: string) => {
     setError(null);
     try {
-      await confirmPasswordMutation.mutateAsync({ email, code, newPassword });
+      await confirmPasswordMutation.mutateAsync({ username: email, code, newPassword });
     } catch (error: any) {
       setError(error.message || "Failed to confirm password reset");
       throw error;
