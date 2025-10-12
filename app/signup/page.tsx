@@ -286,7 +286,7 @@ export function SignUpPageContent() {
                         value={formData.email}
                         onChange={handleChange}
                         className="bg-white/10 text-white border-white/20 placeholder:text-gray-400"
-                        placeholder="john@example.com"
+                        placeholder="john@fframess.com"
                       />
                       {formErrors.email && (
                         <p className="text-sm text-red-400">

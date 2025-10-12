@@ -134,7 +134,7 @@ export default function ForgotPasswordPage() {
                       required
                       disabled={isSubmitting}
                       className="bg-white/10 text-white border-white/20 placeholder:text-gray-400"
-                      placeholder="johndoe"
+                      placeholder="john@fframess.com"
                     />
                   </div>
                   <Button
