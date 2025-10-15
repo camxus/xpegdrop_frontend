@@ -114,7 +114,7 @@ export function PinterestGrid({
     new Rating();
 
   const imageNotes = (image: ImageFile) =>
-    projectNotes?.filter((note) => note.image_name === image.name) || [];
+    projectNotes?.filter((note) => note.image_name === image.name);
 
   return (
     <div
@@ -186,7 +186,7 @@ const PinterestImage = memo(function PinterestImage({
 
   const [editOpen, setEditOpen] = useState(false);
 
-  const handleShowNotes = (image: ImageFile) => {
+  const handleShowImageNotes = (image: ImageFile) => {
     show({
       title: `Notes`,
       content: () => (
@@ -247,7 +247,7 @@ const PinterestImage = memo(function PinterestImage({
               Duplicate (beta)
             </ContextMenuItem>
             <ContextMenuSeparator />
-            <ContextMenuItem onClick={() => handleShowNotes(image)}>
+            <ContextMenuItem onClick={() => handleShowImageNotes(image)}>
               Show Notes
             </ContextMenuItem>
             {/* <ContextMenuSeparator /> */}
@@ -260,14 +260,21 @@ const PinterestImage = memo(function PinterestImage({
         <p className="mt-2 truncate text-sm text-muted-foreground group-hover:text-foreground transition-colors">
           {image.name}
         </p>
-        <StarRatingSlider
-          disabled={disabled}
-          value={rating.value || 0}
-          ratings={ratings}
-          onRatingChange={(value) => onRatingChange(value, rating.rating_id)}
-          className="w-full flex justify-center mt-1"
-        />
-        {!!imageNotes.length && <MessageSquareText className="w-4 h-4" />}
+        <div className="relative flex items-center gap-1 mt-1">
+          <StarRatingSlider
+            disabled={disabled}
+            value={rating.value || 0}
+            ratings={ratings}
+            onRatingChange={(value) => onRatingChange(value, rating.rating_id)}
+            className="w-full flex justify-center"
+          />
+          {!!imageNotes.length && (
+            <MessageSquareText
+              className="cursor-pointer absolute w-4 h-4 right-0"
+              onClick={() => handleShowImageNotes(image)}
+            />
+          )}
+        </div>
 
         <EditImageView
           image={image}
