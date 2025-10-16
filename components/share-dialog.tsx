@@ -209,6 +209,7 @@ export function ShareDialog({ project, onClose }: ShareDialogProps) {
           id="is-public"
           checked={isPublic}
           onCheckedChange={setIsPublic}
+          className="flex-shrink-0"
         />
       </div>
 
@@ -225,6 +226,7 @@ export function ShareDialog({ project, onClose }: ShareDialogProps) {
           id="can-download"
           checked={canDownload}
           onCheckedChange={setCanDownload}
+          className="flex-shrink-0"
         />
       </div>
 
