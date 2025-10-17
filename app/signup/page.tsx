@@ -52,7 +52,15 @@ const step1Schema = yup.object().shape({
     .string()
     .oneOf([yup.ref("password")], "Passwords must match")
     .required("Confirm password is required"),
-  username: yup.string().required("Username is required"),
+  username: yup
+    .string()
+    .required("Username is required")
+    .matches(
+      /^[a-zA-Z0-9_-]+$/,
+      "Only letters, numbers, underscores, and hyphens are allowed"
+    )
+    .min(3, "Username must be at least 3 characters")
+    .max(30, "Username must be at most 30 characters"),
 });
 
 const fullSchema = yup.object().shape({
