@@ -137,7 +137,7 @@ export function SignUpPageContent() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     let newValue = value;
-    if (["username", "email"].includes(value)) {
+    if (["username", "email"].includes(name)) {
       newValue = newValue.toLowerCase();
     }
     setFormData((prev) => ({ ...prev, [name]: newValue }));
