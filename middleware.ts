@@ -8,9 +8,7 @@ const authorizedRoutes = ["/new"];
 
 function isPublicPath(pathname: string): boolean {
   // Dynamic username route match — adjust if you have stricter rules
-  const isUsernameRoute = /^\/[a-zA-Z0-9_-]+(\/[a-zA-Z0-9_-]+)?$/.test(
-    pathname
-  );
+  const isUsernameRoute = /^\/[a-zA-Z0-9._~&-]+(\/[a-zA-Z0-9._~&-]+)?$/.test(pathname);
 
   return isUsernameRoute && !authorizedRoutes.includes(pathname) || publicRoutes.includes(pathname);
 }
