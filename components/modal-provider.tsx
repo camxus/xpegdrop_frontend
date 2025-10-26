@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useState, type ReactNode, type FC, useEffect } from "react";
+import {
+  createContext,
+  useState,
+  type ReactNode,
+  type FC,
+  useEffect,
+} from "react";
 import { X } from "lucide-react";
 
 // Enum for modal positions
@@ -16,8 +22,8 @@ interface ModalOptions {
   content?: FC<any>;
   contentProps?: Record<string, unknown>;
   actions?: FC<any>;
-  width?: string;   // for left/right
-  height?: string;  // for top/bottom
+  width?: string; // for left/right
+  height?: string; // for top/bottom
   position?: Position;
   containerStyle?: React.CSSProperties;
 }
@@ -28,7 +34,9 @@ interface ModalContextType {
   updateProps: (newProps: Record<string, unknown>) => void;
 }
 
-export const ModalContext = createContext<ModalContextType | undefined>(undefined);
+export const ModalContext = createContext<ModalContextType | undefined>(
+  undefined
+);
 
 export function ModalProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -46,7 +54,7 @@ export function ModalProvider({ children }: { children: ReactNode }) {
   };
 
   const updateProps = (newProps: Record<string, unknown>) => {
-    setModalOptions(prev => ({
+    setModalOptions((prev) => ({
       ...prev,
       contentProps: {
         ...prev.contentProps,
@@ -58,8 +66,13 @@ export function ModalProvider({ children }: { children: ReactNode }) {
   const Component = modalOptions.content;
   const Actions = modalOptions.actions;
   const position: Position = modalOptions.position || Position.RIGHT;
-  const width = modalOptions.width || "400px";
-  const height = modalOptions.height || "300px";
+
+  const width = modalOptions.width
+    ? `min(${modalOptions.width}, 100vw)` // never exceed viewport width
+    : "400px";
+  const height = modalOptions.height
+    ? `min(${modalOptions.height}, 100vh)` // never exceed viewport height
+    : "300px";
 
   // Base style
   const baseStyle: React.CSSProperties = {
@@ -69,6 +82,8 @@ export function ModalProvider({ children }: { children: ReactNode }) {
     display: "flex",
     flexDirection: "column",
     transition: "transform 0.3s ease, opacity 0.3s ease",
+    maxHeight: "100vh",
+    maxWidth: "100vw"
   };
 
   if (position === Position.LEFT || position === Position.RIGHT) {
@@ -124,7 +139,10 @@ export function ModalProvider({ children }: { children: ReactNode }) {
             {modalOptions.title && (
               <div className="flex items-center justify-between p-4 border-b">
                 <h2 className="text-lg font-bold">{modalOptions.title}</h2>
-                <button onClick={hide} className="p-1 rounded hover:bg-gray-100">
+                <button
+                  onClick={hide}
+                  className="p-1 rounded hover:bg-gray-100"
+                >
                   <X size={20} />
                 </button>
               </div>
