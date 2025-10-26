@@ -16,6 +16,7 @@ import {
 } from "./ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { getInitials } from "@/lib/utils";
+import { formatDistanceToNow } from "date-fns";
 
 interface NotesViewProps {
   projectId: string;
@@ -86,51 +87,96 @@ export function NotesModal({ projectId, imageName }: NotesViewProps) {
     return uniqueUsers.find((user) => user?.user_id === note.user_id);
   };
 
+  // Helper: round date down to nearest 10 minutes
+  const roundTo10Minutes = (date: Date) => {
+    const minutes = Math.floor(date.getMinutes() / 10) * 10;
+    return new Date(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate(),
+      date.getHours(),
+      minutes
+    );
+  };
+
+  // Group notes by 10-minute window
+  const groupedNotes: Record<string, Note[]> = {};
+  notes.forEach((note) => {
+    const rounded = roundTo10Minutes(new Date(note.created_at!));
+    const key = rounded.toISOString();
+    if (!groupedNotes[key]) groupedNotes[key] = [];
+    groupedNotes[key].push(note);
+  });
+
+  const sortedKeys = Object.keys(groupedNotes).sort(
+    (a, b) => new Date(a).getTime() - new Date(b).getTime()
+  );
+
   return (
     <div className="flex flex-col h-full">
       {/* Notes List */}
       <div className="flex-1 overflow-y-auto p-2 flex flex-col gap-3">
-        {notes.map((note: Note) => (
-          <div key={note.note_id} className="relative p-2 flex flex-col gap-2">
-            <div className="flex justify-between items-start gap-2">
-              <Avatar className="h-8 w-8">
-                <AvatarImage
-                  src={(getNoteUser(note)?.avatar as string) || ""}
-                  alt={getNoteUser(note)?.username}
-                />
-                <AvatarFallback>
-                  {getInitials(
-                    getNoteUser(note)?.first_name || "",
-                    getNoteUser(note)?.last_name || ""
-                  )}
-                </AvatarFallback>
-              </Avatar>{" "}
-              {/* Note Content */}
-              <p className="flex-1 p-1 whitespace-pre-wrap">{note.content}</p>
-              {/* Three-dot Dropdown Menu for Edit/Delete */}
-              {user?.user_id === note.user_id && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="ml-auto mr-2">
-                      <MoreHorizontal size={10} />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent sideOffset={4}>
-                    <DropdownMenuItem onSelect={() => handleEdit(note)}>
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onSelect={() => handleDelete(note.note_id!)}
-                    >
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              )}
+        {sortedKeys.map((timeKey) => {
+          const time = new Date(timeKey);
+          const notesInGroup = groupedNotes[timeKey];
+          return (
+            <div key={timeKey} className="flex flex-col gap-2">
+              {/* Time Header */}
+              <p className="text-xs text-gray-500 font-semibold text-center w-full">
+                {formatDistanceToNow(time, { addSuffix: true })}
+              </p>
+
+              {/* Notes in this group */}
+              {notesInGroup.map((note: Note) => (
+                <div
+                  key={note.note_id}
+                  className="relative p-2 flex flex-col gap-2"
+                >
+                  <div className="flex justify-between items-start gap-2">
+                    <Avatar className="h-6 w-6 text-xs">
+                      <AvatarImage
+                        src={(getNoteUser(note)?.avatar as string) || ""}
+                        alt={getNoteUser(note)?.username}
+                      />
+                      <AvatarFallback>
+                        {getInitials(
+                          getNoteUser(note)?.first_name || "",
+                          getNoteUser(note)?.last_name || ""
+                        )}
+                      </AvatarFallback>
+                    </Avatar>
+
+                    <p className="flex-1 p-0.5 whitespace-pre-wrap text-sm">
+                      {note.content}
+                    </p>
+
+                    {user?.user_id === note.user_id && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="ml-auto mr-2">
+                            <MoreHorizontal size={10} />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent sideOffset={4}>
+                          <DropdownMenuItem onSelect={() => handleEdit(note)}>
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={() => handleDelete(note.note_id!)}
+                          >
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+                  </div>
+                </div>
+              ))}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
+
       {/* Bottom textarea for add/edit */}
       <div className="flex flex-col gap-1 p-2 border-t">
         {editingNoteId && (

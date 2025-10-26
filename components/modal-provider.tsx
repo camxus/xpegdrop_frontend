@@ -141,7 +141,7 @@ export function ModalProvider({ children }: { children: ReactNode }) {
                 <h2 className="text-lg font-bold">{modalOptions.title}</h2>
                 <button
                   onClick={hide}
-                  className="p-1 rounded hover:bg-gray-100"
+                  className="p-1 rounded"
                 >
                   <X size={20} />
                 </button>

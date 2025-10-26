@@ -61,10 +61,10 @@ export function useNotes() {
       const localData = getLocalStorage(LOCAL_NOTES_STORAGE_KEY) || {};
 
       const notesArray: Note[] = Array.isArray(data) ? data : data.notes;
-
+      
       setNotes([
         ...notesArray,
-        ...(localData[projectId][imageName || ""] || [])
+        ...(localData[projectId]?.[imageName || ""] || [])
       ].filter((note, index, self) =>
         index === self.findIndex((n) => n.note_id === note.note_id)
       ));
