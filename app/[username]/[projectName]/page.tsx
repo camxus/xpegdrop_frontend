@@ -32,14 +32,20 @@ export async function generateMetadata({
 
     metadata = {
       title: `${project.name} by ${userData.first_name} | fframess`,
+      description:
+        "Your art is yours. Your data is yours. A platform built by artists, for artists.",
       openGraph: {
         title: project.title,
+        description:
+          "Your art is yours. Your data is yours. A platform built by artists, for artists.",
         images: imagesSlice,
         type: "website",
       },
       twitter: {
         card: "summary_large_image",
         title: project.title,
+        description:
+          "Your art is yours. Your data is yours. A platform built by artists, for artists.",
         images: imagesSlice,
       },
     };
@@ -56,11 +62,20 @@ export async function generateMetadata({
 
     if (status === 400 && message === "EMAIL_REQUIRED") {
       return {
+        title: `Private project by ${userData.first_name} | fframess`,
+        description:
+          "Your art is yours. Your data is yours. A platform built by artists, for artists.",
         openGraph: {
+          title: `Private project by ${userData.first_name} | fframess`,
+          description:
+            "Your art is yours. Your data is yours. A platform built by artists, for artists.",
           type: "website",
         },
         twitter: {
           card: "summary_large_image",
+          description:
+            "Your art is yours. Your data is yours. A platform built by artists, for artists.",
+          title: `Private project by ${userData.first_name} | fframess`,
         },
       };
     }
