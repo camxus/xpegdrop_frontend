@@ -5,9 +5,10 @@ import { userApi } from "@/lib/api/usersApi";
 import type { User } from "@/types/user";
 import { useToast } from "@/hooks/use-toast";
 import { setLocalStorage } from "@/lib/localStorage";
-import { AUTH_USER_KEY } from "./useAuth";
+import { AUTH_USER_KEY, useAuth } from "./useAuth";
 
 export function useUser() {
+  const { user } = useAuth()
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
@@ -15,6 +16,7 @@ export function useUser() {
   const currentUser = useQuery<User, Error>({
     queryKey: ["user"],
     queryFn: userApi.getCurrentUser,
+    enabled: !!user
   });
 
   // Get user by ID (fallback to current user if not passed)
@@ -126,6 +128,7 @@ export class AnonymousUser implements User {
 }
 
 export function useUsers(userIds: string[]) {
+  const { user } = useAuth()
   const queries = useQueries({
     queries: userIds.map((userId) => ({
       queryKey: ["profile", userId],
@@ -133,7 +136,7 @@ export function useUsers(userIds: string[]) {
         userId.includes("anonymous")
           ? Promise.resolve(new AnonymousUser(userId))
           : userApi.getUserById(userId),
-      enabled: !!userId,
+      enabled: !!user,
     })),
   });
 

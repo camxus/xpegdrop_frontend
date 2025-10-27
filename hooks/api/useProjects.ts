@@ -43,9 +43,7 @@ export function useProjects() {
 
       return data;
     } catch (error: any) {
-      const message = error.message;
-      const status = error.status;
-      throw { status, message };
+      throw { status: error.status, message: error.message, data: error.data };
     }
   };
 

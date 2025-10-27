@@ -6,7 +6,7 @@ import { Note } from "@/lib/api/notesApi";
 import { useAuth } from "@/hooks/api/useAuth";
 import { useUsers } from "@/hooks/api/useUser";
 import { Button } from "./ui/button";
-import { Edit2, MoreHorizontal, X } from "lucide-react";
+import { MoreHorizontal, X } from "lucide-react";
 import { Textarea } from "./ui/textarea";
 import {
   DropdownMenu,
@@ -195,7 +195,14 @@ export function NotesModal({ projectId, imageName }: NotesViewProps) {
             </Button>
           </div>
         )}
-        <div className="flex gap-2">
+
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleCreateOrUpdate();
+          }}
+          className="flex gap-2"
+        >
           <Textarea
             resizable={false}
             className="flex-1"
@@ -204,16 +211,21 @@ export function NotesModal({ projectId, imageName }: NotesViewProps) {
             onChange={(e) => setNoteContent(e.target.value)}
             maxLength={500}
             onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
+              // Cmd+Enter (Mac) or Ctrl+Enter (Windows/Linux)
+              if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+                e.preventDefault();
+                handleCreateOrUpdate();
+              }
+              // Enter (without Shift) submits
+              else if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
                 handleCreateOrUpdate();
               }
             }}
           />
-          <Button onClick={handleCreateOrUpdate}>
-            {editingNoteId ? "Update" : "Add"}
-          </Button>
-        </div>
+
+          <Button type="submit">{editingNoteId ? "Update" : "Add"}</Button>
+        </form>
       </div>
     </div>
   );
