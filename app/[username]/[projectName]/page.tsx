@@ -35,7 +35,7 @@ export async function generateMetadata({
       description:
         "Your art is yours. Your data is yours. A platform built by artists, for artists.",
       openGraph: {
-        title: project.title,
+        title: `${project.name} by ${userData.first_name} | fframess`,
         description:
           "Your art is yours. Your data is yours. A platform built by artists, for artists.",
         images: imagesSlice,
@@ -43,7 +43,7 @@ export async function generateMetadata({
       },
       twitter: {
         card: "summary_large_image",
-        title: project.title,
+        title: `${project.name} by ${userData.first_name} | fframess`,
         description:
           "Your art is yours. Your data is yours. A platform built by artists, for artists.",
         images: imagesSlice,
