@@ -32,17 +32,14 @@ export async function generateMetadata({
 
     metadata = {
       title: `${project.name} by ${userData.first_name} | fframess`,
-      description: project.description || "Shop our latest collection",
       openGraph: {
         title: project.title,
-        description: project.description || "Shop our latest collection",
         images: imagesSlice,
         type: "website",
       },
       twitter: {
         card: "summary_large_image",
         title: project.title,
-        description: project.description || "Shop our latest collection",
         images: imagesSlice,
       },
     };
@@ -59,17 +56,11 @@ export async function generateMetadata({
 
     if (status === 400 && message === "EMAIL_REQUIRED") {
       return {
-        title: `Private project by ${userData.first_name} | fframess`,
-        description: "",
         openGraph: {
-          title: `Private project by ${userData.first_name} | fframess`,
-          description: "",
           type: "website",
         },
         twitter: {
           card: "summary_large_image",
-          title: `Private project by ${userData.first_name} | fframess`,
-          description: "",
         },
       };
     }
