@@ -2,9 +2,8 @@ import type React from "react";
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { Providers } from "@/components/providers"; // Import DialogProvider
+import { Providers } from "@/components/providers";
 import { SiteHeader } from "@/components/layout/site-header";
-import { useServiceWorker } from "@/hooks/useServiceWorker";
 
 const inter = Inter({ subsets: ["latin"] });
 

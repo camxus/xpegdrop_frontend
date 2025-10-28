@@ -128,7 +128,6 @@ export class AnonymousUser implements User {
 }
 
 export function useUsers(userIds: string[]) {
-  const { user } = useAuth()
   const queries = useQueries({
     queries: userIds.map((userId) => ({
       queryKey: ["profile", userId],
@@ -136,7 +135,6 @@ export function useUsers(userIds: string[]) {
         userId.includes("anonymous")
           ? Promise.resolve(new AnonymousUser(userId))
           : userApi.getUserById(userId),
-      enabled: !!user,
     })),
   });
 
