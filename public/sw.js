@@ -1,5 +1,5 @@
 const CACHE_NAME = "project-images-cache-v1";
-const IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "webp", "gif"];
+const IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "webp", "gif", "tiff"];
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
@@ -15,7 +15,7 @@ self.addEventListener("fetch", (event) => {
 
   if (ext && IMAGE_EXTENSIONS.includes(ext.toLowerCase())) {
     // Use the pathname only as cache key (ignore query string)
-    const cacheKey = url.pathname.split(["?"][0]);
+    const [cacheKey] = url.pathname.split("?");
 
     event.respondWith(
       caches.open(CACHE_NAME).then(async (cache) => {
