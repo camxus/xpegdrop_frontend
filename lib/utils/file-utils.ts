@@ -1,4 +1,8 @@
 import type { ImageFile, Folder } from "@/types"
+import * as UTIF from "utif";
+
+const unsupportedButValid = ['image/tiff', 'image/heic', 'image/heif'];
+
 
 export function isImageFile(file: File): boolean {
   return file.type.startsWith("image/")
@@ -8,11 +12,11 @@ export function getImageFiles(files: File[]): File[] {
   return files.filter(isImageFile)
 }
 
-export function createImageFile(file: File, folder: string): ImageFile {
+export async function createImageFile(file: File, folder: string): Promise<ImageFile> {
   return {
     id: `${folder}-${file.name}-${Date.now()}`,
     name: file.name,
-    url: URL.createObjectURL(file),
+    url: unsupportedButValid.includes(file.type) ? await getTiffPreviewURL(file) : URL.createObjectURL(file),
     file,
     folder,
   }
@@ -20,9 +24,16 @@ export function createImageFile(file: File, folder: string): ImageFile {
 
 function isImageCorrupted(file: File): Promise<boolean> {
   return new Promise((resolve) => {
+
+    // These formats aren't corrupted — they're just not displayable by browsers
+    if (unsupportedButValid.includes(file.type)) {
+      resolve(false);
+      return;
+    }
+
     const img = new Image();
-    img.onload = () => resolve(false);  // loaded successfully → not corrupted
-    img.onerror = () => resolve(true);  // failed to load → corrupted
+    img.onload = () => resolve(false); // loaded successfully → not corrupted
+    img.onerror = () => resolve(true); // failed to load → corrupted
     img.src = URL.createObjectURL(file);
   });
 }
@@ -32,8 +43,7 @@ export async function processFolderUpload(files: File[]): Promise<Folder[]> {
   for (const file of files) {
     if (!isImageFile(file)) continue;
 
-    const corrupted = await isImageCorrupted(file);
-    if (corrupted) {
+    if (await isImageCorrupted(file)) {
       console.warn(`Corrupted image skipped: ${file.name}`);
       continue;
     }
@@ -54,12 +64,16 @@ export async function processFolderUpload(files: File[]): Promise<Folder[]> {
   }
 
 
-  return Array.from(folderMap.entries()).map(([folderName, folderFiles]) => ({
-    id: `folder-${folderName}-${Date.now()}`,
-    name: folderName,
-    images: folderFiles.map((file) => createImageFile(file, folderName)),
-    createdAt: new Date(),
-  }))
+  return await Promise.all(
+    Array.from(folderMap.entries()).map(async ([folderName, folderFiles]) => ({
+      id: `folder-${folderName}-${Date.now()}`,
+      name: folderName,
+      images: await Promise.all(
+        folderFiles.map((file) => createImageFile(file, folderName))
+      ),
+      createdAt: new Date(),
+    }))
+  );
 }
 
 // Convert File -> Base64 string
@@ -110,4 +124,25 @@ export async function urlToFile(url: string, filename = "thumbnail.jpg") {
   const res = await fetch(url);
   const blob = await res.blob();
   return new File([blob], filename, { type: blob.type });
+}
+
+export async function getTiffPreviewURL(file: File) {
+  const buffer = await file.arrayBuffer()
+  const [ifd] = UTIF.decode(buffer);
+  UTIF.decodeImage(buffer, ifd);
+  const rgba = UTIF.toRGBA8(ifd);
+
+  // Create a canvas and draw
+  const canvas = document.createElement("canvas");
+  canvas.width = ifd.width;
+  canvas.height = ifd.height;
+
+  const ctx = canvas.getContext("2d");
+  if (ctx) {
+    const imgData = ctx.createImageData(canvas.width, canvas.height);
+    imgData.data.set(rgba);
+    ctx.putImageData(imgData, 0, 0);
+  }
+
+  return canvas.toDataURL("image/png");
 }

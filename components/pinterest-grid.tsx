@@ -221,6 +221,7 @@ const PinterestImage = memo(function PinterestImage({
                 )}
               />
               <Image
+                key={image.name}
                 src={image.url || "/placeholder.svg"}
                 alt={image.name}
                 width={300}

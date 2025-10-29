@@ -35,7 +35,7 @@ import { useNotes } from "@/hooks/api/useNotes";
 import { useServiceWorker } from "@/hooks/useServiceWorker";
 
 export default function PublicProjectPage() {
-  useServiceWorker()
+  useServiceWorker();
   const { username, projectName } = useParams<{
     username: string;
     projectName: string;
@@ -167,7 +167,7 @@ export default function PublicProjectPage() {
                   img.name
                 );
                 return {
-                  ...createImageFile(thumbnailFile, projectName),
+                  ...(await createImageFile(thumbnailFile, projectName)),
                   preview_url: img.preview_url,
                 };
               }
@@ -304,14 +304,22 @@ export default function PublicProjectPage() {
       const mockFolder = new Map<string, File[]>();
       mockFolder.set(project?.name || "Untitled Project", files);
 
-      const folderArray = Array.from(mockFolder.entries()).map(
-        ([folderName, folderFiles]) => ({
-          id: `folder-${folderName}-${Date.now()}`,
-          name: folderName,
-          images: folderFiles.map((file) => createImageFile(file, folderName)),
-          createdAt: new Date(),
-        })
+      const folderArray = await Promise.all(
+        Array.from(mockFolder.entries()).map(
+          async ([folderName, folderFiles]) => ({
+            id: `folder-${folderName}-${Date.now()}`,
+            name: folderName,
+            images: await Promise.all(
+              folderFiles.map(
+                async (file) => await createImageFile(file, folderName)
+              )
+            ),
+            createdAt: new Date(),
+          })
+        )
       );
+
+      console.log(folderArray);
 
       show({
         title: "Review Folders",

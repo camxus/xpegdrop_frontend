@@ -171,13 +171,17 @@ export function UploadView() {
       const mockFolder = new Map<string, File[]>();
       mockFolder.set(project?.name || "Untitled Project", files);
 
-      const folderArray = Array.from(mockFolder.entries()).map(
-        ([folderName, folderFiles]) => ({
-          id: `folder-${folderName}-${Date.now()}`,
-          name: folderName,
-          images: folderFiles.map((file) => createImageFile(file, folderName)),
-          createdAt: new Date(),
-        })
+      const folderArray = await Promise.all(
+        Array.from(mockFolder.entries()).map(
+          async ([folderName, folderFiles]) => ({
+            id: `folder-${folderName}-${Date.now()}`,
+            name: folderName,
+            images: await Promise.all(
+              folderFiles.map((file) => createImageFile(file, folderName))
+            ),
+            createdAt: new Date(),
+          })
+        )
       );
 
       show({
