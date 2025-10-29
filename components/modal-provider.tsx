@@ -8,6 +8,7 @@ import {
   useEffect,
 } from "react";
 import { X } from "lucide-react";
+import { Button } from "./ui/button";
 
 // Enum for modal positions
 export enum Position {
@@ -83,7 +84,7 @@ export function ModalProvider({ children }: { children: ReactNode }) {
     flexDirection: "column",
     transition: "transform 0.3s ease, opacity 0.3s ease",
     maxHeight: "100vh",
-    maxWidth: "100vw"
+    maxWidth: "100vw",
   };
 
   if (position === Position.LEFT || position === Position.RIGHT) {
@@ -139,12 +140,9 @@ export function ModalProvider({ children }: { children: ReactNode }) {
             {modalOptions.title && (
               <div className="flex items-center justify-between p-4 border-b">
                 <h2 className="text-lg font-bold">{modalOptions.title}</h2>
-                <button
-                  onClick={hide}
-                  className="p-1 rounded"
-                >
+                <Button size="icon" variant="ghost" onClick={hide}>
                   <X size={20} />
-                </button>
+                </Button>
               </div>
             )}
 
