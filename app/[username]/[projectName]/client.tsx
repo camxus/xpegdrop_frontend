@@ -33,6 +33,7 @@ import {
 } from "@/components/folder-preview-dialog";
 import { useNotes } from "@/hooks/api/useNotes";
 import { useServiceWorker } from "@/hooks/useServiceWorker";
+import { useUser } from "@/hooks/api/useUser";
 
 export default function PublicProjectPage() {
   useServiceWorker();
@@ -69,6 +70,10 @@ export default function PublicProjectPage() {
     createRating: { mutateAsync: createRating },
     updateRating: { mutateAsync: updateRating },
   } = useRatings();
+
+  const {
+    getUserByUsername: { data: projectUser, mutateAsync: getUserByUsername },
+  } = useUser();
 
   const { uploadFiles, isUploading: isUploadingToS3 } = useS3();
 
@@ -432,6 +437,7 @@ export default function PublicProjectPage() {
 
   useEffect(() => {
     loadProject();
+    getUserByUsername(username);
   }, []);
 
   useEffect(() => {
@@ -488,8 +494,11 @@ export default function PublicProjectPage() {
                     </p>
                   )}
                   <p className="text-sm text-muted-foreground">
-                    Created on{" "}
-                    {new Date(project.created_at).toLocaleDateString()}
+                    Created
+                    {projectUser?.first_name && (
+                      <> by {projectUser.first_name}</>
+                    )}{" "}
+                    on {new Date(project.created_at).toLocaleDateString()}
                   </p>
                 </div>
                 <div className="flex gap-2 md:ml-0 ml-auto w-fit">
