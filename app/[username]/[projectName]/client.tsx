@@ -104,8 +104,7 @@ export default function PublicProjectPage() {
   const gradient = useTransform(
     [springX, springY, springSize, springOpacity],
     ([x, y, size, opacity]) =>
-      `radial-gradient(circle ${size}px at ${x}% ${y}%, rgba(255,255,255,${opacity}) 0%, rgba(255,255,255,${
-        (opacity as number) * 0.25
+      `radial-gradient(circle ${size}px at ${x}% ${y}%, rgba(255,255,255,${opacity}) 0%, rgba(255,255,255,${(opacity as number) * 0.25
       }) 50%, transparent 100%)`
   );
 
@@ -291,7 +290,7 @@ export default function PublicProjectPage() {
       });
 
       await getProject(project.project_id);
-    } catch {}
+    } catch { }
   };
 
   const handleAddNewFolders = useCallback(
@@ -496,7 +495,7 @@ export default function PublicProjectPage() {
                   <p className="text-sm text-muted-foreground">
                     Created
                     {projectUser?.first_name && (
-                      <> by {projectUser.first_name}</>
+                      <> by {user?.user_id === projectUser.user_id ? "You" : projectUser.first_name}</>
                     )}{" "}
                     on {new Date(project.created_at).toLocaleDateString()}
                   </p>
