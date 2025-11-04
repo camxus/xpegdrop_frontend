@@ -87,6 +87,7 @@ interface FolderPreviewActionsProps {
   folders: Folder[];
   onCancel: () => void;
   onUpload: (folders: Folder[], currentIndex: number) => void;
+  isNewUpload?: boolean;
 }
 
 export function FolderPreviewActions({
@@ -94,6 +95,7 @@ export function FolderPreviewActions({
   folders,
   onCancel,
   onUpload,
+  isNewUpload = true
 }: FolderPreviewActionsProps) {
   return (
     <>
@@ -101,7 +103,11 @@ export function FolderPreviewActions({
         Cancel
       </Button>
       <Button onClick={() => onUpload(folders, currentIndex)}>
-        Upload {folders.length > 1 ? `${folders.length} Folders` : "Folder"}
+        {
+          isNewUpload ? <>
+            Upload {folders.length > 1 ? `${folders.length} Folders` : "Folder"}</> : <>
+            Add Files</>
+        }
       </Button>
     </>
   );

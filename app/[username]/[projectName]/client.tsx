@@ -323,10 +323,8 @@ export default function PublicProjectPage() {
         )
       );
 
-      console.log(folderArray);
-
       show({
-        title: "Review Folders",
+        title: "Add Files",
         content: FolderPreviewContent,
         contentProps: {
           editable: !!project,
@@ -348,7 +346,7 @@ export default function PublicProjectPage() {
             hide();
           },
         },
-        actions: FolderPreviewActions,
+        actions: (props) => FolderPreviewActions({...props, isNewUpload: false}),
       });
     },
     [project]
