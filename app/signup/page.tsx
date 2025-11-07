@@ -291,7 +291,7 @@ export function SignUpPageContent() {
                         <Button
                           type="button"
                           onClick={handleCheckReferral}
-                          className="w-full bg-white/20 hover:bg-white/30 text-white border-white/20"
+                          className="w-full"
                           disabled={!(referralCode.length === REFERRAL_LENGTH) || checkingReferral}
                         >
                           {checkingReferral ? "Checking..." : "Apply Referral"}
