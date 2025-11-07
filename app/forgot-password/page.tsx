@@ -17,6 +17,7 @@ import { useAuth } from "@/hooks/api/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import * as yup from "yup";
 import { useRouter } from "next/navigation";
+import { MultiCharInput } from "@/components/ui/multi-char-input";
 
 export const confirmPasswordSchema = yup.object().shape({
   email: yup.string().email().required("Email is required"),
@@ -125,7 +126,7 @@ export default function ForgotPasswordPage() {
                 <form onSubmit={handleSendCode} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="email" className="text-white">
-                      email
+                      E-mail
                     </Label>
                     <Input
                       id="email"
@@ -185,15 +186,9 @@ export default function ForgotPasswordPage() {
                     <Label htmlFor="confirmationCode" className="text-white">
                       Confirmation Code
                     </Label>
-                    <Input
-                      id="confirmationCode"
-                      type="text"
-                      value={confirmationCode}
-                      onChange={(e) => setConfirmationCode(e.target.value)}
-                      disabled={isSubmitting}
-                      className="bg-white/10 text-white border-white/20 placeholder:text-gray-400"
-                      placeholder="Enter code"
-                    />
+                    <MultiCharInput id="confirmationCode" value={confirmationCode}
+                      onChange={(value) => setConfirmationCode(value)}
+                      disabled={isSubmitting} length={6} />
                     {errors.code && (
                       <p className="text-sm text-red-600">{errors.code}</p>
                     )}

@@ -23,6 +23,9 @@ import { useUser } from "@/hooks/api/useUser";
 import imageCompression from "browser-image-compression";
 import * as yup from "yup";
 import Image from "next/image";
+import { useReferrals } from "@/hooks/api/useReferrals";
+import { MultiCharInput } from "@/components/ui/multi-char-input";
+import { REFERRAL_LENGTH } from "@/lib/api/referralsApi";
 
 export type FormData = {
   first_name: string;
@@ -96,7 +99,9 @@ export default function SignUpPageWrapper() {
 }
 
 export function SignUpPageContent() {
-  const [step, setStep] = useState(1);
+  const searchParams = useSearchParams();
+
+  const [step, setStep] = useState(0);
   const [formData, setFormData] = useState<FormData>({
     first_name: "",
     last_name: "",
@@ -113,6 +118,9 @@ export function SignUpPageContent() {
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(
     null
   );
+  const [referralCode, setReferralCode] = useState<string>(
+    searchParams.get("code") || ''
+  );
 
   const { signup, isSigningUp, error } = useAuth();
   const {
@@ -122,6 +130,8 @@ export function SignUpPageContent() {
       data: foundUser,
     },
   } = useUser();
+  const { checkReferral: { mutateAsync: checkReferral, isPending: checkingReferral }, redeemReferral: { mutateAsync: redeemReferral } } = useReferrals()
+
   const router = useRouter();
 
   // Debounce username input
@@ -199,6 +209,7 @@ export function SignUpPageContent() {
         bio: formData.bio || undefined,
         avatar_file: avatarFile,
       });
+      redeemReferral(referralCode)
       router.push("/login");
     } catch (err: any) {
       const errors: Record<string, string> = {};
@@ -207,6 +218,17 @@ export function SignUpPageContent() {
       });
       console.log(errors);
       setFormErrors(errors);
+    }
+  };
+
+  const handleCheckReferral = async () => {
+    try {
+      const referral = await checkReferral(referralCode);
+      if (referral) {
+        setStep(1);
+      }
+    } catch (err: any) {
+      console.error("Check referral error:", err);
     }
   };
 
@@ -235,6 +257,48 @@ export function SignUpPageContent() {
               )}
 
               <AnimatePresence mode="wait">
+                {step === 0 &&
+                  (
+                    <motion.div
+                      key="step0"
+                      initial={{ opacity: 0, y: -20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 20 }}
+                      transition={{ duration: 0.3 }}
+                      className="space-y-6 text-center"
+                    >
+                      <p className="text-white/80">
+                        Enter a referral code if you have one
+                      </p>
+
+                      <div className="flex flex-col items-center gap-4">
+                        <MultiCharInput
+                          value={referralCode}
+                          onChange={(value) => setReferralCode(value.toLocaleUpperCase())}
+                          length={REFERRAL_LENGTH}
+                        />
+                        <Button
+                          type="button"
+                          onClick={handleCheckReferral}
+                          className="w-full bg-white/20 hover:bg-white/30 text-white border-white/20"
+                          disabled={!(referralCode.length === REFERRAL_LENGTH) || checkingReferral}
+                        >
+                          {checkingReferral ? "Checking..." : "Apply Referral"}
+                        </Button>
+
+                        <p className="text-white/60 text-sm">or</p>
+
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={() => { }}
+                          className="w-full border-white/20 text-white hover:bg-white/10"
+                        >
+                          Join the Waitlist
+                        </Button>
+                      </div>
+                    </motion.div>
+                  )}
                 {step === 1 && (
                   <motion.div
                     key="step1"
@@ -322,19 +386,18 @@ export function SignUpPageContent() {
                       )}
                       {formData.username && (
                         <p
-                          className={`text-sm ${
-                            usernameAvailable === null
-                              ? "text-gray-400"
-                              : usernameAvailable
+                          className={`text-sm ${usernameAvailable === null
+                            ? "text-gray-400"
+                            : usernameAvailable
                               ? "text-green-400"
                               : "text-red-400"
-                          }`}
+                            }`}
                         >
                           {isCheckingUsername
                             ? "Checking availability..."
                             : usernameAvailable
-                            ? "Username available"
-                            : "Username already taken"}
+                              ? "Username available"
+                              : "Username already taken"}
                         </p>
                       )}
                     </div>

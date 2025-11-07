@@ -16,6 +16,7 @@ import { User } from "@/types/user";
 import { isTokenExpired } from "@/middleware";
 import { jwtDecode } from "jwt-decode";
 import { userApi } from "@/lib/api/usersApi";
+import { useReferrals } from "./useReferrals";
 
 export const AUTH_USER_KEY = "user";
 
@@ -61,8 +62,6 @@ export function useAuth() {
   const signupMutation = useMutation({
     mutationFn: authApi.signup,
     onSuccess: () => {
-      // After successful signup, redirect to login
-      router.push("/login");
     },
     onError: (error: any) => {
       setError(error.message || "Failed to create account");

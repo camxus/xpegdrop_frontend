@@ -19,6 +19,7 @@ import {
   Folder,
   X,
   PlusSquare,
+  Mails,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -40,12 +41,16 @@ import DeleteProjectDialogView from "./delete-project-dialog";
 import { useDialog } from "@/hooks/use-dialog";
 import { useDropbox } from "@/hooks/api/useDropbox";
 import { Progress } from "../ui/progress";
+import { useReferrals } from "@/hooks/api/useReferrals";
+import { MakeReferralComponent } from "../make-referral-dialog";
+import { MAX_REFERRALS_AMOUNT } from "@/lib/api/referralsApi";
 
 interface SiteHeaderProps {
   children: ReactNode;
 }
 
 export function SiteHeader({ children }: SiteHeaderProps) {
+  const { referrals } = useReferrals()
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
 
   const pathname = usePathname();
@@ -109,6 +114,13 @@ export function SiteHeader({ children }: SiteHeaderProps) {
     });
   };
 
+  const handleClickReferral = () => {
+    show({
+      title: "Referrals",
+      content: () => <MakeReferralComponent />,
+    })
+  }
+
   if (!user?.user_id) return <>{children}</>;
 
   return (
@@ -171,11 +183,10 @@ export function SiteHeader({ children }: SiteHeaderProps) {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`group relative flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all ${
-                    isActive(item.href)
-                      ? "bg-white/5 text-white"
-                      : "text-white/80 hover:bg-white/10"
-                  }`}
+                  className={`group relative flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all ${isActive(item.href)
+                    ? "bg-white/5 text-white"
+                    : "text-white/80 hover:bg-white/10"
+                    }`}
                 >
                   {/* Icon */}
                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
@@ -252,9 +263,46 @@ export function SiteHeader({ children }: SiteHeaderProps) {
           </div>
           {/* Avatar at the bottom */}
           <div className="mt-4 pt-4 border-t border-white/10 place-items-start">
+            <Button variant="outline" className="relative mb-4 w-full" onClick={handleClickReferral}>
+              <AnimatePresence>
+                {referrals.length <= MAX_REFERRALS_AMOUNT && (
+                  <motion.div
+                    className="absolute w-2 h-2 bg-red-500 rounded-full -top-1 -right-1"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                  />
+                )}
+              </AnimatePresence>
+              <Mails width={24} height={24} style={isSidebarCollapsed ? { marginLeft: "0px" } : { marginLeft: "4px" }} />
+              <motion.span
+                variants={{
+                  visible: (i: number) => ({
+                    opacity: 1,
+                    display: "block",
+                    transition: {
+                      opacity: { duration: 0.1, delay: i * 0.15 },
+                    },
+                  }),
+                  hidden: {
+                    opacity: 0,
+                    display: "none",
+                    transition: {
+                      opacity: { duration: 0.1 },
+                    },
+                  },
+                }}
+                initial="visible"
+                animate={isSidebarCollapsed ? "hidden" : "visible"}
+                className="whitespace-nowrap overflow-hidden flex-1"
+              >
+                Make Referral
+              </motion.span>
+            </Button>
             <Link href={"/new"}>
-              <Button className="mb-4 ml-1 w-full">
-                <PlusSquare width={24} height={24}/>
+              <Button className="relative mb-4 w-full">
+                <PlusSquare width={24} height={24} style={isSidebarCollapsed ? { marginLeft: "0px" } : { marginLeft: "4px" }} />
                 <motion.span
                   variants={{
                     visible: (i: number) => ({
@@ -354,8 +402,8 @@ export function SiteHeader({ children }: SiteHeaderProps) {
                   {stats.storage.used_percent >= 90
                     ? "Full"
                     : stats.storage.used_percent >= 70
-                    ? "Almost Full"
-                    : `${stats.storage.used_percent.toFixed(0)}%`}
+                      ? "Almost Full"
+                      : `${stats.storage.used_percent.toFixed(0)}%`}
                 </span>
 
                 <Progress
@@ -364,8 +412,8 @@ export function SiteHeader({ children }: SiteHeaderProps) {
                     stats.storage.used_percent >= 90
                       ? "bg-red-400"
                       : stats.storage.used_percent >= 70
-                      ? "bg-amber-400"
-                      : "bg-white"
+                        ? "bg-amber-400"
+                        : "bg-white"
                   }
                   className={cn("w-full h-1 rounded-full")}
                 />

@@ -201,7 +201,7 @@ export function NotesModal({ projectId, imageName }: NotesViewProps) {
             e.preventDefault();
             handleCreateOrUpdate();
           }}
-          className="flex gap-2"
+          className="flex gap-2 items-center"
         >
           <Textarea
             resizable={false}
