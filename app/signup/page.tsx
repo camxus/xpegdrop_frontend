@@ -26,6 +26,8 @@ import Image from "next/image";
 import { useReferrals } from "@/hooks/api/useReferrals";
 import { MultiCharInput } from "@/components/ui/multi-char-input";
 import { REFERRAL_LENGTH } from "@/lib/api/referralsApi";
+import { useDialog } from "@/hooks/use-dialog";
+import { WaitlistDialog } from "@/components/join-waitlist-dialog";
 
 export type FormData = {
   first_name: string;
@@ -132,6 +134,8 @@ export function SignUpPageContent() {
   } = useUser();
   const { checkReferral: { mutateAsync: checkReferral, isPending: checkingReferral }, redeemReferral: { mutateAsync: redeemReferral } } = useReferrals()
 
+  const { show } = useDialog()
+
   const router = useRouter();
 
   // Debounce username input
@@ -232,6 +236,13 @@ export function SignUpPageContent() {
     }
   };
 
+  const handleJoinWaitlist = () => {
+    show({
+      title: "Join Waitlist",
+      content: WaitlistDialog
+    })
+  };
+
   return (
     <div className="min-h-dvh bg-gradient-to-br from-slate-900 via-black to-slate-900 flex items-center justify-center p-4">
       <motion.div
@@ -291,7 +302,7 @@ export function SignUpPageContent() {
                         <Button
                           type="button"
                           variant="ghost"
-                          onClick={() => { }}
+                          onClick={handleJoinWaitlist}
                           className="w-full border-white/20 text-white hover:bg-white/10"
                         >
                           Join the Waitlist

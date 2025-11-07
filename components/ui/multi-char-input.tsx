@@ -53,14 +53,21 @@ export function MultiCharInput({
   };
 
   const handleFocus = (idx: number) => {
-    // Clear all letters after the focused input
     setLetters((letters) => {
-      const newLetters = [...letters]
+      const newLetters = [...letters];
+
+      // Clear all letters from the focused input onwards
       for (let i = idx; i < length; i++) {
         newLetters[i] = "";
       }
 
-      return newLetters
+      // Find the first empty input and focus it
+      const firstEmptyIndex = newLetters.findIndex((l) => l === "");
+      if (firstEmptyIndex !== -1) {
+        inputRefs.current[firstEmptyIndex]?.focus();
+      }
+
+      return newLetters;
     });
   };
 

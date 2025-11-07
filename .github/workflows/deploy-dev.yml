@@ -50,4 +50,7 @@ jobs:
       - name: Deploy to AWS via SST
         env:
           NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
+          NEXT_GID: ${{ vars.NEXT_GID }}
+          NEXT_SHEETID: ${{ vars.NEXT_SHEETID }}
+          NEXT_GOOGLE_SCRIPT_WEBAPP_URL: ${{ vars.NEXT_GOOGLE_SCRIPT_WEBAPP_URL }}
         run: npx sst deploy --stage development
