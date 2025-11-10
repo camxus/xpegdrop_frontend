@@ -34,7 +34,7 @@ export function MakeReferralComponent() {
             <div>
               <span className="font-medium">{ref.code}</span>
               <span className="ml-2 text-sm text-muted-foreground">
-                {ref.reedemed ? "Redeemed" : "Available"}
+                {ref.redeemed ? "Redeemed" : "Available"}
               </span>
             </div>
             <Button size="sm" variant="outline" onClick={() => handleCopyLink(ref.code)}>

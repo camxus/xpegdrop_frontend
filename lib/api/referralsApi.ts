@@ -6,7 +6,7 @@ export class Referral {
   code: string = "";
   created_at?: string = undefined;
   updated_at?: string = undefined;
-  reedemed?: boolean = false;
+  redeemed?: boolean = false;
 }
 
 export const MAX_REFERRALS_AMOUNT = 5
