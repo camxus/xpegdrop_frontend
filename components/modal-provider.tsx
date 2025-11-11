@@ -78,7 +78,6 @@ export function ModalProvider({ children }: { children: ReactNode }) {
   // Base style
   const baseStyle: React.CSSProperties = {
     position: "fixed",
-    background: "black",
     zIndex: 50,
     display: "flex",
     flexDirection: "column",
@@ -135,7 +134,7 @@ export function ModalProvider({ children }: { children: ReactNode }) {
           />
 
           {/* Modal Panel */}
-          <div style={style}>
+          <div className="bg-background" style={style}>
             {/* Header */}
             {modalOptions.title && (
               <div className="flex items-center justify-between p-4 border-b">
