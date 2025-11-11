@@ -11,7 +11,7 @@ export function useReferrals() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { toast } = useToast();
-  const [referrals, setReferrals] = useState<Referral[]>([])
+  const [referrals, setReferrals] = useState<Referral[]>()
 
   /**
   * Fetch referrals for the current user
@@ -34,7 +34,7 @@ export function useReferrals() {
       return await referralsApi.createReferral();
     },
     onSuccess: (data) => {
-      setReferrals((prev) => [...prev, data]);
+      setReferrals((prev) => [...prev || [], data]);
       queryClient.invalidateQueries({ queryKey: ["referrals", user?.user_id] });
       toast({
         title: "Referral created",

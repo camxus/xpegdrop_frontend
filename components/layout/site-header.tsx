@@ -265,7 +265,7 @@ export function SiteHeader({ children }: SiteHeaderProps) {
           <div className="mt-4 pt-4 border-t border-white/10 place-items-start">
             <Button variant="outline" className="relative mb-4 w-full" onClick={handleClickReferral}>
               <AnimatePresence>
-                {referrals.length <= MAX_REFERRALS_AMOUNT && (
+                {!!referrals && referrals.length <= MAX_REFERRALS_AMOUNT && (
                   <motion.div
                     className="absolute w-2 h-2 bg-red-500 rounded-full -top-1 -right-1"
                     initial={{ opacity: 0 }}
