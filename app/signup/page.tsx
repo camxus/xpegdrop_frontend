@@ -4,7 +4,7 @@ import React, { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import { FolderOpen, Eye, EyeOff, Upload } from "lucide-react";
+import { FolderOpen, Eye, EyeOff, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -537,10 +537,10 @@ export function SignUpPageContent() {
                               type="button"
                               variant="ghost"
                               size="sm"
-                              className="absolute top-2 right-2 bg-black/50 hover:bg-black/70 text-white"
+                              className="absolute top-2 right-2 text-white"
                               onClick={() => setAvatarFile(undefined)}
                             >
-                              ×
+                              <X />
                             </Button>
                           </div>
                         )}

@@ -154,7 +154,7 @@ export default function CurvesAdjustment({
       <canvas
         ref={curveCanvasRef}
         className={cn(
-          "w-full rounded-lg border border-white/30 bg-black/30 backdrop-blur-md"
+          "w-full rounded-lg border border-white/30 bg-background backdrop-blur-md"
         )}
         onClick={handleAddPoint}
       />

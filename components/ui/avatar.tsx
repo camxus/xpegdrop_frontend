@@ -105,7 +105,7 @@ export default function AvatarGroup({
                   </Avatar>
                 </div>
               </TooltipTrigger>
-              <TooltipContent className="bg-black/90" side="top">
+              <TooltipContent className="bg-background/90" side="top">
                 {tooltipContent ? (
                   tooltipContent(u)
                 ) : (

@@ -140,7 +140,7 @@ export default function StarRatingWithAvatars({
               ratings?.filter((r) => r.user_id === user?.user_id).length || 0,
           }))}
           tooltipContent={() => (
-            <div className="flex flex-col p-2 space-y-2 bg-black/90 rounded-md">
+            <div className="flex flex-col p-2 space-y-2 bg-background/90 rounded-md">
               {usersByStar.map(({ starRating, users }) => {
                 if (!users.length) return null;
 

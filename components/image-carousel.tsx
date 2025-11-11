@@ -106,7 +106,7 @@ export function ImageCarousel({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-50 bg-black/95 backdrop-blur-sm"
+          className="fixed inset-0 z-50 bg-background/95 backdrop-blur-sm"
           initial={{ opacity: 0, filter: "blur(20px)" }}
           animate={{ opacity: 1, filter: "blur(0px)" }}
           exit={{ opacity: 0, filter: "blur(20px)" }}
@@ -188,7 +188,7 @@ export function ImageCarousel({
           </div>
 
           {/* Bottom navigation dots */}
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/50 rounded-full px-4 py-2">
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-background/50 rounded-full px-4 py-2">
             {images.map((_, idx) => (
               <button
                 key={idx}

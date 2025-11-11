@@ -777,7 +777,7 @@ export const EditImageView: React.FC<EditImageViewProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex bg-black/90">
+    <div className="fixed inset-0 z-50 flex bg-background">
       {/* Canvas */}
       <div
         ref={containerRef}
