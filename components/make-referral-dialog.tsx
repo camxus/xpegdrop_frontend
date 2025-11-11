@@ -7,7 +7,7 @@ import { useReferrals } from "@/hooks/api/useReferrals";
 export function MakeReferralComponent() {
   const { toast } = useToast();
   const {
-    referrals,
+    referrals = [],
     createReferral: { mutateAsync: createReferral, isPending: creatingReferral }
   } = useReferrals();
 
