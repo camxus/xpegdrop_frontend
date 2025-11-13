@@ -34,8 +34,13 @@ import {
 import { useNotes } from "@/hooks/api/useNotes";
 import { useServiceWorker } from "@/hooks/useServiceWorker";
 import { useUser } from "@/hooks/api/useUser";
+import { useTenants } from "@/components/tenants-provider";
 
-export default function PublicProjectPage() {
+interface IPublicProjectPage {
+  tenantHandle: string | null
+}
+
+export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) {
   useServiceWorker();
   const { username, projectName } = useParams<{
     username: string;
@@ -43,8 +48,6 @@ export default function PublicProjectPage() {
   }>();
 
   const { user } = useAuth();
-
-  const isCurrentUser = user?.username === username;
 
   const { toast } = useToast();
   const { show, hide } = useDialog();
@@ -59,6 +62,7 @@ export default function PublicProjectPage() {
 
   const {
     getProjectByShareUrl,
+    getTenantProjectByShareUrl,
     updateProject: { mutateAsync: updateProject },
     addProjectFiles: { mutateAsync: addProjectFiles },
     getProject: { mutateAsync: getProject },
@@ -75,6 +79,8 @@ export default function PublicProjectPage() {
     getUserByUsername: { data: projectUser, mutateAsync: getUserByUsername },
   } = useUser();
 
+  const { getTenant } = useTenants()
+
   const { uploadFiles, isUploading: isUploadingToS3 } = useS3();
 
   const [project, setProject] = useState<Project | null>(null);
@@ -89,6 +95,12 @@ export default function PublicProjectPage() {
   const [isCarouselOpen, setIsCarouselOpen] = useState(false);
   const [carouselStartIndex, setCarouselStartIndex] = useState(0);
   const [projectLoadProgress, setProjectLoadProgress] = useState(0);
+
+  const { data: tenant } = getTenant(project?.tenant_id || "")
+
+  const isProjectUser = user?.user_id === projectUser?.user_id
+  const isTenantMember = tenant?.members.some((m) => m.user_id === user?.user_id)
+  const canEdit = isProjectUser || tenant?.members.some((m) => m.user_id === user?.user_id && (m.role === "admin" || m.role === "editor"))
 
   const x = useMotionValue(50);
   const y = useMotionValue(50);
@@ -121,7 +133,7 @@ export default function PublicProjectPage() {
 
   const loadProject = async (email?: string) => {
     try {
-      const data = await getProjectByShareUrl(username, projectName, email);
+      const data = tenantHandle ? await getTenantProjectByShareUrl(tenantHandle, username, projectName, email) : await getProjectByShareUrl(username, projectName, email);
       setProject(data?.project || null);
 
       function createEmptyImage(
@@ -260,7 +272,7 @@ export default function PublicProjectPage() {
   };
 
   const handleUpdateProject = async (value: Partial<Project>) => {
-    if (!project || !isCurrentUser) return;
+    if (!project || !isProjectUser) return;
     try {
       setProject({ ...project, ...value });
       await updateProject({
@@ -346,7 +358,7 @@ export default function PublicProjectPage() {
             hide();
           },
         },
-        actions: (props) => FolderPreviewActions({...props, isNewUpload: false}),
+        actions: (props) => FolderPreviewActions({ ...props, isNewUpload: false }),
       });
     },
     [project]
@@ -354,7 +366,7 @@ export default function PublicProjectPage() {
 
   const handleShare = () => {
     if (!project) return;
-    if (!isCurrentUser) return;
+    if (!isProjectUser && !isTenantMember) return;
     show({
       content: () => <ShareDialog project={project} onClose={hide} />,
     });
@@ -396,7 +408,7 @@ export default function PublicProjectPage() {
   );
 
   const handleDuplicateImage = async (image: ImageFile) => {
-    if (!isCurrentUser || !project) return;
+    if (!isProjectUser || !project) return;
 
     const existingImage = images.find((i) => i.name === image.name);
     if (!existingImage?.preview_url) return;
@@ -443,10 +455,12 @@ export default function PublicProjectPage() {
 
   return (
     <>
-      <GlobalFileUploader
-        onFilesSelected={handleAddNewFolders}
-        directory={true}
-      />
+      {canEdit &&
+        <GlobalFileUploader
+          onFilesSelected={handleAddNewFolders}
+          directory={true}
+        />
+      }
 
       <motion.div
         className="min-h-dvh bg-background relative overflow-hidden"
@@ -483,7 +497,7 @@ export default function PublicProjectPage() {
                   <EditableTitle
                     title={project.name}
                     onSave={(value) => handleUpdateProject({ name: value })}
-                    editable={isCurrentUser}
+                    editable={canEdit}
                   />
                   {project.description && (
                     <p className="text-muted-foreground">
@@ -492,20 +506,20 @@ export default function PublicProjectPage() {
                   )}
                   <p className="text-sm text-muted-foreground">
                     Created
-                    {projectUser?.first_name && (
-                      <> by {user?.user_id === projectUser.user_id ? "You" : projectUser.first_name}</>
+                    {projectUser && (
+                      <> by {isProjectUser ? "You" : projectUser.first_name}</>
                     )}{" "}
                     on {new Date(project.created_at).toLocaleDateString()}
                   </p>
                 </div>
                 <div className="flex gap-2 md:ml-0 ml-auto w-fit">
-                  {(project.can_download || isCurrentUser) && (
+                  {(project.can_download || isProjectUser || isTenantMember) && (
                     <Button disabled={isDownloading} onClick={handleDownload}>
                       <Download className="h-4 w-4" />
                       Download
                     </Button>
                   )}
-                  {project.share_url && isCurrentUser && (
+                  {project.share_url && canEdit && (
                     <Button
                       onClick={handleShare}
                       className="cursor-pointer flex items-center gap-2"

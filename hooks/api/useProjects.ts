@@ -20,6 +20,13 @@ export function useProjects() {
       enabled: !!user?.user_id,
     });
 
+  const getTenantProjects = (tenantId?: string) =>
+    useQuery<Project[], Error>({
+      queryKey: ["tenant-projects", tenantId],
+      queryFn: () => projectsApi.getTenantProjects(tenantId!),
+      enabled: !!tenantId,
+    });
+
   // Get single project by id
   const getProject = useMutation({
     mutationFn: (projectId: string) => projectsApi.getProject(projectId),
@@ -36,6 +43,27 @@ export function useProjects() {
   ) => {
     try {
       const data = await projectsApi.getProjectByShareUrl(
+        username,
+        projectName,
+        email
+      );
+
+      return data;
+    } catch (error: any) {
+      throw { status: error.status, message: error.message, data: error.data };
+    }
+  };
+
+  // Get single project by share URL (public route)
+  const getTenantProjectByShareUrl = async (
+    tenantHandle: string,
+    username: string,
+    projectName: string,
+    email?: string
+  ) => {
+    try {
+      const data = await projectsApi.getTenantProjectByShareUrl(
+        tenantHandle,
         username,
         projectName,
         email
@@ -163,8 +191,10 @@ export function useProjects() {
 
   return {
     projects,
+    getTenantProjects,
     getProject,
     getProjectByShareUrl,
+    getTenantProjectByShareUrl,
     createProject,
     updateProject,
     deleteProject,

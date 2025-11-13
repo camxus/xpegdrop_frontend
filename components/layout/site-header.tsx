@@ -20,6 +20,7 @@ import {
   X,
   PlusSquare,
   Mails,
+  ChevronsUpDown,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -44,12 +45,18 @@ import { Progress } from "../ui/progress";
 import { useReferrals } from "@/hooks/api/useReferrals";
 import { MakeReferralComponent } from "../make-referral-dialog";
 import { MAX_REFERRALS_AMOUNT } from "@/lib/api/referralsApi";
+import { useTenants } from "../tenants-provider";
+
+
+const SIDEBAR_WIDTH = 256
+const SIDEBAR_WIDTH_COLLAPSED = 64
 
 interface SiteHeaderProps {
   children: ReactNode;
 }
 
 export function SiteHeader({ children }: SiteHeaderProps) {
+  const { tenants, currentTenant, setCurrentTenant } = useTenants()
   const { referrals } = useReferrals()
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
 
@@ -57,9 +64,15 @@ export function SiteHeader({ children }: SiteHeaderProps) {
   const { user, logout } = useAuth();
   const { show, hide } = useDialog();
   const {
-    projects: { data: projects = [] },
+    projects: { data: personalProjects = [] },
+    getTenantProjects,
     deleteProject: { mutateAsync: deleteProject },
   } = useProjects();
+
+  const { data: tenantProjects = [] } = getTenantProjects(currentTenant?.tenant_id || "");
+
+  const projects = [...personalProjects, ...tenantProjects]
+
   const {
     stats: { data: stats },
   } = useDropbox();
@@ -67,7 +80,7 @@ export function SiteHeader({ children }: SiteHeaderProps) {
   const isActive = (path: string) => pathname === path;
 
   const sidebarItems =
-    projects
+    [...(currentTenant && !!tenantProjects.length ? tenantProjects : personalProjects)]
       .filter((project) => project.status === "created")
       ?.sort((a, b) => {
         return (
@@ -130,7 +143,7 @@ export function SiteHeader({ children }: SiteHeaderProps) {
         initial={{ width: 0, opacity: 0 }}
         animate={{
           opacity: 1,
-          width: isSidebarCollapsed ? 64 : 256,
+          width: isSidebarCollapsed ? SIDEBAR_WIDTH_COLLAPSED : SIDEBAR_WIDTH,
         }}
         className="bg-transparent border-r border-gray-800 flex flex-col overflow-hidden w-full"
       >
@@ -331,18 +344,16 @@ export function SiteHeader({ children }: SiteHeaderProps) {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
-                  className="mb-4 flex items-center gap-2 p-2"
+                  className="mb-4 flex items-center justify-start gap-2 p-2 w-full"
                   variant="ghost"
                 >
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={user?.avatar as string} />
                     <AvatarFallback className="text-sm">
-                      {getInitials(
-                        user?.first_name || "",
-                        user?.last_name || ""
-                      )}
+                      {getInitials(user?.first_name || "", user?.last_name || "")}
                     </AvatarFallback>
                   </Avatar>
+
                   <motion.span
                     className="text-muted-foreground"
                     animate={isSidebarCollapsed ? "hidden" : "visible"}
@@ -350,10 +361,10 @@ export function SiteHeader({ children }: SiteHeaderProps) {
                     variants={{
                       visible: {
                         opacity: 1,
-                        display: "block", // appears immediately
+                        display: "block",
                         transition: {
-                          opacity: { duration: 0.1, delay: 0.15 }, // delay only opacity
-                          display: { delay: 0.15 }, // no delay
+                          opacity: { duration: 0.1, delay: 0.15 },
+                          display: { delay: 0.15 },
                         },
                       },
                       hidden: {
@@ -365,12 +376,59 @@ export function SiteHeader({ children }: SiteHeaderProps) {
                   >
                     {user?.username}
                   </motion.span>
+
+                  <AnimatePresence mode="wait">
+                    {!!!tenants.length && !isSidebarCollapsed && (
+                      <motion.div
+                        key="chevron"
+                        initial={{ opacity: 0, y: -4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -4 }}
+                        transition={{ duration: 0.15, delay: 0.3 }}
+                        className="ml-auto"
+                      >
+                        <ChevronsUpDown className="h-4 w-4 text-muted-foreground" />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => logout()}>
-                  Sign out
-                </DropdownMenuItem>
+              <DropdownMenuContent align="end" style={{ width: `calc(${SIDEBAR_WIDTH}px - 0.75rem)` }}>
+                {!!tenants.length && (
+                  <>
+                    {tenants.map((tenant) => (
+                      <DropdownMenuItem
+                        key={tenant.tenant_id}
+                        onClick={() => setCurrentTenant(tenant)}
+                        className="flex items-start gap-2 w-full"
+                      >
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={tenant?.avatar as string} />
+                          <AvatarFallback className="text-sm">
+                            {getInitials(tenant?.name || "", "")}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span>{tenant.name}</span>
+                      </DropdownMenuItem>
+                    ))}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      key={user.user_id}
+                      onClick={() => setCurrentTenant(null)}
+                      className="flex items-start gap-2 w-full"
+                    >
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={user?.avatar as string} />
+                        <AvatarFallback className="text-sm">
+                          {getInitials(user?.first_name || "", user?.last_name || "")}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span>{user.username}</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                  </>
+                )}
+                <DropdownMenuItem onClick={logout}>Sign out</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

@@ -27,6 +27,12 @@ export const projectsApi = {
     return await api.get("/projects");
   },
 
+  //Get all projects for a specific tenant
+  getTenantProjects: async (tenatnId: string) => {
+    return await api.get<Project[]>(`/projects/tenant/${tenatnId}`);
+  },
+
+
   // Get single project by ID
   getProject: async (projectId: string) => {
     return await api.get(`/projects/${projectId}`);
@@ -53,6 +59,19 @@ export const projectsApi = {
   ) => {
     return await api.get(
       `/projects/share/${username}/${encodeURIComponent(projectName)}`,
+      { params: { email: email } }
+    );
+  },
+
+  // Get a shared tenant project by public share URL (username + projectName)
+  getTenantProjectByShareUrl: async (
+    tenantHandle: string,
+    username: string,
+    projectName: string,
+    email?: string
+  ) => {
+    return await api.get(
+      `/projects/share/tenant/${tenantHandle}/${username}/${encodeURIComponent(projectName)}`,
       { params: { email: email } }
     );
   },

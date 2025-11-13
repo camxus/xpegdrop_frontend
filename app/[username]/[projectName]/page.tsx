@@ -9,16 +9,23 @@ type PageParams = Promise<{ username: string; projectName: string }>;
 // generateMetadata expects a destructured object with `params: PageParams`
 export async function generateMetadata({
   params,
+  headers,
 }: {
   params: PageParams;
+  headers: Headers;
 }): Promise<Metadata> {
   const { username, projectName } = await params;
+  const tenant = headers.get("x-tenant");
 
   let metadata = {} as Metadata;
   const userData = await userApi.getUserByUsername(username);
 
   try {
-    const projectData = await projectsApi.getProjectByShareUrl(
+    const projectData = tenant ? await projectsApi.getTenantProjectByShareUrl(
+      tenant,
+      username,
+      projectName
+    ) : await projectsApi.getProjectByShareUrl(
       username,
       projectName
     );
@@ -85,6 +92,11 @@ export async function generateMetadata({
 }
 
 // Page component
-export default function Page() {
-  return <ProjectPage />;
+export default function Page({
+  headers,
+}: {
+  headers: Headers;
+}) {
+  const tenant = headers.get("x-tenant");
+  return <ProjectPage tenantHandle={tenant}/>;
 }

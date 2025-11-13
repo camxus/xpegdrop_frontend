@@ -37,6 +37,13 @@ export function isTokenExpired(payload: any): boolean {
   return Date.now() >= expirationTime;
 }
 
+// Extract subdomain if present
+function getSubdomain(host: string): string | null {
+  const parts = host.split(".");
+  if (parts.length > 2) return parts[0]; // e.g., tenant.example.com → "tenant"
+  return null;
+}
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -72,6 +79,13 @@ export function middleware(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = "/new"; // keep qs intact
     return NextResponse.redirect(url);
+  }
+
+  // detect tenant from subdomain and inject it into headers
+  const host = request.headers.get("host") || "";
+  const tenant = getSubdomain(host);
+  if (tenant) {
+    requestHeaders.set("x-tenant", tenant);
   }
 
   return NextResponse.next({
