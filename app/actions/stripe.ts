@@ -15,7 +15,7 @@ export async function startCheckoutSession(productId: string, userId: string) {
     line_items: [
       {
         price_data: {
-          currency: "usd",
+          currency: "eur",
           product_data: {
             name: product.name,
             description: product.description,
