@@ -32,6 +32,7 @@ import GlowingButton from "@/components/glowing-button";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Rating } from "@/lib/api/ratingsApi";
+import { blurFadeInVariants } from "@/lib/motion";
 
 export default function UploadViewWrapper() {
   return (
@@ -106,8 +107,7 @@ export function UploadView() {
   const gradient = useTransform(
     [springX, springY, springSize, springOpacity],
     ([latestX, latestY, latestSize, latestOpacity]) =>
-      `radial-gradient(circle ${latestSize}px at ${latestX}% ${latestY}%, rgba(255,255,255,${latestOpacity}) 0%, rgba(255,255,255,${
-        (latestOpacity as number) * 0.25
+      `radial-gradient(circle ${latestSize}px at ${latestX}% ${latestY}%, rgba(255,255,255,${latestOpacity}) 0%, rgba(255,255,255,${(latestOpacity as number) * 0.25
       }) 50%, transparent 100%)`
   );
 
@@ -292,7 +292,7 @@ export function UploadView() {
         updatedProjects[folderIndex] = project;
         return updatedProjects;
       });
-    } catch {}
+    } catch { }
   };
 
   const handleAddProjectFiles = async (folder: Folder, folderIndex = 0) => {
@@ -307,7 +307,7 @@ export function UploadView() {
       });
 
       await getProject(currentProject.project_id);
-    } catch {}
+    } catch { }
   };
 
   const handleImageClick = useCallback((imageIndex: number) => {
@@ -479,10 +479,10 @@ export function UploadView() {
                             currentProject?.share_url
                               ? handleShare
                               : () =>
-                                  handleUpload(
-                                    currentFolder,
-                                    currentFolderIndex
-                                  )
+                                handleUpload(
+                                  currentFolder,
+                                  currentFolderIndex
+                                )
                           }
                           disabled={isUploading}
                           className="cursor-pointer flex items-center gap-2"
@@ -531,30 +531,37 @@ export function UploadView() {
                     directory={true}
                   />
 
-                  <FileUploader
-                    onFilesSelected={handleNewFolders}
-                    accept={{ "image/*": [] }}
-                    maxFiles={1000}
-                    directory={true}
-                    className="h-dvh w-screen max-w-full max-h-full flex items-center justify-center"
+                  <motion.div
+                    className="space-y-4"
+                    variants={blurFadeInVariants}
+                    initial="hidden"
+                    animate="show"
                   >
-                    <div className="text-center space-y-4">
-                      <FolderOpen className="h-12 w-12 mx-auto text-muted-foreground" />
-                      <div>
-                        <h3 className="text-lg font-semibold">
-                          Upload Image Folders
-                        </h3>
-                        <p className="text-muted-foreground">
-                          Drag and drop folders containing images, or click to
-                          browse
-                        </p>
+                    <FileUploader
+                      onFilesSelected={handleNewFolders}
+                      accept={{ "image/*": [] }}
+                      maxFiles={1000}
+                      directory={true}
+                      className="h-dvh w-screen max-w-full max-h-full flex items-center justify-center"
+                    >
+                      <div className="text-center space-y-4">
+                        <FolderOpen className="h-12 w-12 mx-auto text-muted-foreground" />
+                        <div>
+                          <h3 className="text-lg font-semibold">
+                            Upload Image Folders
+                          </h3>
+                          <p className="text-muted-foreground">
+                            Drag and drop folders containing images, or click to
+                            browse
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                    <Button className="m-4">
-                      <UploadIcon />
-                      Upload
-                    </Button>
-                  </FileUploader>
+                      <Button className="m-4">
+                        <UploadIcon />
+                        Upload
+                      </Button>
+                    </FileUploader>
+                  </motion.div>
                 </>
               );
           }

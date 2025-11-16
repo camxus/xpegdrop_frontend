@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { useState, useEffect, use, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -23,31 +23,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-
-const containerVariants = {
-    hidden: {},
-    show: { transition: { staggerChildren: 0.1 } },
-};
-
-const itemVariants = {
-    hidden: { opacity: 0, y: 20, filter: "blur(4px)" },
-    show: { opacity: 1, y: 0, filter: "blur(0px)", transition: { duration: 0.4 } },
-};
-
-// export const mockTenant: Tenant = {
-//     tenant_id: "tenant_123",
-//     handle: "myteam",
-//     name: "My Team",
-//     description: "A mock tenant for testing.",
-//     members: [
-//         { user_id: "u1", role: "admin", joined_at: "2024-01-05T12:00:00Z" },
-//         { user_id: "u2", role: "editor", joined_at: "2024-02-20T12:00:00Z" },
-//         { user_id: "u3", role: "viewer", joined_at: "2024-03-15T12:00:00Z" },
-//     ],
-//     avatar: undefined,
-//     created_at: new Date().toISOString(),
-//     updated_at: new Date().toISOString(),
-// };
+import { blurFadeInVariants, staggeredContainerVariants } from "@/lib/motion";
 
 export default function TenantPreferencesPage() {
     const { handle } = useParams<{ handle: string }>();
@@ -154,7 +130,7 @@ export default function TenantPreferencesPage() {
 
     return (
         <motion.div
-            variants={containerVariants}
+            variants={staggeredContainerVariants}
             initial="hidden"
             animate="show"
             className="p-8 max-w-4xl mx-auto"
@@ -190,8 +166,8 @@ export default function TenantPreferencesPage() {
             </motion.div>
 
             {/* Editable fields */}
-            <motion.div className="space-y-4" variants={containerVariants}>
-                <motion.div variants={itemVariants} className="space-y-2">
+            <motion.div className="space-y-4" variants={staggeredContainerVariants}>
+                <motion.div variants={blurFadeInVariants} className="space-y-2">
                     <Label htmlFor="name" className="text-muted-foreground">Name</Label>
                     <Input
                         id="name"
@@ -202,7 +178,7 @@ export default function TenantPreferencesPage() {
                     />
                 </motion.div>
 
-                <motion.div variants={itemVariants} className="space-y-2">
+                <motion.div variants={blurFadeInVariants} className="space-y-2">
                     <Label htmlFor="name" className="text-muted-foreground">Handle</Label>
                     <Input
                         id="name"
@@ -213,7 +189,7 @@ export default function TenantPreferencesPage() {
                     />
                 </motion.div>
 
-                <motion.div variants={itemVariants} className="space-y-2">
+                <motion.div variants={blurFadeInVariants} className="space-y-2">
                     <Label htmlFor="description" className="text-muted-foreground">Description</Label>
                     <Input
                         id="description"
@@ -224,7 +200,7 @@ export default function TenantPreferencesPage() {
                     />
                 </motion.div>
 
-                <motion.div className="mt-8" variants={itemVariants}>
+                <motion.div className="mt-8" variants={blurFadeInVariants}>
                     <Label className="text-2xl font-semibold mb-4">Members</Label>
 
                     <TenantUsersTable tenant={tenant} users={uniqueUsers} />
@@ -238,36 +214,6 @@ interface TenantUsersTableProps {
     tenant: Tenant;
     users: User[];
 }
-
-// const mockUsers: User[] = [
-//     {
-//         user_id: "u1",
-//         username: "alice123",
-//         email: "alice@example.com",
-//         first_name: "Alice",
-//         last_name: "Johnson",
-//         bio: "Frontend dev",
-//         created_at: "2024-01-01T12:00:00Z",
-//     },
-//     {
-//         user_id: "u2",
-//         username: "bob456",
-//         email: "bob@example.com",
-//         first_name: "Bob",
-//         last_name: "Smith",
-//         bio: "Backend dev",
-//         created_at: "2024-02-15T12:00:00Z",
-//     },
-//     {
-//         user_id: "u3",
-//         username: "carol789",
-//         email: "carol@example.com",
-//         first_name: "Carol",
-//         last_name: "Davis",
-//         created_at: "2024-03-10T12:00:00Z",
-//     },
-// ];
-
 
 
 export function TenantUsersTable({ tenant, users }: TenantUsersTableProps) {
@@ -447,6 +393,8 @@ export function InviteMemberButton({ tenant }: { tenant: Tenant }) {
         const [searchResults, setSearchResults] = useState<User[] | null>(null);
         const [popoverOpen, setPopoverOpen] = useState(false);
 
+        const inputRef = useRef<HTMLInputElement>(null);
+
         useEffect(() => { console.log(searchResults) }, [searchResults])
 
         // Debounce search
@@ -484,8 +432,8 @@ export function InviteMemberButton({ tenant }: { tenant: Tenant }) {
 
             try {
                 await inviteMember.mutateAsync({
-                  tenantId: tenant.tenant_id,
-                  data: { user_id: selectedUser.user_id, role },
+                    tenantId: tenant.tenant_id,
+                    data: { user_id: selectedUser.user_id, role },
                 });
                 hide();
             } catch (err) {
@@ -499,22 +447,45 @@ export function InviteMemberButton({ tenant }: { tenant: Tenant }) {
         return (<div className="space-y-4 relative w-full" >
             <Popover open={!!(searchResults && popoverOpen)} onOpenChange={setPopoverOpen}>
                 <PopoverTrigger asChild>
-                    <Input
-                        type="search"
-                        placeholder="Search by username"
-                        value={search}
-                        autoComplete="off"
-                        onChange={(e) => {
-                            setSearch(e.target.value);
-                            setSelectedUser(null);
-                        }}
-                        onFocus={() => {
-                            if (searchResults?.length) setPopoverOpen(true);
-                        }}
-                    />
+                    {selectedUser ? (
+                        <div
+                            onClick={() => {
+                                setSelectedUser(null);
+
+                                // wait a bit so React renders the Input
+                                requestAnimationFrame(() => {
+                                    inputRef.current?.focus();
+                                });
+                            }}
+                            className="flex items-center gap-2 p-2 border rounded-md cursor-pointer hover:bg-accent"
+                        >
+                            <Avatar className="h-6 w-6">
+                                <AvatarImage src={selectedUser?.avatar as string} />
+                                <AvatarFallback className="text-xs">
+                                    {getInitials(selectedUser?.first_name || "", "")}
+                                </AvatarFallback>
+                            </Avatar>
+                            <span className="text-sm">{selectedUser.username}</span>
+                        </div>
+                    ) : (
+                        <Input
+                            ref={inputRef}
+                            type="search"
+                            placeholder="Search by username"
+                            value={search}
+                            autoComplete="off"
+                            onChange={(e) => {
+                                setSearch(e.target.value);
+                                setSelectedUser(null);
+                            }}
+                            onFocus={() => {
+                                if (searchResults?.length) setPopoverOpen(true);
+                            }}
+                        />
+                    )}
                 </PopoverTrigger>
 
-                <PopoverContent className="p-0 w-full max-h-40 overflow-y-auto">
+                <PopoverContent className="p-0 w-full max-h-40 overflow-y-auto pointer-events-auto">
                     {searchResults && searchResults.length ? (
                         searchResults.map((u) => (
                             <div

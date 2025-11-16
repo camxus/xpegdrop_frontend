@@ -15,20 +15,7 @@ import { getInitials } from "@/lib/utils";
 import Link from "next/link";
 import { User } from "@/types/user";
 import { motion } from "framer-motion";
-
-const containerVariants = {
-  hidden: {},
-  show: {
-    transition: {
-      staggerChildren: 0.1,
-    },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20, filter: "blur(4px)" },
-  show: { opacity: 1, y: 0, filter: "blur(0px)", transition: { duration: 0.4 } },
-};
+import { blurFadeInVariants, staggeredContainerVariants } from "@/lib/motion";
 
 
 export default function PreferencesPage() {
@@ -124,7 +111,7 @@ export default function PreferencesPage() {
 
   return (
     <motion.div
-      variants={containerVariants}
+      variants={staggeredContainerVariants}
       initial="hidden"
       animate="show"
       className="p-8 max-w-4xl mx-auto"
@@ -161,11 +148,11 @@ export default function PreferencesPage() {
       {/* Editable user details */}
       <motion.div
         className="space-y-4"
-        variants={containerVariants}
+        variants={staggeredContainerVariants}
         initial="hidden"
         animate="show"
       >
-        <motion.div variants={itemVariants} className="space-y-1">
+        <motion.div variants={blurFadeInVariants} className="space-y-1">
           <Label htmlFor="first_name" className="text-muted-foreground">First Name</Label>
           <Input
             id="first_name"
@@ -174,7 +161,7 @@ export default function PreferencesPage() {
           />
         </motion.div>
 
-        <motion.div variants={itemVariants} className="space-y-2">
+        <motion.div variants={blurFadeInVariants} className="space-y-2">
           <Label htmlFor="last_name" className="text-muted-foreground">Last Name</Label>
           <Input
             id="last_name"
@@ -183,7 +170,7 @@ export default function PreferencesPage() {
           />
         </motion.div>
 
-        <motion.div variants={itemVariants} className="space-y-2">
+        <motion.div variants={blurFadeInVariants} className="space-y-2">
           <Label htmlFor="last_name" className="text-muted-foreground">Username</Label>
           <Input
             id="last_name"
@@ -192,7 +179,7 @@ export default function PreferencesPage() {
           />
         </motion.div>
 
-        <motion.div variants={itemVariants} className="space-y-1">
+        <motion.div variants={blurFadeInVariants} className="space-y-1">
           <Label htmlFor="email" className="text-muted-foreground">Email</Label>
           <Input
             id="email"
@@ -204,7 +191,7 @@ export default function PreferencesPage() {
 
       {/* Manage Billing */}
       <motion.div
-        variants={itemVariants}
+        variants={blurFadeInVariants}
         initial="hidden"
         animate="show"
         className="mt-8"
