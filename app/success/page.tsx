@@ -39,8 +39,10 @@ export function SuccessClient() {
 
   if (loading || !product) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-muted-foreground">Loading...</p>
+      <div className="flex items-center justify-center h-[80vh]">
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+        </div>
       </div>
     );
   }
