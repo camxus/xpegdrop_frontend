@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { tenantsApi, Tenant } from "@/lib/api/tenantsApi";
+import { tenantsApi, Tenant, S3Location } from "@/lib/api/tenantsApi";
 import { useToast } from "../use-toast";
 import { useAuth } from "./useAuth";
 
@@ -24,8 +24,8 @@ export function useTenants() {
   });
 
   /**
- * Fetch a single tenant by ID
- */
+   * Fetch a single tenant by ID
+   */
   const getTenant = (tenantId: string) =>
     useQuery({
       queryKey: ["tenant", tenantId],
@@ -34,6 +34,19 @@ export function useTenants() {
         return await tenantsApi.getTenant(tenantId);
       },
       enabled: !!tenantId,
+      staleTime: 1000 * 60 * 5, // cache for 5 minutes
+    });
+
+  /**
+   * Fetch a single tenant by ID
+   */
+  const getTenantByHandle = (handle: string) =>
+    useQuery({
+      queryKey: ["tenant", handle],
+      queryFn: async () => {
+        if (!handle) throw new Error("Tenant handle is required");
+        return await tenantsApi.getTenantByHandle(handle);
+      },
       staleTime: 1000 * 60 * 5, // cache for 5 minutes
     });
 
@@ -64,37 +77,52 @@ export function useTenants() {
   });
 
   /**
-   * Update tenant
-   */
+  * Update tenant
+  */
   const updateTenant = useMutation({
     mutationFn: async ({
       tenantId,
-      updates,
+      data,
     }: {
       tenantId: string;
-      updates: Partial<Pick<Tenant, "name" | "description" | "avatar">>;
-    }) => tenantsApi.updateTenant(tenantId, updates),
+      data: {
+        name?: string;
+        description?: string;
+        avatar?: File | S3Location | null;
+      };
+    }) => {
+      // Pass through to real API (multipart/form-data)
+      return tenantsApi.updateTenant(tenantId, data);
+    },
+
     onSuccess: (updatedTenant) => {
-      queryClient.setQueryData<Tenant[]>(["tenants", user?.user_id], (old) =>
-        old
-          ? old.map((t) =>
+      // Update tenant list cache
+      queryClient.setQueryData<Tenant[]>(
+        ["tenants", user?.user_id],
+        (old) => {
+          if (!old) return [updatedTenant];
+          return old.map((t) =>
             t.tenant_id === updatedTenant.tenant_id ? updatedTenant : t
-          )
-          : [updatedTenant]
+          );
+        }
       );
+
       toast({
         title: "Team updated",
         description: "Your team was updated successfully.",
       });
     },
+
     onError: (err: any) => {
       toast({
         title: "Error",
-        description: err?.response?.data?.error || "Failed to update tenant.",
+        description:
+          err?.response?.data?.error || "Failed to update tenant.",
         variant: "destructive",
       });
     },
   });
+
 
   /**
    * Delete tenant
@@ -128,7 +156,7 @@ export function useTenants() {
       data,
     }: {
       tenantId: string;
-      data: { user_id: string; role?: "admin" | "member" | "viewer" };
+      data: { user_id: string; role?: "admin" | "editor" | "viewer" };
     }) => tenantsApi.inviteMember(tenantId, data),
     onSuccess: ({ tenant }) => {
       queryClient.setQueryData<Tenant[]>(["tenants", user?.user_id], (old) =>
@@ -145,6 +173,39 @@ export function useTenants() {
       toast({
         title: "Error",
         description: err?.response?.data?.error || "Failed to invite member.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  /**
+ * Update member role
+ */
+  const updateMember = useMutation({
+    mutationFn: async ({
+      tenantId,
+      userId,
+      role,
+    }: {
+      tenantId: string;
+      userId: string;
+      role: "admin" | "editor" | "viewer";
+    }) => tenantsApi.updateMember(tenantId, userId, role),
+    onSuccess: ({ tenant }) => {
+      queryClient.setQueryData<Tenant[]>(["tenants", user?.user_id], (old) =>
+        old
+          ? old.map((t) => (t.tenant_id === tenant.tenant_id ? tenant : t))
+          : [tenant]
+      );
+      toast({
+        title: "Member updated",
+        description: "The member's role was updated successfully.",
+      });
+    },
+    onError: (err: any) => {
+      toast({
+        title: "Error",
+        description: err?.response?.data?.error || "Failed to update member.",
         variant: "destructive",
       });
     },
@@ -185,10 +246,12 @@ export function useTenants() {
     tenants: tenantsQuery.data ?? [],
     isLoading: tenantsQuery.isLoading,
     getTenant,
+    getTenantByHandle,
     createTenant,
     updateTenant,
     deleteTenant,
     inviteMember,
+    updateMember,
     removeMember,
   };
 }

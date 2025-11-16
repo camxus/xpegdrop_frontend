@@ -35,6 +35,11 @@ export function useUser() {
     mutationFn: (username: string) => userApi.getUserByUsername(username),
   });
 
+  // Get user by public username
+  const searchByUsername = useMutation<User[], Error, string>({
+    mutationFn: (username: string) => userApi.searchByUsername(username),
+  });
+
   // ✅ Update user info + avatar with toast
   const updateUser = useMutation({
     mutationFn: userApi.updateUser,
@@ -96,6 +101,7 @@ export function useUser() {
   return {
     currentUser,
     getUserById,
+    searchByUsername,
     getUserByUsername,
     updateUser,
     updateDropboxToken,

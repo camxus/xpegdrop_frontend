@@ -12,6 +12,11 @@ export const userApi = {
     return await api.get<User>(`/users/${userId || ""}`);
   },
 
+  // 🔍 Search user by username (public profile)
+  searchByUsername: (username: string) => {
+    return api.get<User[]>(`/users/search?q=${encodeURIComponent(username)}`);
+  },
+  
   // 🔍 Get user by username (public profile)
   getUserByUsername: async (username: string) => {
     return await api.get<User>(`/users/username/${username}`);

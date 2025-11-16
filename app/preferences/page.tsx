@@ -183,6 +183,15 @@ export default function PreferencesPage() {
           />
         </motion.div>
 
+        <motion.div variants={itemVariants} className="space-y-2">
+          <Label htmlFor="last_name" className="text-muted-foreground">Username</Label>
+          <Input
+            id="last_name"
+            value={userState.username}
+            onChange={(e) => setUserState((prev) => ({ ...prev, username: e.target.value }))}
+          />
+        </motion.div>
+
         <motion.div variants={itemVariants} className="space-y-1">
           <Label htmlFor="email" className="text-muted-foreground">Email</Label>
           <Input

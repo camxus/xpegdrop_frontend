@@ -8,7 +8,7 @@ export interface S3Location {
 
 export interface Tenant {
   tenant_id: string;
-  hanlde: string;
+  handle: string;
   name: string;
   description?: string;
   members: {
@@ -44,13 +44,55 @@ export const tenantsApi = {
   },
 
   /**
+   * Get a single tenant by handle
+   */
+  getTenantByHandle: async (handle: string) => {
+    return await api.get<Tenant>(`/tenants/handle/${handle}`);
+  },
+
+  /**
    * Update a tenant (admin only)
+   *
+   * Supports:
+   * - name (string)
+   * - description (string)
+   * - avatar (File OR S3Location JSON)
    */
   updateTenant: async (
     tenantId: string,
-    data: { name?: string; description?: string; avatar?: S3Location | string }
+    formData: {
+      name?: string;
+      description?: string;
+      avatar?: File | S3Location | null;
+    }
   ) => {
-    return await api.put<Tenant>(`/tenants/${tenantId}`, data);
+    const data = new FormData();
+
+    for (const key in formData) {
+      const value = formData[key as keyof typeof formData];
+
+      // Handle avatar upload
+      if (key === "avatar") {
+        if (value instanceof File) {
+          data.append("avatar", value);
+        } else if (value && typeof value === "object") {
+          // S3Location object → send as JSON
+          data.append("avatar", JSON.stringify(value));
+        }
+        continue;
+      }
+
+      // Regular fields
+      if (value !== undefined && value !== null) {
+        data.append(key, value as string);
+      }
+    }
+
+    return await api.put<Tenant>(`/tenants/${tenantId}`, data, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
   },
 
   /**
@@ -65,7 +107,7 @@ export const tenantsApi = {
    */
   inviteMember: async (
     tenantId: string,
-    data: { user_id: string; role?: "admin" | "member" | "viewer" }
+    data: { user_id: string; role?: "admin" | "editor" | "viewer" }
   ) => {
     return await api.post<{ message: string; tenant: Tenant }>(
       `/tenants/${tenantId}/invite`,
@@ -74,11 +116,21 @@ export const tenantsApi = {
   },
 
   /**
+   * Update a member's role
+   */
+  updateMember: async (tenantId: string, userId: string, role: "admin" | "editor" | "viewer") => {
+    return await api.patch<{ message: string; tenant: Tenant }>(
+      `/tenants/${tenantId}/${userId}`,
+      { role }
+    );
+  },
+
+  /**
    * Remove a member from the tenant (admin only)
    */
   removeMember: async (tenantId: string, userId: string) => {
     return await api.delete<{ message: string; tenant: Tenant }>(
-      `/tenants/${tenantId}/members/${userId}`
+      `/tenants/${tenantId}/${userId}`
     );
   },
 };

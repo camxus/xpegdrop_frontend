@@ -7,9 +7,11 @@ import { projectsApi } from "@/lib/api/projectsApi";
 import { S3Location } from "@/types/user";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "./useAuth";
+import { useTenants } from "@/components/tenants-provider";
 
 export function useProjects() {
   const { user } = useAuth()
+  const { currentTenant } = useTenants()
   const queryClient = useQueryClient();
 
   // Get all projects
@@ -20,11 +22,11 @@ export function useProjects() {
       enabled: !!user?.user_id,
     });
 
-  const getTenantProjects = (tenantId?: string) =>
+  const tenantProjects =
     useQuery<Project[], Error>({
-      queryKey: ["tenant-projects", tenantId],
-      queryFn: () => projectsApi.getTenantProjects(tenantId!),
-      enabled: !!tenantId,
+      queryKey: ["tenant-projects", currentTenant?.tenant_id],
+      queryFn: () => projectsApi.getTenantProjects(currentTenant?.tenant_id!),
+      enabled: !!currentTenant?.tenant_id,
     });
 
   // Get single project by id
@@ -191,7 +193,7 @@ export function useProjects() {
 
   return {
     projects,
-    getTenantProjects,
+    tenantProjects,
     getProject,
     getProjectByShareUrl,
     getTenantProjectByShareUrl,

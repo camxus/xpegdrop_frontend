@@ -75,7 +75,7 @@ const SIZE_MAP: Record<string, string> = {
   lg: "w-12 h-12 text-base",
 };
 
-export default function AvatarGroup({
+function AvatarGroup({
   users,
   max = 4,
   size = "md",

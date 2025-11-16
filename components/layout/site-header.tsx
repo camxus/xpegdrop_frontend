@@ -67,11 +67,10 @@ export function SiteHeader({ children }: SiteHeaderProps) {
   const { show, hide } = useDialog();
   const {
     projects: { data: personalProjects = [] },
-    getTenantProjects,
+    tenantProjects: { data: tenantProjects = [] },
     deleteProject: { mutateAsync: deleteProject },
   } = useProjects();
 
-  const { data: tenantProjects = [] } = getTenantProjects(currentTenant?.tenant_id || "");
 
   const projects = [...personalProjects, ...tenantProjects]
 

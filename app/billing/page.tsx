@@ -24,18 +24,18 @@ export default function BillingPage() {
 
   return (
     <div className="max-w-4xl mx-auto p-8">
+      <Link href="/preferences">
+        <Button variant="ghost" className="mb-6">
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back
+        </Button>
+      </Link>
+
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <Link href="/preferences">
-          <Button variant="ghost" className="mb-6">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back
-          </Button>
-        </Link>
-
         <h1 className="text-4xl font-bold mb-8">Billing & Subscription</h1>
       </motion.div>
 
