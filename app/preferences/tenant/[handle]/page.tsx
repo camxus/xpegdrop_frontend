@@ -34,20 +34,20 @@ const itemVariants = {
     show: { opacity: 1, y: 0, filter: "blur(0px)", transition: { duration: 0.4 } },
 };
 
-export const mockTenant: Tenant = {
-    tenant_id: "tenant_123",
-    handle: "myteam",
-    name: "My Team",
-    description: "A mock tenant for testing.",
-    members: [
-        { user_id: "u1", role: "admin", joined_at: "2024-01-05T12:00:00Z" },
-        { user_id: "u2", role: "editor", joined_at: "2024-02-20T12:00:00Z" },
-        { user_id: "u3", role: "viewer", joined_at: "2024-03-15T12:00:00Z" },
-    ],
-    avatar: undefined,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-};
+// export const mockTenant: Tenant = {
+//     tenant_id: "tenant_123",
+//     handle: "myteam",
+//     name: "My Team",
+//     description: "A mock tenant for testing.",
+//     members: [
+//         { user_id: "u1", role: "admin", joined_at: "2024-01-05T12:00:00Z" },
+//         { user_id: "u2", role: "editor", joined_at: "2024-02-20T12:00:00Z" },
+//         { user_id: "u3", role: "viewer", joined_at: "2024-03-15T12:00:00Z" },
+//     ],
+//     avatar: undefined,
+//     created_at: new Date().toISOString(),
+//     updated_at: new Date().toISOString(),
+// };
 
 export default function TenantPreferencesPage() {
     const { handle } = useParams<{ handle: string }>();
@@ -63,7 +63,7 @@ export default function TenantPreferencesPage() {
 
     const { show, hide } = useDialog();
 
-    const [tenantState, setTenantState] = useState<Tenant>(mockTenant!);
+    const [tenantState, setTenantState] = useState<Tenant>(tenant!);
     const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
 
     // --- Auto-save tenant updates (name, description)
@@ -144,7 +144,7 @@ export default function TenantPreferencesPage() {
         });
     };
 
-    if (!mockTenant || !tenantState) return (
+    if (!tenant || !tenantState) return (
         <div className="flex items-center justify-center h-[80vh]">
             <div className="absolute inset-0 flex items-center justify-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
@@ -227,7 +227,7 @@ export default function TenantPreferencesPage() {
                 <motion.div className="mt-8" variants={itemVariants}>
                     <Label className="text-2xl font-semibold mb-4">Members</Label>
 
-                    <TenantUsersTable tenant={mockTenant} users={uniqueUsers} />
+                    <TenantUsersTable tenant={tenant} users={uniqueUsers} />
                 </motion.div>
             </motion.div>
         </motion.div>
@@ -239,34 +239,34 @@ interface TenantUsersTableProps {
     users: User[];
 }
 
-const mockUsers: User[] = [
-    {
-        user_id: "u1",
-        username: "alice123",
-        email: "alice@example.com",
-        first_name: "Alice",
-        last_name: "Johnson",
-        bio: "Frontend dev",
-        created_at: "2024-01-01T12:00:00Z",
-    },
-    {
-        user_id: "u2",
-        username: "bob456",
-        email: "bob@example.com",
-        first_name: "Bob",
-        last_name: "Smith",
-        bio: "Backend dev",
-        created_at: "2024-02-15T12:00:00Z",
-    },
-    {
-        user_id: "u3",
-        username: "carol789",
-        email: "carol@example.com",
-        first_name: "Carol",
-        last_name: "Davis",
-        created_at: "2024-03-10T12:00:00Z",
-    },
-];
+// const mockUsers: User[] = [
+//     {
+//         user_id: "u1",
+//         username: "alice123",
+//         email: "alice@example.com",
+//         first_name: "Alice",
+//         last_name: "Johnson",
+//         bio: "Frontend dev",
+//         created_at: "2024-01-01T12:00:00Z",
+//     },
+//     {
+//         user_id: "u2",
+//         username: "bob456",
+//         email: "bob@example.com",
+//         first_name: "Bob",
+//         last_name: "Smith",
+//         bio: "Backend dev",
+//         created_at: "2024-02-15T12:00:00Z",
+//     },
+//     {
+//         user_id: "u3",
+//         username: "carol789",
+//         email: "carol@example.com",
+//         first_name: "Carol",
+//         last_name: "Davis",
+//         created_at: "2024-03-10T12:00:00Z",
+//     },
+// ];
 
 
 
@@ -274,7 +274,7 @@ export function TenantUsersTable({ tenant, users }: TenantUsersTableProps) {
     const { removeMember, updateMember } = useTenants()
     const [rowSelection, setRowSelection] = useState<Record<number, any>>({});
     // Map users with their tenant membership info
-    const data = mockUsers
+    const data = users
         .map((user) => {
             const member = tenant.members.find((m) => m.user_id === user.user_id);
             if (!member) return null;
