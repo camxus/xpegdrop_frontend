@@ -414,7 +414,7 @@ export function SiteHeader({ children }: SiteHeaderProps) {
                   </motion.span>
 
                   <AnimatePresence mode="wait">
-                    {!!!tenants.length && !isSidebarCollapsed && (
+                    {!!tenants.length && !isSidebarCollapsed && (
                       <motion.div
                         key="chevron"
                         initial={{ opacity: 0, y: -4 }}
