@@ -8,9 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Edit2, Check, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-interface EditableTitleProps {
+interface EditableTitleProps extends React.InputHTMLAttributes<any> {
   title: string;
-  onSave: (newTitle: string) => void;
+  onSave?: (newTitle: string) => void;
   editable?: boolean;
   className?: string;
 }
@@ -20,6 +20,7 @@ export function EditableTitle({
   onSave,
   className,
   editable,
+  ...props
 }: EditableTitleProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(title);
@@ -62,6 +63,7 @@ export function EditableTitle({
           onChange={(e) => setEditValue(e.target.value)}
           onKeyDown={handleKeyDown}
           className="text-2xl font-bold w-fit max-w-full" // Added w-fit max-w-full
+          {...props}
         />
         <Button size="sm" onClick={handleSave}>
           <Check className="h-4 w-4" />

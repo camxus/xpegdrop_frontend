@@ -7,15 +7,29 @@ import { ArrowLeft } from 'lucide-react'
 import { useStripe } from '@/hooks/api/useStripe'
 import { addDays, format } from 'date-fns'
 import { PRODUCTS } from '@/lib/products'
+import { motion } from 'framer-motion'
 
+const containerVariants = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.1 } },
+}
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 20, filter: "blur(4px)" },
+  show: { opacity: 1, y: 0, filter: "blur(0px)", transition: { duration: 0.4 } },
+}
 
 export default function BillingPage() {
   const { billingInfo: { data: billingInfo }, billingPortal: { data: billingPortal } } = useStripe()
 
   return (
-    <div className="min-h-screen bg-background p-8">
-      <div className="max-w-4xl mx-auto">
-        <Link href="/">
+    <div className="max-w-4xl mx-auto p-8">
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <Link href="/preferences">
           <Button variant="ghost" className="mb-6">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
@@ -23,8 +37,16 @@ export default function BillingPage() {
         </Link>
 
         <h1 className="text-4xl font-bold mb-8">Billing & Subscription</h1>
+      </motion.div>
 
-        <div className="space-y-6">
+      <motion.div
+        className="space-y-6"
+        variants={containerVariants}
+        initial="hidden"
+        animate="show"
+      >
+        {/* Current Plan */}
+        <motion.div variants={itemVariants}>
           <Card>
             <CardHeader>
               <CardTitle>Current Plan</CardTitle>
@@ -55,7 +77,10 @@ export default function BillingPage() {
               )}
             </CardContent>
           </Card>
+        </motion.div>
 
+        {/* Payment Method */}
+        <motion.div variants={itemVariants}>
           <Card>
             <CardHeader>
               <CardTitle>Payment Method</CardTitle>
@@ -78,22 +103,28 @@ export default function BillingPage() {
               )}
             </CardContent>
           </Card>
-          {billingInfo?.subscription?.status && <Card>
-            <CardHeader>
-              <CardTitle>Manage Billing</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                View and manage your subscription details, including renewal dates and payment history.
-              </p>
+        </motion.div>
 
-              <Link href={billingPortal || ""} target="_blank" rel="noopener noreferrer">
-                <Button variant="default">Go to Poral</Button>
-              </Link>
-            </CardContent>
-          </Card>}
-        </div>
-      </div>
+        {/* Manage Billing */}
+        {billingInfo?.subscription?.status && (
+          <motion.div variants={itemVariants}>
+            <Card>
+              <CardHeader>
+                <CardTitle>Manage Billing</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  View and manage your subscription details, including renewal dates and payment history.
+                </p>
+
+                <Link href={billingPortal || ""} target="_blank" rel="noopener noreferrer">
+                  <Button variant="default">Go to Portal</Button>
+                </Link>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+      </motion.div>
     </div>
   )
 }

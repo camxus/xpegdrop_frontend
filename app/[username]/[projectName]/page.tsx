@@ -3,19 +3,20 @@ import ProjectPage from "./client";
 import { projectsApi } from "@/lib/api/projectsApi";
 import { ApiError } from "@/lib/api/client";
 import { userApi } from "@/lib/api/usersApi";
+import { headers as nextHeaders } from "next/headers";
 
 type PageParams = Promise<{ username: string; projectName: string }>;
 
 // generateMetadata expects a destructured object with `params: PageParams`
 export async function generateMetadata({
   params,
-  headers,
 }: {
   params: PageParams;
-  headers: Headers;
 }): Promise<Metadata> {
   const { username, projectName } = await params;
-  const tenant = headers.get("x-tenant");
+
+  const headers = await nextHeaders();
+  const tenant = headers?.get("x-tenant");
 
   let metadata = {} as Metadata;
   const userData = await userApi.getUserByUsername(username);
@@ -92,11 +93,9 @@ export async function generateMetadata({
 }
 
 // Page component
-export default function Page({
-  headers,
-}: {
-  headers: Headers;
-}) {
-  const tenant = headers.get("x-tenant");
-  return <ProjectPage tenantHandle={tenant}/>;
+export default async function Page() {
+  const headers = await nextHeaders();
+  const tenant = headers?.get("x-tenant");
+
+  return <ProjectPage tenantHandle={tenant} />;
 }

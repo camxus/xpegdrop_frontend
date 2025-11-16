@@ -84,7 +84,8 @@ export function middleware(request: NextRequest) {
   // detect tenant from subdomain and inject it into headers
   const host = request.headers.get("host") || "";
   const tenant = getSubdomain(host);
-  if (tenant) {
+
+  if (tenant && tenant !== "app") {
     requestHeaders.set("x-tenant", tenant);
   }
 
