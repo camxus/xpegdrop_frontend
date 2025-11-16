@@ -17,7 +17,7 @@ export function useReferrals() {
   * Fetch referrals for the current user
   */
   useQuery({
-    queryKey: ["referrals", user?.user_id],
+    queryKey: ["referrals"],
     queryFn: async () => {
       return setReferrals((await referralsApi.getUserReferrals()));
     },
@@ -35,7 +35,7 @@ export function useReferrals() {
     },
     onSuccess: (data) => {
       setReferrals((prev) => [...prev || [], data]);
-      queryClient.invalidateQueries({ queryKey: ["referrals", user?.user_id] });
+      queryClient.invalidateQueries({ queryKey: ["referrals"] });
       toast({
         title: "Referral created",
         description: `New referral code: ${data.code}`,
@@ -63,7 +63,7 @@ export function useReferrals() {
         title: "Referral redeemed",
         description: `You successfully redeemed referral code ${data.referral.code}.`,
       });
-      queryClient.invalidateQueries({ queryKey: ["referrals", user?.user_id] });
+      queryClient.invalidateQueries({ queryKey: ["referrals"] });
     },
     onError: (err: any) => {
       console.error("Redeem referral error:", err);
