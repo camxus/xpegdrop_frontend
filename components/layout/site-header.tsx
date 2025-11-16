@@ -21,6 +21,7 @@ import {
   PlusSquare,
   Mails,
   ChevronsUpDown,
+  CircleFadingArrowUp,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -46,6 +47,7 @@ import { useReferrals } from "@/hooks/api/useReferrals";
 import { MakeReferralComponent } from "../make-referral-dialog";
 import { MAX_REFERRALS_AMOUNT } from "@/lib/api/referralsApi";
 import { useTenants } from "../tenants-provider";
+import UpgradePage from "@/app/upgrade/page";
 
 
 const SIDEBAR_WIDTH = 256
@@ -131,6 +133,14 @@ export function SiteHeader({ children }: SiteHeaderProps) {
     show({
       title: "Referrals",
       content: () => <MakeReferralComponent />,
+    })
+  }
+
+  const handleClickUpgrade = () => {
+    show({
+      title: "Upgrade",
+      content: () => <UpgradePage />,
+      containerProps: { className: "max-w-[90%]" }
     })
   }
 
@@ -313,6 +323,32 @@ export function SiteHeader({ children }: SiteHeaderProps) {
                 Make Referral
               </motion.span>
             </Button>
+            <Button variant="outline" className="relative mb-4 w-full" onClick={handleClickUpgrade}>
+              <CircleFadingArrowUp width={24} height={24} style={isSidebarCollapsed ? { marginLeft: "0px" } : { marginLeft: "4px" }} />
+              <motion.span
+                variants={{
+                  visible: (i: number) => ({
+                    opacity: 1,
+                    display: "block",
+                    transition: {
+                      opacity: { duration: 0.1, delay: i * 0.15 },
+                    },
+                  }),
+                  hidden: {
+                    opacity: 0,
+                    display: "none",
+                    transition: {
+                      opacity: { duration: 0.1 },
+                    },
+                  },
+                }}
+                initial="visible"
+                animate={isSidebarCollapsed ? "hidden" : "visible"}
+                className="whitespace-nowrap overflow-hidden flex-1"
+              >
+                Upgrade
+              </motion.span>
+            </Button>
             <Link href={"/new"}>
               <Button className="relative mb-4 w-full">
                 <PlusSquare width={24} height={24} style={isSidebarCollapsed ? { marginLeft: "0px" } : { marginLeft: "4px" }} />
@@ -428,6 +464,7 @@ export function SiteHeader({ children }: SiteHeaderProps) {
                     <DropdownMenuSeparator />
                   </>
                 )}
+                <DropdownMenuItem><Link href={"/preferences"}>Preferences</Link></DropdownMenuItem>
                 <DropdownMenuItem onClick={logout}>Sign out</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

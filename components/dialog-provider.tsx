@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useState, type ReactNode, type FC } from "react";
+import { createContext, useState, type ReactNode, type FC, RefAttributes } from "react";
 import {
   Dialog,
   DialogContent,
@@ -9,6 +9,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 
 interface DialogOptions {
   title?: string;
@@ -16,6 +17,7 @@ interface DialogOptions {
   content?: FC<any>;
   contentProps?: Record<string, unknown>;
   actions?: FC<any>;
+  containerProps?: React.HTMLAttributes<HTMLDivElement>
 }
 
 interface DialogContextType {
@@ -59,9 +61,10 @@ export function DialogProvider({ children }: { children: ReactNode }) {
     <DialogContext.Provider value={{ show, hide, updateProps }}>
       {children}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-         <DialogContent
-          className="overflow-hidden flex flex-col"
-          style={{ maxHeight: "calc(100vh - 4rem)" }}
+        <DialogContent
+          {...dialogOptions.containerProps}
+          className={cn("overflow-hidden flex flex-col", dialogOptions.containerProps?.className)}
+          style={{ maxHeight: "calc(100vh - 4rem)", ...dialogOptions.containerProps?.style }}
         >
           {dialogOptions.title && (
             <DialogHeader className="flex-shrink-0">
