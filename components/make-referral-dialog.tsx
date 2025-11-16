@@ -53,7 +53,7 @@ export function MakeReferralComponent() {
         >
           {creatingReferral ? "Creating..." : "Create Referral"}
         </Button>
-        <p className="text-sm text-gray-500 mt-1">
+        <p className="text-sm text-muted-foreground mt-1">
           You have {5 - referrals.length} {5 - referrals.length === 1 ? "referral" : "referrals"} left
         </p>
       </div>

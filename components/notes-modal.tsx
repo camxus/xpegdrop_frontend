@@ -122,7 +122,7 @@ export function NotesModal({ projectId, imageName }: NotesViewProps) {
           return (
             <div key={timeKey} className="flex flex-col gap-2">
               {/* Time Header */}
-              <p className="text-xs text-gray-500 font-semibold text-center w-full">
+              <p className="text-xs text-muted-foreground font-semibold text-center w-full">
                 {formatDistanceToNow(time, { addSuffix: true })}
               </p>
 

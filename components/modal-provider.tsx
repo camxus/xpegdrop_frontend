@@ -9,6 +9,7 @@ import {
 } from "react";
 import { X } from "lucide-react";
 import { Button } from "./ui/button";
+import { cn } from "@/lib/utils";
 
 // Enum for modal positions
 export enum Position {
@@ -94,8 +95,8 @@ export function ModalProvider({ children }: { children: ReactNode }) {
     baseStyle.transform = isVisible
       ? "translateX(0)"
       : position === Position.RIGHT
-      ? "translateX(100%)"
-      : "translateX(-100%)";
+        ? "translateX(100%)"
+        : "translateX(-100%)";
   } else {
     baseStyle.left = 0;
     baseStyle[position] = 0;
@@ -104,8 +105,8 @@ export function ModalProvider({ children }: { children: ReactNode }) {
     baseStyle.transform = isVisible
       ? "translateY(0)"
       : position === Position.BOTTOM
-      ? "translateY(100%)"
-      : "translateY(-100%)";
+        ? "translateY(100%)"
+        : "translateY(-100%)";
   }
 
   const style = { ...baseStyle, ...modalOptions.containerStyle };
@@ -126,15 +127,19 @@ export function ModalProvider({ children }: { children: ReactNode }) {
         <>
           {/* Backdrop */}
           <div
-            className={`fixed inset-0 bg-black/30 transition-opacity duration-300 ${
-              isVisible ? "opacity-100" : "opacity-0"
-            }`}
+            className={`fixed inset-0 bg-black/30 transition-opacity duration-300 ${isVisible ? "opacity-100" : "opacity-0"
+              }`}
             style={{ zIndex: 40 }}
             onClick={hide}
           />
 
           {/* Modal Panel */}
-          <div className="bg-background" style={style}>
+          <div className={cn("bg-background border-white/10",
+            position === Position.TOP && "border-b",
+            position === Position.BOTTOM && "border-t",
+            position === Position.LEFT && "border-r",
+            position === Position.RIGHT && "border-l"
+          )} style={style}>
             {/* Header */}
             {modalOptions.title && (
               <div className="flex items-center justify-between p-4 border-b">

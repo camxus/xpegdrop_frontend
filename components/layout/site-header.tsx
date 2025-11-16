@@ -155,7 +155,7 @@ export function SiteHeader({ children }: SiteHeaderProps) {
           opacity: 1,
           width: isSidebarCollapsed ? SIDEBAR_WIDTH_COLLAPSED : SIDEBAR_WIDTH,
         }}
-        className="bg-transparent border-r border-gray-800 flex flex-col overflow-hidden w-full"
+        className="bg-transparent border-r border-white/10 flex flex-col overflow-hidden w-full"
       >
         <div className="p-4">
           <div className="flex items-center justify-between gap-2">
