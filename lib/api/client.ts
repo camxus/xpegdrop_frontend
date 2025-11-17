@@ -8,7 +8,7 @@ import axios, {
   type AxiosResponse,
 } from "axios";
 import { authApi } from "./authApi";
-import { getCookieClient, setCookieClient } from "../cookie";
+import { getCookieClient, removeCookieClient, setCookieClient } from "../cookie";
 import { TOKEN_KEY } from "./token";
 import { cookies } from "next/headers";
 import { parseJwtToken } from "@/middleware";
@@ -215,6 +215,7 @@ axiosInstance.interceptors.request.use(
             setCookieClient(TOKEN_KEY, JSON.stringify({ accessToken, idToken, refreshToken }))
             processQueue(null);
           } catch (refreshError) {
+            removeCookieClient(TOKEN_KEY)
             processQueue(refreshError, null);
             throw refreshError;
           } finally {
