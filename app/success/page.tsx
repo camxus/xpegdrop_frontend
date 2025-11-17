@@ -76,7 +76,7 @@ export function SuccessClient() {
               annual={product.annual}
               link=""
               buttonText="Active Plan"
-              primary={true}
+              primary
               showAnnualBilling={isAnnual}
               setShowAnnualBilling={() => { }}
             />

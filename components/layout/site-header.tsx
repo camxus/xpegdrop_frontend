@@ -463,7 +463,11 @@ export function SiteHeader({ children }: SiteHeaderProps) {
                     <DropdownMenuSeparator />
                   </>
                 )}
-                <DropdownMenuItem><Link href={"/preferences"}>Preferences</Link></DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Link href={"/preferences"} className="w-full h-full">
+                    Preferences
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={logout}>Sign out</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
