@@ -211,7 +211,7 @@ export function SiteHeader({ children }: SiteHeaderProps) {
                     }`}
                 >
                   {/* Icon */}
-                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                  <motion.div initial={false} animate={{ opacity: 1 }}>
                     <item.icon width={20} height={20} />
                   </motion.div>
 
@@ -249,7 +249,7 @@ export function SiteHeader({ children }: SiteHeaderProps) {
                       handleDeleteProject(item.id);
                     }}
                     className={cn(
-                      "cursor-pointer absolute right-3 opacity-0 group-hover:opacity-100 text-white/60 hover:text-red-500 transition-[opacity,colors] duration-200",
+                      "cursor-pointer absolute right-3 opacity-0 group-hover:opacity-100 text-white/60 hover:text-destructive-foreground transition-[opacity,colors] duration-200",
                       isSidebarCollapsed ? "hidden" : "block"
                     )}
                   >
