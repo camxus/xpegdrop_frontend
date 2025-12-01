@@ -15,22 +15,20 @@ A modern React-based frontend for **fframess**, built for speed, clean UI/UX, an
 | Auth | OAuth / Cognito |
 
 ---
-
+```bash
 ## Project Structure
 
 fframess_frontend/
 ├── src/
 │   ├── components/       # Reusable UI components
-│   ├── features/         # App feature modules
-│   ├── pages/ or app/    # Routing (Next.js or standard SPA)
+│   ├── app/              # Routing (Next.js or standard SPA)
 │   ├── hooks/            # Custom hooks
 │   ├── lib/              # Utils + API config
-│   ├── styles/           # Global styles/theme
-│   └── main.tsx
 │
 ├── public/               # Static assets
 ├── package.json
 └── README.md
+```
 
 ---
 
