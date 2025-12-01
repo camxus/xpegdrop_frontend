@@ -22,6 +22,9 @@ import { useModal } from "@/hooks/use-modal";
 import { NotesModal } from "./notes-modal";
 import { Note } from "@/lib/api/notesApi";
 import { MessageSquareText } from "lucide-react";
+import { useUser } from "@/hooks/api/useUser";
+import { useDialog } from "@/hooks/use-dialog";
+import UnauthorizedRatingDialog, { UnauthorizedRatingDialogActions } from "./unauthorized-rating-dialog";
 
 interface PinterestGridProps {
   projectId: string;
@@ -182,12 +185,16 @@ const PinterestImage = memo(function PinterestImage({
   onRatingChange: (value: number, ratingId?: string) => void;
   onDuplicateImage: (image: ImageFile) => void;
 }) {
-  const { show } = useModal();
+  const { user } = useAuth()
+  const { localUser, setLocalUser } = useUser()
+
+  const modal = useModal();
+  const dialog = useDialog();
 
   const [editOpen, setEditOpen] = useState(false);
 
   const handleShowImageNotes = (image: ImageFile) => {
-    show({
+    modal.show({
       title: `Notes`,
       content: () => (
         <NotesModal projectId={projectId} imageName={image.name} />
@@ -196,6 +203,34 @@ const PinterestImage = memo(function PinterestImage({
       width: "500px",
     });
   };
+
+  const handleRatingChange = (value: number) => {
+
+    const firstName = user?.first_name ?? localUser.first_name;
+    const lastName = user?.last_name ?? localUser.last_name;
+
+    if (!firstName || !lastName) {
+      dialog.show({
+        title: "You're currently not signed in",
+        description: "Leave a note with your name so the owner knows who accessed this folder.",
+        content: UnauthorizedRatingDialog,
+        actions: UnauthorizedRatingDialogActions,
+        contentProps: {
+          onSubmit: (firstName: string, lastName: string) => {
+            if (!firstName || !lastName) return
+
+            setLocalUser({ first_name: firstName, last_name: lastName })
+            onRatingChange(value, rating.rating_id)
+
+            return
+          }
+        }
+      })
+      return
+    }
+
+    onRatingChange(value, rating.rating_id)
+  }
 
   return (
     <>
@@ -217,7 +252,7 @@ const PinterestImage = memo(function PinterestImage({
                 className={cn(
                   "absolute inset-0 border-2 border-transparent transition-all duration-300 rounded-lg z-20 pointer-events-none",
                   isHovered &&
-                    "border-white shadow-[0_0_20px_rgba(255,255,255,0.5)]"
+                  "border-white shadow-[0_0_20px_rgba(255,255,255,0.5)]"
                 )}
               />
               <Image
@@ -266,7 +301,7 @@ const PinterestImage = memo(function PinterestImage({
             disabled={disabled}
             value={rating.value || 0}
             ratings={ratings}
-            onRatingChange={(value) => onRatingChange(value, rating.rating_id)}
+            onRatingChange={(value) => handleRatingChange(value)}
             className="w-full flex justify-center"
           />
           {!!imageNotes.length && (

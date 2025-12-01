@@ -4,13 +4,18 @@ import { useQuery, useMutation, useQueryClient, useQueries } from "@tanstack/rea
 import { userApi } from "@/lib/api/usersApi";
 import type { User } from "@/types/user";
 import { useToast } from "@/hooks/use-toast";
-import { setLocalStorage } from "@/lib/localStorage";
+import { getLocalStorage, setLocalStorage } from "@/lib/localStorage";
 import { AUTH_USER_KEY, useAuth } from "./useAuth";
+
+export const LOCAL_USER_STORAGE_KEY = "local_user";
 
 export function useUser() {
   const { user } = useAuth()
   const queryClient = useQueryClient();
   const { toast } = useToast();
+
+  const localUser: Partial<User> = getLocalStorage(LOCAL_USER_STORAGE_KEY)
+  const setLocalUser = (user: Partial<User>) => setLocalStorage(LOCAL_USER_STORAGE_KEY, user || { ...localUser, user })
 
   // Get current authenticated user
   const currentUser = useQuery<User, Error>({
@@ -99,6 +104,8 @@ export function useUser() {
   });
 
   return {
+    localUser,
+    setLocalUser,
     currentUser,
     getUserById,
     searchByUsername,

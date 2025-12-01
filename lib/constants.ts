@@ -1,0 +1,1 @@
+export const LOCAL_USER_STORAGE_KEY = "local_user";

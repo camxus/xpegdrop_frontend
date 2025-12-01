@@ -8,11 +8,12 @@ export class Note {
   content: string = "";
   created_at?: string = undefined;
   updated_at?: string = undefined;
+  author: { first_name: string, last_name: string } = { first_name: "", last_name: "" }
 }
 
 export const notesApi = {
   // Create new note (authenticated)
-  createNote: async (note: { project_id: string; content: string }) => {
+  createNote: async (note: Partial<Note>) => {
     return await api.post<Note>("/notes", note);
   },
 

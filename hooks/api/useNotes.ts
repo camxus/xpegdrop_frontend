@@ -18,9 +18,18 @@ export function useNotes() {
 
   const saveLocalNotes = (projectId: string, imageName: string, notes: Note[]) => {
     const localData = getLocalStorage(LOCAL_NOTES_STORAGE_KEY) || {};
+
+    // Ensure project object exists
+    if (!localData[projectId]) {
+      localData[projectId] = {};
+    }
+
+    // Ensure image object exists (optional if just assigning notes directly)
     localData[projectId][imageName] = notes;
+
     setLocalStorage(LOCAL_NOTES_STORAGE_KEY, localData);
   };
+
 
   // All notes from current user
   const userNotes: Note[] = user?.user_id
@@ -61,7 +70,7 @@ export function useNotes() {
       const localData = getLocalStorage(LOCAL_NOTES_STORAGE_KEY) || {};
 
       const notesArray: Note[] = Array.isArray(data) ? data : data.notes;
-      
+
       setNotes([
         ...notesArray,
         ...(localData[projectId]?.[imageName || ""] || [])
@@ -73,7 +82,7 @@ export function useNotes() {
 
   // Mutation: Create note
   const createNote = useMutation({
-    mutationFn: (note: { project_id: string, image_name: string; content: string }) =>
+    mutationFn: (note: Partial<Note>) =>
       notesApi.createNote(note),
     onSuccess: (data) => {
       if (!data) return;

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useNotes } from "@/hooks/api/useNotes";
 import { Note } from "@/lib/api/notesApi";
 import { useAuth } from "@/hooks/api/useAuth";
-import { useUsers } from "@/hooks/api/useUser";
+import { useUser, useUsers } from "@/hooks/api/useUser";
 import { Button } from "./ui/button";
 import { MoreHorizontal, X } from "lucide-react";
 import { Textarea } from "./ui/textarea";
@@ -17,6 +17,8 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { getInitials } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
+import { useDialog } from "@/hooks/use-dialog";
+import UnauthorizedNoteDialog, { UnauthorizedNoteDialogActions } from "./unauthorized-note-dialog";
 
 interface NotesViewProps {
   projectId: string;
@@ -24,7 +26,9 @@ interface NotesViewProps {
 }
 
 export function NotesModal({ projectId, imageName }: NotesViewProps) {
+  const { show, hide } = useDialog()
   const { user } = useAuth();
+  const { localUser, setLocalUser } = useUser()
   const {
     notes,
     setNotes,
@@ -50,6 +54,30 @@ export function NotesModal({ projectId, imageName }: NotesViewProps) {
   const handleCreateOrUpdate = async () => {
     if (!noteContent.trim()) return;
 
+    const firstName = user?.first_name ?? localUser?.first_name;
+    const lastName = user?.last_name ?? localUser?.last_name;
+
+    if (!firstName || !lastName) {
+      show({
+        title: "You're currently not signed in",
+        description: "Leave a note with your name so the owner knows who accessed this folder.",
+        content: UnauthorizedNoteDialog,
+        actions: UnauthorizedNoteDialogActions,
+        contentProps: {
+          onSubmit: (firstName: string, lastName: string) => {
+            if (!firstName || !lastName) return
+
+            setLocalUser({ first_name: firstName, last_name: lastName })
+            handleCreateOrUpdate()
+            hide()
+            return
+          }
+        }
+      })
+
+      return
+    }
+
     if (editingNoteId) {
       await updateNote({
         noteId: editingNoteId,
@@ -61,6 +89,7 @@ export function NotesModal({ projectId, imageName }: NotesViewProps) {
         project_id: projectId,
         image_name: imageName,
         content: noteContent,
+        author: { first_name: firstName, last_name: lastName }
       });
     }
 
@@ -140,14 +169,15 @@ export function NotesModal({ projectId, imageName }: NotesViewProps) {
                       />
                       <AvatarFallback>
                         {getInitials(
-                          getNoteUser(note)?.first_name || "",
-                          getNoteUser(note)?.last_name || ""
+                          note.user_id.includes("anonymous") ? note.author?.first_name : getNoteUser(note)?.first_name || "",
+                          note.user_id.includes("anonymous") ? note.author?.last_name : getNoteUser(note)?.last_name || ""
                         )}
                       </AvatarFallback>
                     </Avatar>
 
+
                     <p className="flex-1 p-0.5 whitespace-pre-wrap text-sm">
-                      {note.content}
+                      {note.user_id.includes("anonymous") ? note.author?.first_name : getNoteUser(note)?.first_name} {note.user_id.includes("anonymous") ? note.author?.last_name : getNoteUser(note)?.last_name}
                     </p>
 
                     {user?.user_id === note.user_id && (
@@ -170,6 +200,10 @@ export function NotesModal({ projectId, imageName }: NotesViewProps) {
                       </DropdownMenu>
                     )}
                   </div>
+
+                  <p className="flex-1 p-0.5 whitespace-pre-wrap text-sm">
+                    {note.content}
+                  </p>
                 </div>
               ))}
             </div>

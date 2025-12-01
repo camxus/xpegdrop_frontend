@@ -22,11 +22,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
         disableTransitionOnChange
       >
         <TenantsProvider>
-          <ModalProvider>
-            <DialogProvider>
+          <DialogProvider>
+            <ModalProvider>
               {children}
-            </DialogProvider>
-          </ModalProvider>
+            </ModalProvider>
+          </DialogProvider>
         </TenantsProvider>
         <Toaster />
       </ThemeProvider>
