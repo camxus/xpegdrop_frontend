@@ -1,30 +1,62 @@
-# React api architecture
+# fframess — Frontend  
 
-*Automatically synced with your [v0.dev](https://v0.dev) deployments*
+A modern React-based frontend for **fframess**, built for speed, clean UI/UX, and seamless communication with the backend API.
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/camxus-projects/v0-react-api-architecture)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.dev-black?style=for-the-badge)](https://v0.dev/chat/projects/zKi99BiIqG6)
+---
 
-## Overview
+## Tech Stack
 
-This repository will stay in sync with your deployed chats on [v0.dev](https://v0.dev).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.dev](https://v0.dev).
+| Layer | Technology |
+|---|---|
+| Framework | React (Vite or Next.js — update based on implementation) |
+| Styling | TailwindCSS · shadcn/ui |
+| State/Data | React Query |
+| API | REST |
+| Auth | OAuth / Cognito |
 
-## Deployment
+---
 
-Your project is live at:
+## Project Structure
 
-**[https://vercel.com/camxus-projects/v0-react-api-architecture](https://vercel.com/camxus-projects/v0-react-api-architecture)**
+fframess_frontend/
+│── src/
+│ ├── components/ # Reusable UI components
+│ ├── features/ # App feature modules
+│ ├── pages/ or app/ # Routing (Next.js or standard SPA)
+│ ├── hooks/ # Custom hooks
+│ ├── lib/ # Utils + API config
+│ ├── styles/ # Global styles/theme
+│ └── main.tsx
+│
+│── public/ # Static assets
+│── package.json
+│── README.md
 
-## Build your app
+---
 
-Continue building your app on:
+## API Integration
 
-**[https://v0.dev/chat/projects/zKi99BiIqG6](https://v0.dev/chat/projects/zKi99BiIqG6)**
+This frontend communicates with the **fframess backend**.
 
-## How It Works
+---
 
-1. Create and modify your project using [v0.dev](https://v0.dev)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository# xpegdrop_frontend
+## Development
+
+yarn # Install dependencies
+yarn dev # Start dev server
+yarn build # Create production build
+
+---
+
+## Contributing
+
+Pull requests welcome.  
+For features, open an issue first to discuss changes.
+
+---
+
+## License
+
+MIT License © fframess
+
+---
