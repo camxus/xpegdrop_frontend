@@ -10,7 +10,7 @@ import { PRODUCTS } from '@/lib/products'
 export default function UpgradePage() {
   const { user } = useAuth()
 
-  const [showAnnualBilling, setShowAnnualBilling] = useState(false)
+  const [showAnnualBilling, setShowAnnualBilling] = useState(true)
 
   const handleSelectPlan = async (productId: string, trial = false) => {
     if (!user) return
