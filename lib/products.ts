@@ -6,7 +6,10 @@ export interface Product {
   features: string[]
   monthly: number
   annual: number
+  trialDays?: number
 }
+
+const TRIAL_DAYS = 7
 
 // This is the source of truth for all products. 
 // All UI to display products should pull from this array. 
@@ -26,6 +29,7 @@ export const PRODUCTS: Product[] = [
       'Custom branding & watermark control',
       'Cloud storage for all your images',
     ],
+    trialDays: TRIAL_DAYS,
   },
   {
     id: 'pro-annual',
@@ -41,6 +45,7 @@ export const PRODUCTS: Product[] = [
       'Custom branding & watermark control',
       'Cloud storage for all your images',
     ],
+    trialDays: TRIAL_DAYS,
   },
   {
     id: 'agency-monthly',

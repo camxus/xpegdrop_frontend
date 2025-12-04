@@ -17,4 +17,13 @@ export interface User {
   };
   created_at: string;
   updated_at?: string;
+
+  stripe?: {
+    customer_id?: string;
+  };
+
+  membership?: {
+    membership_id?: string;
+    status?: "active" | "past_due" | "canceled" | "incomplete" | "trialing" | string;
+  };
 }

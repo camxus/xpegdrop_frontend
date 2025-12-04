@@ -79,6 +79,7 @@ export function SuccessClient() {
               primary
               showAnnualBilling={isAnnual}
               setShowAnnualBilling={() => { }}
+              trialDays={undefined}
             />
           </div>
         </div>

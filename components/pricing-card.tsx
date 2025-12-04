@@ -11,8 +11,9 @@ export default function PricingCard({
   features,
   monthly,
   annual,
-  link,
+  trialDays,
   buttonText,
+  link,
   primary,
   delay,
   showAnnualBilling,
@@ -24,13 +25,14 @@ export default function PricingCard({
   features: string[];
   monthly: number;
   annual: number;
-  link: string;
+  trialDays: number | undefined,
   buttonText: string;
+  link?: string;
   primary?: boolean;
   delay?: number;
   showAnnualBilling: boolean;
   setShowAnnualBilling: React.Dispatch<React.SetStateAction<boolean>>;
-  onClick?: React.DOMAttributes<HTMLButtonElement>["onClick"];
+  onClick?: (event?: React.MouseEvent<HTMLButtonElement>, opts?: { trial?: boolean }) => void;
 }) {
   return (
     <motion.div
@@ -141,9 +143,25 @@ export default function PricingCard({
                 >
                   {buttonText}
                 </Button>
-              );
+              )
 
-              return link ? <Link href={link}>{button}</Link> : button;
+              // trial button
+              const trialButton = trialDays ? (
+                <Button
+                  variant="outline"
+                  className="w-full mb-2" // spacing above main button
+                  onClick={(e) => onClick && onClick(e, { trial: true })}
+                >
+                  Try {trialDays} days for free
+                </Button>
+              ) : null
+
+              return (
+                <>
+                  {trialButton}
+                  {link ? <Link href={link}>{button}</Link> : button}
+                </>
+              )
             })()}
           </div>
         </CardContent>

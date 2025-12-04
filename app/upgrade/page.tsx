@@ -5,17 +5,18 @@ import { motion } from 'framer-motion'
 import PricingCard from '@/components/pricing-card'
 import { startCheckoutSession } from '@/app/actions/stripe'
 import { useAuth } from '@/hooks/api/useAuth'
+import { PRODUCTS } from '@/lib/products'
 
 export default function UpgradePage() {
   const { user } = useAuth()
 
   const [showAnnualBilling, setShowAnnualBilling] = useState(false)
 
-  const handleSelectPlan = async (productId: string) => {
+  const handleSelectPlan = async (productId: string, trial = false) => {
     if (!user) return
 
     try {
-      const checkoutUrl = await startCheckoutSession(productId, user?.user_id)
+      const checkoutUrl = await startCheckoutSession(productId, user?.user_id, trial)
       if (checkoutUrl) {
         window.location.href = checkoutUrl
       }
@@ -24,40 +25,29 @@ export default function UpgradePage() {
     }
   }
 
-  const plans = [
-    {
-      name: 'Pro',
-      desc: 'For serious creators and small studios that need flexibility and performance.',
-      monthly: 6,
-      annual: 60,
-      features: [
-        'Dropbox storage + 500 GB storage',
-        'Unlimited projects',
-        'Advanced analytics & project insights',
-        'Custom branding & watermark control',
-        'Cloud storage for all your images',
-      ],
-      primary: true,
-      monthlyId: 'pro-monthly',
-      annualId: 'pro-annual',
-      delay: 0.1,
-    },
-    {
-      name: 'Agency',
-      desc: 'Designed for agencies, collectives, and professional teams.',
-      monthly: 39,
-      annual: 390,
-      features: [
-        '2 TB storage',
-        'Team collaboration tools',
-        'Priority support',
-      ],
-      primary: false,
-      monthlyId: 'agency-monthly',
-      annualId: 'agency-annual',
-      delay: 0.2,
-    },
-  ]
+  const planNames = Array.from(new Set(PRODUCTS.map(p => {
+    if (p.id.includes("pro")) return "Pro"
+    if (p.id.includes("agency")) return "Agency"
+    return p.name
+  })))
+
+  const plans = planNames.map((planName, index) => {
+    const monthlyProduct = PRODUCTS.find(p => p.id.includes(planName.toLowerCase()) && p.id.includes("monthly"))
+    const annualProduct = PRODUCTS.find(p => p.id.includes(planName.toLowerCase()) && p.id.includes("annual"))
+
+    return {
+      name: planName,
+      desc: monthlyProduct?.description || annualProduct?.description || "",
+      monthly: monthlyProduct?.monthly || 0,
+      annual: annualProduct?.annual || 0,
+      features: monthlyProduct?.features || annualProduct?.features || [],
+      trialDays: PRODUCTS.find(p => p.id.includes(planName.toLowerCase()))?.trialDays,
+      primary: planName === "Pro",
+      monthlyId: monthlyProduct?.id || "",
+      annualId: annualProduct?.id || "",
+      delay: 0.1 + index * 0.1,
+    }
+  })
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
@@ -120,13 +110,13 @@ export default function UpgradePage() {
                 features={plan.features}
                 monthly={plan.monthly}
                 annual={plan.annual}
-                link=""
+                trialDays={plan.trialDays}
                 buttonText={`Upgrade to ${plan.name}`}
                 primary={plan.primary}
                 delay={plan.delay}
                 showAnnualBilling={showAnnualBilling}
                 setShowAnnualBilling={setShowAnnualBilling}
-                onClick={() => handleSelectPlan(productId)}
+                onClick={(e, opts) => handleSelectPlan(productId, opts?.trial)}
               />
             )
           })}
