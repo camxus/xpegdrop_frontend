@@ -20,7 +20,13 @@ export function useUser() {
   // Get current authenticated user
   const currentUser = useQuery<User, Error>({
     queryKey: ["user"],
-    queryFn: userApi.getCurrentUser,
+    queryFn: async () => {
+      const user = await userApi.getCurrentUser()
+
+      setLocalStorage(AUTH_USER_KEY, user);
+
+      return user
+    },
     enabled: !!user
   });
 

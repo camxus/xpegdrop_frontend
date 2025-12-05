@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";

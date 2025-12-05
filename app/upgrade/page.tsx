@@ -6,14 +6,24 @@ import PricingCard from '@/components/pricing-card'
 import { startCheckoutSession } from '@/app/actions/stripe'
 import { useAuth } from '@/hooks/api/useAuth'
 import { PRODUCTS } from '@/lib/products'
+import { useDialog } from '@/hooks/use-dialog'
+import { RedeemReferralDialog } from '@/components/redeem-referral-dialog'
 
 export default function UpgradePage() {
   const { user } = useAuth()
+  const { show } = useDialog()
 
   const [showAnnualBilling, setShowAnnualBilling] = useState(true)
 
   const handleSelectPlan = async (productId: string, trial = false) => {
     if (!user) return
+
+    if (productId.includes("artist")) {
+      show({
+        title: "Redeem Referral",
+        content: RedeemReferralDialog,
+      });
+    }
 
     try {
       const checkoutUrl = await startCheckoutSession(productId, user?.user_id, trial)

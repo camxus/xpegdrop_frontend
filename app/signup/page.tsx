@@ -4,7 +4,7 @@ import React, { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import { FolderOpen, Eye, EyeOff, Upload, X } from "lucide-react";
+import { Eye, EyeOff, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,16 +18,10 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/hooks/api/useAuth";
 import { FileUploader } from "@/components/ui/file-uploader";
-import { useDropbox } from "@/hooks/api/useDropbox";
 import { useUser } from "@/hooks/api/useUser";
 import imageCompression from "browser-image-compression";
 import * as yup from "yup";
 import Image from "next/image";
-import { useReferrals } from "@/hooks/api/useReferrals";
-import { MultiCharInput } from "@/components/ui/multi-char-input";
-import { REFERRAL_LENGTH } from "@/lib/api/referralsApi";
-import { useDialog } from "@/hooks/use-dialog";
-import { WaitlistDialog } from "@/components/join-waitlist-dialog";
 
 export type FormData = {
   first_name: string;
@@ -103,7 +97,7 @@ export default function SignUpPageWrapper() {
 export function SignUpPageContent() {
   const searchParams = useSearchParams();
 
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<FormData>({
     first_name: "",
     last_name: "",
@@ -120,9 +114,6 @@ export function SignUpPageContent() {
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(
     null
   );
-  const [referralCode, setReferralCode] = useState<string>(
-    searchParams.get("code") || ''
-  );
 
   const { signup, isSigningUp, error } = useAuth();
   const {
@@ -132,9 +123,6 @@ export function SignUpPageContent() {
       data: foundUser,
     },
   } = useUser();
-  const { checkReferral: { mutateAsync: checkReferral, isPending: checkingReferral }, redeemReferral: { mutateAsync: redeemReferral } } = useReferrals()
-
-  const { show } = useDialog()
 
   const router = useRouter();
 
@@ -213,7 +201,6 @@ export function SignUpPageContent() {
         bio: formData.bio || undefined,
         avatar_file: avatarFile,
       });
-      redeemReferral(referralCode)
       router.push("/login");
     } catch (err: any) {
       const errors: Record<string, string> = {};
@@ -223,24 +210,6 @@ export function SignUpPageContent() {
       console.log(errors);
       setFormErrors(errors);
     }
-  };
-
-  const handleCheckReferral = async () => {
-    try {
-      const referral = await checkReferral(referralCode);
-      if (referral) {
-        setStep(1);
-      }
-    } catch (err: any) {
-      console.error("Check referral error:", err);
-    }
-  };
-
-  const handleJoinWaitlist = () => {
-    show({
-      title: "Join Waitlist",
-      content: WaitlistDialog
-    })
   };
 
   return (
@@ -268,48 +237,6 @@ export function SignUpPageContent() {
               )}
 
               <AnimatePresence mode="wait">
-                {step === 0 &&
-                  (
-                    <motion.div
-                      key="step0"
-                      initial={{ opacity: 0, y: -20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 20 }}
-                      transition={{ duration: 0.3 }}
-                      className="space-y-6 text-center"
-                    >
-                      <p className="text-white/80">
-                        Enter a referral code if you have one
-                      </p>
-
-                      <div className="flex flex-col items-center gap-4">
-                        <MultiCharInput
-                          value={referralCode}
-                          onChange={(value) => setReferralCode(value.toLocaleUpperCase())}
-                          length={REFERRAL_LENGTH}
-                        />
-                        <Button
-                          type="button"
-                          onClick={handleCheckReferral}
-                          className="w-full"
-                          disabled={!(referralCode.length === REFERRAL_LENGTH) || checkingReferral}
-                        >
-                          {checkingReferral ? "Checking..." : "Apply Referral"}
-                        </Button>
-
-                        <p className="text-white/60 text-sm">or</p>
-
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          onClick={handleJoinWaitlist}
-                          className="w-full border-white/20 text-white hover:bg-white/10"
-                        >
-                          Join the Waitlist
-                        </Button>
-                      </div>
-                    </motion.div>
-                  )}
                 {step === 1 && (
                   <motion.div
                     key="step1"
