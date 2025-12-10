@@ -80,7 +80,7 @@ export function SuccessClient() {
               showAnnualBilling={isAnnual}
               setShowAnnualBilling={() => { }}
               trialDays={undefined}
-            />
+              disabled={false} />
           </div>
         </div>
 

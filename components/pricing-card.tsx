@@ -154,6 +154,7 @@ export default function PricingCard({
                   variant="ghost"
                   className="w-full mb-2 bg-background/10 text-background"
                   onClick={(e) => onClick && onClick(e, { trial: true })}
+                  disabled={disabled}
                 >
                   Try {trialDays} days for free
                 </Button>

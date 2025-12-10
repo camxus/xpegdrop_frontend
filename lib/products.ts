@@ -48,7 +48,7 @@ export const PRODUCTS: Product[] = [
   {
     id: 'pro_annual',
     name: 'Pro Annual',
-    description: 'For serious creators and small studios that need flexibility and performance. Save with annual billing!',
+    description: 'For serious creators and small studios that need flexibility and performance.',
     priceInCents: 6000, // $60.00
     monthly: 6,
     annual: 60,
@@ -59,7 +59,7 @@ export const PRODUCTS: Product[] = [
       'Custom branding & watermark control',
       'Cloud storage for all your images',
     ],
-    trialDays: TRIAL_DAYS,
+    trialDays: 14,
   },
   {
     id: 'agency_monthly',
@@ -77,7 +77,7 @@ export const PRODUCTS: Product[] = [
   {
     id: 'agency_annual',
     name: 'Agency Annual',
-    description: 'Designed for agencies, collectives, and professional teams. Save with annual billing!',
+    description: 'Designed for agencies, collectives, and professional teams.',
     priceInCents: 39000, // $390.00
     monthly: 39,
     annual: 390,

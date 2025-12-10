@@ -22,11 +22,9 @@ export async function startCheckoutSession(productId: string, userId: string, tr
           },
           unit_amount: product.priceInCents,
           recurring: {
-            interval: trial
-              ? 'month' // Stripe requires interval for subscriptions
-              : product.id.includes('annual')
-                ? 'year'
-                : 'month',
+            interval: product.id.includes('annual')
+              ? 'year'
+              : 'month',
           },
         },
         quantity: 1,

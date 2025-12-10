@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import PricingCard from '@/components/pricing-card'
 import { startCheckoutSession } from '@/app/actions/stripe'
@@ -44,25 +44,34 @@ export default function UpgradePage() {
     return p.name
   })))
 
-  const plans = planNames.map((planName, index) => {
-    const product = PRODUCTS.find(p => p.id.includes(planName.toLowerCase()))
-    const monthlyProduct = PRODUCTS.find(p => p.id.includes(planName.toLowerCase()) && p.id.includes("monthly"))
-    const annualProduct = PRODUCTS.find(p => p.id.includes(planName.toLowerCase()) && p.id.includes("annual"))
+  const plans = useMemo(() => {
+    return planNames.map((planName, index) => {
+      const key = planName.toLowerCase()
 
-    return {
-      name: planName,
-      productId: product?.id || "",
-      desc: monthlyProduct?.description || annualProduct?.description || product?.description || "",
-      monthly: monthlyProduct?.monthly || 0,
-      annual: annualProduct?.annual || 0,
-      features: monthlyProduct?.features || annualProduct?.features || product?.features || [],
-      trialDays: PRODUCTS.find(p => p.id.includes(planName.toLowerCase()))?.trialDays,
-      primary: planName === "Pro",
-      monthlyId: monthlyProduct?.id || "",
-      annualId: annualProduct?.id || "",
-      delay: 0.1 + index * 0.1,
-    }
-  })
+      const monthlyProduct = PRODUCTS.find(
+        p => p.id.includes(key) && p.id.includes("monthly")
+      )
+      const annualProduct = PRODUCTS.find(
+        p => p.id.includes(key) && p.id.includes("annual")
+      )
+
+      // pick based on toggle
+      const activeProduct = showAnnualBilling ? annualProduct : monthlyProduct
+
+      return {
+        name: planName,
+        productId: activeProduct?.id || "",
+        desc: activeProduct?.description || "",
+        price: showAnnualBilling
+          ? activeProduct?.annual || 0
+          : activeProduct?.monthly || 0,
+        features: activeProduct?.features || [],
+        trialDays: activeProduct?.trialDays,
+        primary: planName === "Pro",
+        delay: 0.1 + index * 0.1,
+      }
+    })
+  }, [showAnnualBilling, planNames, PRODUCTS])
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
@@ -115,7 +124,6 @@ export default function UpgradePage() {
 
         <div className="grid md:grid-cols-3 gap-8 max-w-7xl mx-auto">
           {plans.map((plan) => {
-            const productId = (showAnnualBilling ? plan.annualId : plan.monthlyId) || plan.productId
 
             return (
               <PricingCard
@@ -123,19 +131,19 @@ export default function UpgradePage() {
                 name={plan.name}
                 desc={plan.desc}
                 features={plan.features}
-                monthly={plan.monthly}
-                annual={plan.annual}
+                monthly={plan.price}
+                annual={plan.price}
                 trialDays={plan.trialDays}
                 buttonText={
-                  user?.membership?.membership_id === productId
+                  user?.membership?.membership_id === plan.productId
                     ? `You're currently on ${plan.name}`
                     : `Upgrade to ${plan.name}`
                 } primary={plan.primary}
                 delay={plan.delay}
-                disabled={user?.membership?.membership_id === productId}
+                disabled={user?.membership?.membership_id === plan.productId}
                 showAnnualBilling={showAnnualBilling}
                 setShowAnnualBilling={setShowAnnualBilling}
-                onClick={(e, opts) => handleSelectPlan(productId, opts?.trial)}
+                onClick={(e, opts) => handleSelectPlan(plan.productId, opts?.trial)}
               />
             )
           })}
