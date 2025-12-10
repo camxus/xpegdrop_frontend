@@ -10,6 +10,11 @@ export default $config({
     };
   },
   async run() {
-    new sst.aws.Nextjs("fframess-frontend");
+    // Pass server-only env safely
+    new sst.aws.Nextjs("fframess-frontend", {
+      environment: {
+        NEXT_STRIPE_SECRET_KEY: process.env.NEXT_STRIPE_SECRET_KEY!,
+      },
+    });
   },
 });
