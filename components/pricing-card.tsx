@@ -19,6 +19,7 @@ export default function PricingCard({
   showAnnualBilling,
   setShowAnnualBilling,
   onClick,
+  disabled
 }: {
   name: string;
   desc: string;
@@ -33,6 +34,7 @@ export default function PricingCard({
   showAnnualBilling: boolean;
   setShowAnnualBilling: React.Dispatch<React.SetStateAction<boolean>>;
   onClick?: (event?: React.MouseEvent<HTMLButtonElement>, opts?: { trial?: boolean }) => void;
+  disabled: boolean
 }) {
   return (
     <motion.div
@@ -140,6 +142,7 @@ export default function PricingCard({
                     : "bg-primary text-primary-foreground hover:bg-primary/90"
                     }`}
                   onClick={link ? undefined : onClick}
+                  disabled={disabled}
                 >
                   {buttonText}
                 </Button>
@@ -148,8 +151,8 @@ export default function PricingCard({
               // trial button
               const trialButton = trialDays ? (
                 <Button
-                  variant="outline"
-                  className="w-full mb-2" // spacing above main button
+                  variant="ghost"
+                  className="w-full mb-2 bg-background/10 text-background"
                   onClick={(e) => onClick && onClick(e, { trial: true })}
                 >
                   Try {trialDays} days for free

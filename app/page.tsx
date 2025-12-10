@@ -13,6 +13,9 @@ import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { useDropbox } from "@/hooks/api/useDropbox";
 import Link from "next/link";
 import GlowingButton from "@/components/glowing-button";
+import { useAuth } from "@/hooks/api/useAuth";
+import { useDialog } from "@/hooks/use-dialog";
+import UpgradePage from "./upgrade/page";
 
 export default function HomePageWrapper() {
   return (
@@ -54,8 +57,7 @@ export function HomePage() {
   const gradient = useTransform(
     [springX, springY, springSize, springOpacity],
     ([latestX, latestY, latestSize, latestOpacity]) =>
-      `radial-gradient(circle ${latestSize}px at ${latestX}% ${latestY}%, rgba(255,255,255,${latestOpacity}) 0%, rgba(255,255,255,${
-        (latestOpacity as number) * 0.25
+      `radial-gradient(circle ${latestSize}px at ${latestX}% ${latestY}%, rgba(255,255,255,${latestOpacity}) 0%, rgba(255,255,255,${(latestOpacity as number) * 0.25
       }) 50%, transparent 100%)`
   );
 

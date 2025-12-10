@@ -11,8 +11,6 @@ export function MakeReferralComponent() {
     createReferral: { mutateAsync: createReferral, isPending: creatingReferral }
   } = useReferrals();
 
-  console.log(referrals)
-
   const handleCopyLink = (code: string) => {
     const link = `https://app.fframess.com/signup?code=${code}`;
     navigator.clipboard.writeText(link);

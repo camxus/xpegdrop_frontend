@@ -71,6 +71,26 @@ export function MultiCharInput({
     });
   };
 
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>, idx: number) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData("text").toUpperCase().replace(/\s+/g, "");
+    if (!pasted) return;
+
+    const newLetters = [...letters];
+
+    for (let i = 0; i < pasted.length && idx + i < length; i++) {
+      newLetters[idx + i] = pasted[i];
+    }
+
+    setLetters(newLetters);
+    onChange(newLetters.join(""));
+
+    const nextIndex = idx + pasted.length;
+    if (nextIndex < length) {
+      inputRefs.current[nextIndex]?.focus();
+    }
+  };
+
   return (
     <div className="flex flex-wrap">
       {letters.map((letter, idx) => (
@@ -84,6 +104,7 @@ export function MultiCharInput({
           onChange={(e) => handleChange(idx, e.target.value)}
           onKeyDown={(e) => handleKeyDown(e, idx)}
           onFocus={() => handleFocus(idx)}
+          onPaste={(e) => handlePaste(e, idx)}
           style={{ caretColor: "transparent", width: `calc(100%/${length})`, textAlign: "center" }}
           {...props}
         />
