@@ -59,7 +59,7 @@ export function useReferrals() {
     onSuccess: (data) => {
       toast({
         title: "Referral redeemed",
-        description: `You successfully redeemed referral code ${data.referral.code}.`,
+        description: `You successfully redeemed referral code ${data.code}.`,
       });
       queryClient.invalidateQueries({ queryKey: ["referrals"] });
     },

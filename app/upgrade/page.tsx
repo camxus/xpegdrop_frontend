@@ -8,6 +8,7 @@ import { useAuth } from '@/hooks/api/useAuth'
 import { PRODUCTS } from '@/lib/products'
 import { useDialog } from '@/hooks/use-dialog'
 import { RedeemReferralDialog } from '@/components/redeem-referral-dialog'
+import { useSearchParams } from 'next/navigation'
 
 export default function UpgradePage() {
   const { user } = useAuth()
@@ -21,8 +22,9 @@ export default function UpgradePage() {
     if (productId.includes("artist")) {
       show({
         title: "Redeem Referral",
-        content: RedeemReferralDialog,
+        content: () => <RedeemReferralDialog />,
       });
+      return
     }
 
     try {
@@ -36,21 +38,24 @@ export default function UpgradePage() {
   }
 
   const planNames = Array.from(new Set(PRODUCTS.map(p => {
+    if (p.id.includes("artist")) return "Artist"
     if (p.id.includes("pro")) return "Pro"
     if (p.id.includes("agency")) return "Agency"
     return p.name
   })))
 
   const plans = planNames.map((planName, index) => {
+    const product = PRODUCTS.find(p => p.id.includes(planName.toLowerCase()))
     const monthlyProduct = PRODUCTS.find(p => p.id.includes(planName.toLowerCase()) && p.id.includes("monthly"))
     const annualProduct = PRODUCTS.find(p => p.id.includes(planName.toLowerCase()) && p.id.includes("annual"))
 
     return {
       name: planName,
-      desc: monthlyProduct?.description || annualProduct?.description || "",
+      productId: product?.id || "",
+      desc: monthlyProduct?.description || annualProduct?.description || product?.description || "",
       monthly: monthlyProduct?.monthly || 0,
       annual: annualProduct?.annual || 0,
-      features: monthlyProduct?.features || annualProduct?.features || [],
+      features: monthlyProduct?.features || annualProduct?.features || product?.features || [],
       trialDays: PRODUCTS.find(p => p.id.includes(planName.toLowerCase()))?.trialDays,
       primary: planName === "Pro",
       monthlyId: monthlyProduct?.id || "",
@@ -108,9 +113,9 @@ export default function UpgradePage() {
           </div>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <div className="grid md:grid-cols-3 gap-8 max-w-7xl mx-auto">
           {plans.map((plan) => {
-            const productId = showAnnualBilling ? plan.annualId : plan.monthlyId
+            const productId = (showAnnualBilling ? plan.annualId : plan.monthlyId) || plan.productId
 
             return (
               <PricingCard
@@ -121,9 +126,13 @@ export default function UpgradePage() {
                 monthly={plan.monthly}
                 annual={plan.annual}
                 trialDays={plan.trialDays}
-                buttonText={`Upgrade to ${plan.name}`}
-                primary={plan.primary}
+                buttonText={
+                  user?.membership?.membership_id === productId
+                    ? `You're currently on ${plan.name}`
+                    : `Upgrade to ${plan.name}`
+                } primary={plan.primary}
                 delay={plan.delay}
+                disabled={user?.membership?.membership_id === productId}
                 showAnnualBilling={showAnnualBilling}
                 setShowAnnualBilling={setShowAnnualBilling}
                 onClick={(e, opts) => handleSelectPlan(productId, opts?.trial)}

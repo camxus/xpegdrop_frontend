@@ -30,9 +30,10 @@ import { useDropbox } from "@/hooks/api/useDropbox";
 import { useAuth } from "@/hooks/api/useAuth";
 import GlowingButton from "@/components/glowing-button";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Rating } from "@/lib/api/ratingsApi";
 import { blurFadeInVariants } from "@/lib/motion";
+import UpgradePage from "../upgrade/page";
 
 export default function UploadViewWrapper() {
   return (
@@ -55,6 +56,7 @@ export default function UploadViewWrapper() {
 export function UploadView() {
   const searchParams = useSearchParams();
   const tokenFromUrl = searchParams.get("dropbox_token");
+  const router = useRouter()
 
   const { user } = useAuth();
 
@@ -391,6 +393,11 @@ export function UploadView() {
         </div>
       </div>
     );
+  }
+
+  if (user && !user?.membership?.membership_id || !["active", "trialing"].includes(user?.membership?.status || "")) {
+    router.push("/upgrade")
+    return
   }
 
   if (authUrl.data && !user?.dropbox?.access_token) {

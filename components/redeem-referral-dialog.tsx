@@ -1,22 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { MultiCharInput } from "@/components/ui/multi-char-input";
 import { useReferrals } from "@/hooks/api/useReferrals";
 import { REFERRAL_LENGTH } from "@/lib/api/referralsApi";
 import { useDialog } from "@/hooks/use-dialog";
 import { useUser } from "@/hooks/api/useUser";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export function RedeemReferralDialog() {
+  const router = useRouter()
   const searchParams = useSearchParams();
 
   const { currentUser: { refetch: refetchCurrentUser } } = useUser()
   const { hide } = useDialog()
 
   const [referralCode, setReferralCode] = useState<string>(
-    searchParams.get("code") || ''
+    searchParams.get("code") || ""
   );
 
   const {
@@ -29,11 +30,12 @@ export function RedeemReferralDialog() {
     if (result) {
       refetchCurrentUser()
       hide();
+      router.push("/new")
     }
   };
 
   return (
-    <div className="flex items-center justify-center">
+    <div className="flex flex-col items-center justify-center">
       <p className="text-white/70 text-center text-sm mb-6">
         Redeem your invitation
       </p>

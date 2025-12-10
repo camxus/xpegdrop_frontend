@@ -36,8 +36,6 @@ export default function HomePageWrapper() {
 }
 
 export function HomePage() {
-  const { show } = useDialog()
-  const { user } = useAuth()
   const {
     authUrl: { data: authUrl, refetch: fetchAuthUrl },
   } = useDropbox();
@@ -77,16 +75,6 @@ export function HomePage() {
   useEffect(() => {
     fetchAuthUrl();
   }, []);
-
-  if (!user?.membership?.membership_id || !["active", "trialing"].includes(user.membership.status || "")) {
-    show({
-      title: "Upgrade",
-      content: UpgradePage,
-      containerProps: { className: "max-w-[90%]" }
-    })
-
-    return
-  }
 
   return (
     <motion.div

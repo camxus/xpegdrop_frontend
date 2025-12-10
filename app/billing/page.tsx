@@ -8,6 +8,7 @@ import { useStripe } from '@/hooks/api/useStripe'
 import { addDays, format } from 'date-fns'
 import { PRODUCTS } from '@/lib/products'
 import { motion } from 'framer-motion'
+import { useAuth } from '@/hooks/api/useAuth'
 
 const containerVariants = {
   hidden: {},
@@ -20,6 +21,7 @@ const itemVariants = {
 }
 
 export default function BillingPage() {
+  const { user } = useAuth()
   const { billingInfo: { data: billingInfo }, billingPortal: { data: billingPortal } } = useStripe()
 
   return (
@@ -50,6 +52,31 @@ export default function BillingPage() {
           <Card>
             <CardHeader>
               <CardTitle>Current Plan</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {user?.membership?.membership_id ? (
+                <div>
+                  <p className="text-3xl font-bold text-foreground mb-2">
+                    {PRODUCTS.find((p) => p.id === user?.membership?.membership_id)?.name}
+                  </p>
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Status: {user?.membership?.status}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  You do not have an active subscription.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Current Subscription */}
+        <motion.div variants={itemVariants}>
+          <Card>
+            <CardHeader>
+              <CardTitle>Current Subscription</CardTitle>
             </CardHeader>
             <CardContent>
               {billingInfo?.subscription ? (
