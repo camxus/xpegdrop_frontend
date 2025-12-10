@@ -48,6 +48,10 @@ export default function UpgradePage() {
     return planNames.map((planName, index) => {
       const key = planName.toLowerCase()
 
+      const product = PRODUCTS.find(
+        p => p.id.includes(key)
+      )
+
       const monthlyProduct = PRODUCTS.find(
         p => p.id.includes(key) && p.id.includes("monthly")
       )
@@ -56,7 +60,7 @@ export default function UpgradePage() {
       )
 
       // pick based on toggle
-      const activeProduct = showAnnualBilling ? annualProduct : monthlyProduct
+      const activeProduct = (showAnnualBilling ? annualProduct : monthlyProduct) || product
 
       return {
         name: planName,
