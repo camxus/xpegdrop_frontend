@@ -31,6 +31,7 @@ export type FormData = {
   confirmPassword: string;
   username: string;
   bio: string;
+  agreeTerms: boolean
 };
 
 const step1Schema = yup.object().shape({
@@ -73,7 +74,9 @@ const fullSchema = yup.object().shape({
     .oneOf([yup.ref("password")])
     .required(),
   bio: yup.string().optional(),
-  // avatar_file: yup.mixed().optional(),
+  agreeTerms: yup.boolean()
+    .oneOf([true], "You must agree to the Terms and Conditions")
+    .required(),  // avatar_file: yup.mixed().optional(),
 });
 
 export default function SignUpPageWrapper() {
@@ -83,7 +86,7 @@ export default function SignUpPageWrapper() {
         <div className="w-full h-full">
           <div className="flex items-center justify-center h-[80vh]">
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-foreground"></div>
             </div>
           </div>
         </div>
@@ -106,6 +109,7 @@ export function SignUpPageContent() {
     confirmPassword: "",
     username: "",
     bio: "",
+    agreeTerms: false
   });
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [avatarFile, setAvatarFile] = useState<File>();
@@ -150,6 +154,7 @@ export function SignUpPageContent() {
     if (["username", "email"].includes(name)) {
       newValue = newValue.toLowerCase();
     }
+
     setFormData((prev) => ({ ...prev, [name]: newValue }));
   };
 
@@ -213,16 +218,16 @@ export function SignUpPageContent() {
   };
 
   return (
-    <div className="min-h-dvh bg-gradient-to-br from-slate-900 via-black to-slate-900 flex items-center justify-center p-4">
+    <div className="min-h-dvh bg-gradient-to-br from-slate-900 via-background to-slate-900 flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <Card className="w-full max-w-md bg-white/10 border-white/20 backdrop-blur-sm">
+        <Card className="w-full max-w-md bg-foreground/10 border-foreground/20 backdrop-blur-sm">
           <CardHeader className="text-center">
             <div className="flex items-center justify-center mb-4">
-              <CardTitle className="text-2xl text-white">fframess</CardTitle>
+              <CardTitle className="text-2xl text-foreground">fframess</CardTitle>
             </div>
             <CardDescription className="text-gray-300">
               Create your account
@@ -248,7 +253,7 @@ export function SignUpPageContent() {
                   >
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="first_name" className="text-white">
+                        <Label htmlFor="first_name" className="text-foreground">
                           First Name
                         </Label>
                         <Input
@@ -266,7 +271,7 @@ export function SignUpPageContent() {
                         )}
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="last_name" className="text-white">
+                        <Label htmlFor="last_name" className="text-foreground">
                           Last Name
                         </Label>
                         <Input
@@ -274,7 +279,7 @@ export function SignUpPageContent() {
                           name="last_name"
                           value={formData.last_name}
                           onChange={handleChange}
-                          className="bg-white/10 text-white border-white/20 placeholder:text-gray-400"
+                          className="bg-foreground/10 text-foreground border-foreground/20 placeholder:text-gray-400"
                           placeholder="Doe"
                         />
                         {formErrors.last_name && (
@@ -286,7 +291,7 @@ export function SignUpPageContent() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="email" className="text-white">
+                      <Label htmlFor="email" className="text-foreground">
                         Email
                       </Label>
                       <Input
@@ -295,7 +300,7 @@ export function SignUpPageContent() {
                         type="email"
                         value={formData.email}
                         onChange={handleChange}
-                        className="bg-white/10 text-white border-white/20 placeholder:text-gray-400"
+                        className="bg-foreground/10 text-foreground border-foreground/20 placeholder:text-gray-400"
                         placeholder="john@fframess.com"
                       />
                       {formErrors.email && (
@@ -306,7 +311,7 @@ export function SignUpPageContent() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="username" className="text-white">
+                      <Label htmlFor="username" className="text-foreground">
                         Username
                       </Label>
                       <Input
@@ -314,7 +319,7 @@ export function SignUpPageContent() {
                         name="username"
                         value={formData.username}
                         onChange={handleChange}
-                        className="bg-white/10 text-white border-white/20 placeholder:text-gray-400"
+                        className="bg-foreground/10 text-foreground border-foreground/20 placeholder:text-gray-400"
                         placeholder="johndoe"
                       />
                       {formErrors.username && (
@@ -341,7 +346,7 @@ export function SignUpPageContent() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="password" className="text-white">
+                      <Label htmlFor="password" className="text-foreground">
                         Password
                       </Label>
                       <div className="relative">
@@ -351,14 +356,14 @@ export function SignUpPageContent() {
                           type={showPassword ? "text" : "password"}
                           value={formData.password}
                           onChange={handleChange}
-                          className="bg-white/10 text-white border-white/20 placeholder:text-gray-400 pr-10"
+                          className="bg-foreground/10 text-foreground border-foreground/20 placeholder:text-gray-400 pr-10"
                           placeholder="Password"
                         />
                         <Button
                           type="button"
                           variant="ghost"
                           size="sm"
-                          className="absolute right-0 top-0 h-full px-3 text-white/70 hover:text-white"
+                          className="absolute right-0 top-0 h-full px-3 text-foreground/70 hover:text-foreground"
                           onClick={() => setShowPassword(!showPassword)}
                         >
                           {showPassword ? (
@@ -376,7 +381,7 @@ export function SignUpPageContent() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="confirmPassword" className="text-white">
+                      <Label htmlFor="confirmPassword" className="text-foreground">
                         Confirm Password
                       </Label>
                       <div className="relative">
@@ -386,14 +391,14 @@ export function SignUpPageContent() {
                           type={showConfirmPassword ? "text" : "password"}
                           value={formData.confirmPassword}
                           onChange={handleChange}
-                          className="bg-white/10 text-white border-white/20 placeholder:text-gray-400 pr-10"
+                          className="bg-foreground/10 text-foreground border-foreground/20 placeholder:text-gray-400 pr-10"
                           placeholder="Confirm Password"
                         />
                         <Button
                           type="button"
                           variant="ghost"
                           size="sm"
-                          className="absolute right-0 top-0 h-full px-3 text-white/70 hover:text-white"
+                          className="absolute right-0 top-0 h-full px-3 text-foreground/70 hover:text-foreground"
                           onClick={() =>
                             setShowConfirmPassword(!showConfirmPassword)
                           }
@@ -415,7 +420,7 @@ export function SignUpPageContent() {
                     <Button
                       type="button"
                       disabled={usernameAvailable === false}
-                      className="w-full bg-white/20 hover:bg-white/30 text-white border-white/20"
+                      className="w-full bg-foreground/20 hover:bg-foreground/30 text-foreground border-foreground/20"
                       onClick={goNext}
                     >
                       Next
@@ -433,7 +438,7 @@ export function SignUpPageContent() {
                     className="space-y-4"
                   >
                     <div className="space-y-2">
-                      <Label htmlFor="avatar" className="text-white">
+                      <Label htmlFor="avatar" className="text-foreground">
                         Profile Image{" "}
                         <span className="text-muted-foreground">optional</span>
                       </Label>
@@ -443,9 +448,9 @@ export function SignUpPageContent() {
                             onFilesSelected={handleAvatarUpload}
                             accept={{ "image/*": [".jpeg", ".jpg", ".png"] }}
                             maxFiles={1}
-                            className="w-40 h-40 rounded-lg border-2 border-dashed border-white/30 bg-white/5 hover:bg-white/10 transition-colors"
+                            className="w-40 h-40 rounded-lg border-2 border-dashed border-foreground/30 bg-foreground/5 hover:bg-foreground/10 transition-colors"
                           >
-                            <div className="flex flex-col items-center justify-center text-white/70">
+                            <div className="flex flex-col items-center justify-center text-foreground/70">
                               <Upload className="h-8 w-8 mb-2" />
                               <span className="text-sm">Upload Image</span>
                             </div>
@@ -464,7 +469,7 @@ export function SignUpPageContent() {
                               type="button"
                               variant="ghost"
                               size="sm"
-                              className="absolute top-2 right-2 text-white"
+                              className="absolute top-2 right-2 text-foreground"
                               onClick={() => setAvatarFile(undefined)}
                             >
                               <X />
@@ -474,18 +479,44 @@ export function SignUpPageContent() {
                       </div>
                     </div>
 
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center space-x-2 mt-2">
+                        <input
+                          type="checkbox"
+                          id="agreeTerms"
+                          onChange={(e) => setFormData((prev) => ({ ...prev, agreeTerms: e.target.checked }))}
+                          className="w-4 h-4 text-foreground border-foreground/20 bg-transparent accent-foreground"
+                        />
+                        <label htmlFor="agreeTerms" className="text-foreground text-sm">
+                          I agree to the{" "}
+                          <Link
+                            href="https://www.fframess.com/terms-and-conditions"
+                            target="_blank"
+                            className="underline hover:text-gray-200"
+                          >
+                            Terms & Conditions
+                          </Link>
+                        </label>
+                      </div>
+                      {formErrors.agreeTerms && (
+                        <p className="text-sm text-red-400">
+                          {formErrors.agreeTerms}
+                        </p>
+                      )}
+                    </div>
+
                     <div className="flex gap-2">
                       <Button
                         type="button"
                         variant="ghost"
-                        className="w-1/2 text-white border-white/20 hover:bg-white/10"
+                        className="w-1/2 text-foreground border-foreground/20 hover:bg-foreground/10"
                         onClick={() => setStep(1)}
                       >
                         Back
                       </Button>
                       <Button
                         type="submit"
-                        className="cursor-pointer w-1/2 bg-white/20 hover:bg-white/30 text-white border-white/20"
+                        className="cursor-pointer w-1/2 bg-foreground/20 hover:bg-foreground/30 text-foreground border-foreground/20"
                         disabled={
                           isSigningUp ||
                           !formData.username ||
@@ -505,7 +536,7 @@ export function SignUpPageContent() {
                 Already have an account?{" "}
                 <Link
                   href="/login"
-                  className="text-white underline hover:text-gray-200"
+                  className="text-foreground underline hover:text-gray-200"
                 >
                   Sign in
                 </Link>
