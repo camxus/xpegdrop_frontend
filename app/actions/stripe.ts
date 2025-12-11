@@ -5,6 +5,7 @@ import { PRODUCTS } from '@/lib/products'
 
 export async function startCheckoutSession(productId: string, userId: string, trial = false) {
   const product = PRODUCTS.find(p => p.id === productId)
+
   if (!product) {
     throw new Error(`Product with id "${productId}" not found`)
   }
@@ -36,8 +37,8 @@ export async function startCheckoutSession(productId: string, userId: string, tr
       ? { trial_period_days: product.trialDays }
       : undefined,
 
-    success_url: `${process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'}/success?session_id={CHECKOUT_SESSION_ID}&plan=${product.id}`,
-    cancel_url: `${process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'}/billing`,
+    success_url: `${process.env.__NEXT_PRIVATE_ORIGIN || 'http://localhost:3000'}/success?session_id={CHECKOUT_SESSION_ID}&plan=${product.id}`,
+    cancel_url: `${process.env.__NEXT_PRIVATE_ORIGIN || 'http://localhost:3000'}/billing`,
   })
 
   return session.url
