@@ -14,6 +14,7 @@ export default $config({
     new sst.aws.Nextjs("fframess-frontend", {
       environment: {
         NEXT_STRIPE_SECRET_KEY: process.env.NEXT_STRIPE_SECRET_KEY!,
+        NEXT_PUBLIC_URL: process.env.NEXT_PUBLIC_URL!,
       },
     });
   },
