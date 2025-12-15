@@ -10,13 +10,13 @@ import { useDialog } from "@/hooks/use-dialog";
 interface FolderPreviewContentProps {
   folders: Folder[];
   onRename: (folderIndex: number, newName: string) => void;
-  editableTitle?: boolean;
+  editable?: boolean;
 }
 
 export function FolderPreviewContent({
   folders,
   onRename,
-  editableTitle,
+  editable,
 }: FolderPreviewContentProps) {
   const { updateProps } = useDialog();
 
@@ -35,7 +35,7 @@ export function FolderPreviewContent({
       <EditableTitle
         title={currentFolder.name}
         onSave={(newName) => onRename(currentIndex, newName)}
-        editable={editableTitle}
+        editable={editable}
       />
 
       {/* Images list */}

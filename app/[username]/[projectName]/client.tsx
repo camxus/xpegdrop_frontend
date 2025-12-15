@@ -339,11 +339,8 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
         title: "Add Files",
         content: FolderPreviewContent,
         contentProps: {
-          editable: !!project,
+          editable: false,
           folders: folderArray,
-          onRename: (folderIndex: number, newName: string) => {
-            folderArray[folderIndex].name = newName;
-          },
           onCancel: hide,
           onUpload: async (
             confirmedFolders: Folder[],
@@ -351,8 +348,10 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
           ) => {
             Promise.all(
               confirmedFolders.map(
-                async (folder) =>
+                async (folder) => {
                   await handleAddProjectFiles(folder, currentFolderIndex)
+                  loadProject()
+                }
               )
             );
             hide();

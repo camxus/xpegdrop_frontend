@@ -63,7 +63,7 @@ export function UploadView() {
   const { authUrl } = useDropbox(tokenFromUrl || "");
   const { uploadFiles, isUploading: isUploadingToS3 } = useS3();
   const { toast } = useToast();
-  const { show, hide } = useDialog();
+  const { show, hide, updateProps } = useDialog();
 
   const {
     createProject: {
@@ -136,6 +136,7 @@ export function UploadView() {
           folders: newFolders,
           onRename: (folderIndex: number, newName: string) => {
             newFolders[folderIndex].name = newName;
+            updateProps({ folders: newFolders })
           },
           onCancel: hide,
           onUpload: async (
@@ -249,19 +250,15 @@ export function UploadView() {
               : proj
           )
         );
-        setFolders((prev) =>
-          prev.map((folder) =>
-            folder.name === currentProject.name
-              ? { ...folder, name: newName }
-              : folder
-          )
-        );
+
+        handleFolderRename(newName)
+        
         toast({ title: "Project name updated" });
       } catch {
         toast({ title: "Failed to update project", variant: "destructive" });
       }
     },
-    [currentProject, updateProject, toast]
+    [currentProject, updateProject]
   );
 
   const handlePreviousFolder = () =>
