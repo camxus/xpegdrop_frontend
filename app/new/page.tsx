@@ -252,7 +252,7 @@ export function UploadView() {
         );
 
         handleFolderRename(newName)
-        
+
         toast({ title: "Project name updated" });
       } catch {
         toast({ title: "Failed to update project", variant: "destructive" });
@@ -266,7 +266,7 @@ export function UploadView() {
   const handleNextFolder = () =>
     setCurrentFolderIndex((prev) => Math.min(folders.length - 1, prev + 1));
 
-  const handleUpload = async (folder: Folder, folderIndex = 0) => {
+  const handleUpload = async (folder: Folder, folderIndex = 0, storageProvider: "b2" | "dropbox" = "dropbox") => {
     const uploadFolder = folder || currentFolder;
     if (!uploadFolder) return;
     try {
@@ -275,6 +275,7 @@ export function UploadView() {
       const project = await createProject({
         name: uploadFolder.name,
         file_locations: tempFileLocations,
+        storage_provider: storageProvider
       });
       await Promise.all(
         queuedRatings.map(async (rating) =>

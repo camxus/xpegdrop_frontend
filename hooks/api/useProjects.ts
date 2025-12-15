@@ -83,6 +83,7 @@ export function useProjects() {
       name: string;
       files?: File[];
       file_locations?: S3Location[];
+      storage_provider: "b2" | "dropbox"
     }) => projectsApi.createProject(formData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });

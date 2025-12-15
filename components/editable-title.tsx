@@ -35,7 +35,7 @@ export function EditableTitle({
 
   const handleSave = () => {
     if (editValue.trim() && editValue !== title) {
-      onSave(editValue.trim());
+      onSave?.(editValue.trim());
     }
     setIsEditing(false);
     setEditValue(title);
