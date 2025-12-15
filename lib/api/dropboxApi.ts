@@ -2,11 +2,9 @@ import type { DropboxUploadResponse } from "@/types";
 import { api } from "./client";
 
 export interface DropboxStorageStats {
-  storage: {
-    used: number;
-    allocated: number;
-    used_percent: number;
-  };
+  used: number;
+  allocated: number;
+  used_percent: number;
 }
 
 export const dropboxApi = {

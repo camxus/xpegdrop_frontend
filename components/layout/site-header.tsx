@@ -1,21 +1,10 @@
 "use client";
 
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useState } from "react";
 import Link from "next/link";
 import {
-  BarChart3,
-  Calendar,
-  Users,
-  Heart,
-  MessageCircle,
-  User,
-  Map,
-  Plus,
-  Bell,
   ChevronLeft,
   ChevronRight,
-  NotebookTabs,
-  Search,
   Folder,
   X,
   PlusSquare,
@@ -34,7 +23,6 @@ import {
 import { AnimatePresence, motion } from "framer-motion";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/api/useAuth";
-import { useRouter } from "next/navigation";
 import { cn, getInitials } from "@/lib/utils";
 import { Button } from "../ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -42,12 +30,13 @@ import { useProjects } from "@/hooks/api/useProjects";
 import DeleteProjectDialogView from "./delete-project-dialog";
 import { useDialog } from "@/hooks/use-dialog";
 import { useDropbox } from "@/hooks/api/useDropbox";
-import { Progress } from "../ui/progress";
 import { useReferrals } from "@/hooks/api/useReferrals";
 import { MakeReferralComponent } from "../make-referral-dialog";
 import { MAX_REFERRALS_AMOUNT } from "@/lib/api/referralsApi";
 import { useTenants } from "../tenants-provider";
 import UpgradePage from "@/app/upgrade/page";
+import { useStorage } from "@/hooks/api/useStorage";
+import StorageIndicator from "../ui/storage-indicator";
 
 
 const SIDEBAR_WIDTH = 256
@@ -75,7 +64,12 @@ export function SiteHeader({ children }: SiteHeaderProps) {
   const projects = [...personalProjects, ...tenantProjects]
 
   const {
-    stats: { data: stats },
+    stats: { data: storageStats },
+  } = useStorage();
+
+  const {
+    authUrl,
+    stats: { data: dropboxStats },
   } = useDropbox();
 
   const isActive = (path: string) => pathname === path;
@@ -478,43 +472,28 @@ export function SiteHeader({ children }: SiteHeaderProps) {
       {/* Main Content Area */}
       <div className="relative flex-1 flex flex-col overflow-hidden">
         <AnimatePresence>
-          {!isSidebarCollapsed && stats?.storage && (
+          {!isSidebarCollapsed && (dropboxStats || storageStats) && (
             <motion.div
               className="absolute inset-0 bg-black/50 z-40 flex items-end justify-center"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.5 }}
-              onClick={() => setIsSidebarCollapsed(true)}
             >
               <motion.div
                 className="flex flex-col space-y-2 items-center w-[80%] mb-8 pointer-events-auto"
                 initial={{ filter: "blur(20px)", opacity: 0, y: 30 }}
                 animate={{ filter: "blur(0px)", opacity: 1, y: 0 }}
                 exit={{ filter: "blur(20px)", opacity: 0, y: 30 }}
-                transition={{ delay: 0.5, duration: 0.5 }}
-                onClick={(e) => e.stopPropagation()} // Prevent closing when clicking storage
-              >
-                <span className="text-xs text-muted-foreground">
-                  Storage{" "}
-                  {stats.storage.used_percent >= 90
-                    ? "Full"
-                    : stats.storage.used_percent >= 70
-                      ? "Almost Full"
-                      : `${stats.storage.used_percent.toFixed(0)}%`}
-                </span>
+                transition={{ delay: 0.5, duration: 0.5, staggerChildren: 0.1 }}
 
-                <Progress
-                  value={stats.storage.used_percent}
-                  color={
-                    stats.storage.used_percent >= 90
-                      ? "bg-red-400"
-                      : stats.storage.used_percent >= 70
-                        ? "bg-amber-400"
-                        : "bg-white"
-                  }
-                  className={cn("w-full h-1 rounded-full")}
-                />
+              >
+                {storageStats && <StorageIndicator percentage={storageStats.used_percent} />}
+                {dropboxStats && <StorageIndicator percentage={dropboxStats.used_percent} isDropbox/>}
+                {
+                  authUrl.data && !user?.dropbox?.access_token && <>
+                    <Button className="mt-1">Connect your Dropbox</Button></>
+                }
               </motion.div>
             </motion.div>
           )}

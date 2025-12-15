@@ -11,7 +11,7 @@ import { EditableTitle } from "@/components/editable-title";
 import { useToast } from "@/hooks/use-toast";
 import { createImageFile, processFolderUpload } from "@/lib/utils/file-utils";
 import { Upload, FolderOpen, Share2, UploadIcon } from "lucide-react";
-import type { Folder } from "@/types";
+import type { Folder, StorageProvider } from "@/types";
 import { ImageCarousel } from "@/components/image-carousel";
 import { ShareDialog } from "@/components/share-dialog";
 import { cn } from "@/lib/utils";
@@ -34,6 +34,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Rating } from "@/lib/api/ratingsApi";
 import { blurFadeInVariants } from "@/lib/motion";
 import UpgradePage from "../upgrade/page";
+import { useStorage } from "@/hooks/api/useStorage";
 
 export default function UploadViewWrapper() {
   return (
@@ -66,6 +67,7 @@ export function UploadView() {
   const { show, hide, updateProps } = useDialog();
 
   const {
+    projects: { data: personalProjects = [] },
     createProject: {
       mutateAsync: createProject,
       isPending: isUploadingProject,
@@ -82,6 +84,10 @@ export function UploadView() {
     createRating: { mutateAsync: createRating },
     updateRating: { mutateAsync: updateRating },
   } = useRatings();
+
+  const {
+    stats: { data: storageStats },
+  } = useStorage();
 
   const isUploading = isUploadingProject || isUploadingToS3;
 
@@ -118,6 +124,14 @@ export function UploadView() {
 
   const handleNewFolders = useCallback(
     async (files: File[]) => {
+      if (user?.membership?.membership_id === "artist" && personalProjects.length >= 3) {
+        show({
+          title: "Upgrade",
+          content: () => <UpgradePage />,
+          containerProps: { className: "max-w-[90%]" }
+        })
+      }
+
       if (files.length === 0) return;
       const newFolders = await processFolderUpload(files);
       if (newFolders.length === 0) {
@@ -141,13 +155,14 @@ export function UploadView() {
           onCancel: hide,
           onUpload: async (
             confirmedFolders: Folder[],
-            currentFolderIndex: number
+            currentFolderIndex: number,
+            storageProvider: StorageProvider
           ) => {
             setFolders((prev) => [...prev, ...confirmedFolders]);
             setCurrentFolderIndex(confirmedFolders.length ? 0 : 0);
             Promise.all(
               confirmedFolders.map(
-                async (folder) => await handleUpload(folder, currentFolderIndex)
+                async (folder) => await handleUpload(folder, currentFolderIndex, storageProvider)
               )
             );
             hide();
@@ -199,14 +214,15 @@ export function UploadView() {
           onCancel: hide,
           onUpload: async (
             confirmedFolders: Folder[],
-            currentFolderIndex: number
+            currentFolderIndex: number,
+            storageProvider: StorageProvider
           ) => {
             setFolders((prev) => [...prev, ...confirmedFolders]);
             setCurrentFolderIndex(confirmedFolders.length ? 0 : 0);
             Promise.all(
               confirmedFolders.map(
                 async (folder) =>
-                  await handleAddProjectFiles(folder, currentFolderIndex)
+                  await handleAddProjectFiles(folder, currentFolderIndex, storageProvider)
               )
             );
             hide();
@@ -266,7 +282,7 @@ export function UploadView() {
   const handleNextFolder = () =>
     setCurrentFolderIndex((prev) => Math.min(folders.length - 1, prev + 1));
 
-  const handleUpload = async (folder: Folder, folderIndex = 0, storageProvider: "b2" | "dropbox" = "dropbox") => {
+  const handleUpload = async (folder: Folder, folderIndex = 0, storageProvider: StorageProvider = "dropbox") => {
     const uploadFolder = folder || currentFolder;
     if (!uploadFolder) return;
     try {
@@ -295,11 +311,23 @@ export function UploadView() {
     } catch { }
   };
 
-  const handleAddProjectFiles = async (folder: Folder, folderIndex = 0) => {
+  const handleAddProjectFiles = async (folder: Folder, folderIndex = 0, storageProvider: StorageProvider) => {
     const uploadFolder = folder || currentFolder;
-    if (!uploadFolder || !project) return;
+    if (!uploadFolder || !project || !storageStats) return;
     try {
       const imageFiles = uploadFolder.images.map((img) => img.file);
+      const totalSize = imageFiles.reduce((sum, file) => sum + file.size, 0);
+
+      // Check if adding this would exceed allocated storage
+      if (storageProvider === "b2" && storageStats.used + totalSize > storageStats.allocated) {
+        show({
+          title: "Upgrade",
+          content: () => <UpgradePage />,
+          containerProps: { className: "max-w-[90%]" }
+        })
+        return
+      }
+
       const tempFileLocations = await uploadFiles(imageFiles);
       await addProjectFiles({
         projectId: project?.project_id,

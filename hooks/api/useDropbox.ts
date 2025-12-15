@@ -20,11 +20,9 @@ interface DropboxTokenPayload {
 }
 
 export interface DropboxStorageStats {
-  storage: {
-    used: number;
-    allocated: number;
-    used_percent: number;
-  };
+  used: number;
+  allocated: number;
+  used_percent: number;
 }
 
 export function useDropbox(tokenFromUrl?: string) {

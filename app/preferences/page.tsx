@@ -16,12 +16,25 @@ import Link from "next/link";
 import { User } from "@/types/user";
 import { motion } from "framer-motion";
 import { blurFadeInVariants, staggeredContainerVariants } from "@/lib/motion";
+import { useDropbox } from "@/hooks/api/useDropbox";
+import { useStorage } from "@/hooks/api/useStorage";
+import StorageIndicator from "@/components/ui/storage-indicator";
 
 
 export default function PreferencesPage() {
   const { user } = useAuth();
   const { updateUser } = useUser();
   const { show, hide } = useDialog();
+
+
+  const {
+    stats: { data: storageStats },
+  } = useStorage();
+
+  const {
+    authUrl,
+    stats: { data: dropboxStats },
+  } = useDropbox();
 
   const [userState, setUserState] = useState<User>(user!);
   const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
@@ -194,12 +207,36 @@ export default function PreferencesPage() {
         variants={blurFadeInVariants}
         initial="hidden"
         animate="show"
+        className="mt-8 flex flex-col gap-2 items-center"
+      >
+        {storageStats && <StorageIndicator percentage={storageStats.used_percent} />}
+        {dropboxStats && <StorageIndicator percentage={dropboxStats.used_percent} isDropbox/>}
+      </motion.div>
+
+      {
+        authUrl.data && !user?.dropbox?.access_token &&
+        <motion.div
+          variants={blurFadeInVariants}
+          initial="hidden"
+          animate="show"
+          className="mt-8"
+        >
+
+          <Button className="mt-1">Connect your Dropbox</Button>
+
+        </motion.div>
+      }
+
+      <motion.div
+        variants={blurFadeInVariants}
+        initial="hidden"
+        animate="show"
         className="mt-8"
       >
         <Link href="/billing">
           <Button variant="default">Manage Billing</Button>
         </Link>
       </motion.div>
-    </motion.div>
+    </motion.div >
   );
 }

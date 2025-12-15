@@ -8,7 +8,7 @@ import { useProjects } from "@/hooks/api/useProjects";
 import { useRatings } from "@/hooks/api/useRatings";
 import { useToast } from "@/hooks/use-toast";
 import { useDialog } from "@/hooks/use-dialog";
-import type { Folder, ImageFile } from "@/types";
+import type { Folder, ImageFile, StorageProvider } from "@/types";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -35,6 +35,8 @@ import { useNotes } from "@/hooks/api/useNotes";
 import { useServiceWorker } from "@/hooks/useServiceWorker";
 import { useUser } from "@/hooks/api/useUser";
 import { useTenants } from "@/components/tenants-provider";
+import UpgradePage from "@/app/upgrade/page";
+import { useStorage } from "@/hooks/api/useStorage";
 
 interface IPublicProjectPage {
   tenantHandle: string | null
@@ -78,6 +80,10 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
   const {
     getUserByUsername: { data: projectUser, mutateAsync: getUserByUsername },
   } = useUser();
+
+  const {
+    stats: { data: storageStats },
+  } = useStorage();
 
   const { getTenant } = useTenants()
 
@@ -290,11 +296,23 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
     }
   };
 
-  const handleAddProjectFiles = async (folder: Folder, folderIndex = 0) => {
+  const handleAddProjectFiles = async (folder: Folder, folderIndex = 0, storageProvider: StorageProvider) => {
     const uploadFolder = folder;
-    if (!uploadFolder || !project) return;
+    if (!uploadFolder || !project || !storageStats) return;
     try {
       const imageFiles = uploadFolder.images.map((img) => img.file);
+      const totalSize = imageFiles.reduce((sum, file) => sum + file.size, 0);
+
+      // Check if adding this would exceed allocated storage
+      if (storageProvider === "b2" && storageStats.used + totalSize > storageStats.allocated) {
+        show({
+          title: "Upgrade",
+          content: () => <UpgradePage />,
+          containerProps: { className: "max-w-[90%]" }
+        })
+        return
+      }
+
       const tempFileLocations = await uploadFiles(imageFiles);
       await addProjectFiles({
         projectId: project?.project_id,
@@ -344,12 +362,13 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
           onCancel: hide,
           onUpload: async (
             confirmedFolders: Folder[],
-            currentFolderIndex: number
+            currentFolderIndex: number,
+            storageProvider: StorageProvider
           ) => {
             Promise.all(
               confirmedFolders.map(
                 async (folder) => {
-                  await handleAddProjectFiles(folder, currentFolderIndex)
+                  await handleAddProjectFiles(folder, currentFolderIndex, storageProvider)
                   loadProject()
                 }
               )

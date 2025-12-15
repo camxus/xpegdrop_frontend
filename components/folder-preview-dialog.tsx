@@ -3,9 +3,11 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { EditableTitle } from "@/components/editable-title";
-import type { Folder } from "@/types";
+import type { Folder, StorageProvider } from "@/types";
 import { Button } from "@/components/ui/button";
 import { useDialog } from "@/hooks/use-dialog";
+import { Switch } from "./ui/switch";
+import { cn } from "@/lib/utils";
 
 interface FolderPreviewContentProps {
   folders: Folder[];
@@ -86,7 +88,7 @@ interface FolderPreviewActionsProps {
   currentIndex: number,
   folders: Folder[];
   onCancel: () => void;
-  onUpload: (folders: Folder[], currentIndex: number) => void;
+  onUpload: (folders: Folder[], currentIndex: number, storageProvider: StorageProvider) => void;
   isNewUpload?: boolean;
 }
 
@@ -95,20 +97,36 @@ export function FolderPreviewActions({
   folders,
   onCancel,
   onUpload,
-  isNewUpload = true
+  isNewUpload = true,
 }: FolderPreviewActionsProps) {
+  const [storageProvider, setStorageProvider] = useState<StorageProvider>("b2");
+
   return (
-    <>
-      <Button variant="outline" onClick={onCancel}>
-        Cancel
-      </Button>
-      <Button onClick={() => onUpload(folders, currentIndex)}>
-        {
-          isNewUpload ? <>
-            Upload {folders.length > 1 ? `${folders.length} Folders` : "Folder"}</> : <>
-            Add Files</>
-        }
-      </Button>
-    </>
+    <div className="flex w-full justify-between">
+      {/* Toggle */}
+      <div className="flex items-center space-x-2">
+        <Switch
+          className="data-[state=checked]:bg-blue-200"
+          checked={storageProvider === "dropbox"}
+          onCheckedChange={(value) => setStorageProvider(value ? "dropbox" : "b2")}
+        />
+        <span className="text-sm text-muted-foreground">Use Dropbox Storage</span>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex">
+        <Button variant="outline" onClick={onCancel}>
+          Cancel
+        </Button>
+        <Button
+          className={"bg-blue-200"}
+          onClick={() => onUpload(folders, currentIndex, storageProvider)}
+        >
+          {isNewUpload
+            ? `Upload ${folders.length > 1 ? `${folders.length} Folders` : "Folder"}`
+            : "Add Files"}
+        </Button>
+      </div>
+    </div>
   );
 }

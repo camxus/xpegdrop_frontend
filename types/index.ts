@@ -28,3 +28,5 @@ export interface CreateFolderDto {
 export interface UpdateFolderDto {
   name: string
 }
+
+export type StorageProvider = "b2" | "dropbox"

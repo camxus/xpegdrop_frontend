@@ -1,10 +1,11 @@
 import { Project } from "@/types/project";
 import { api } from "./client";
 import { S3Location } from "@/types/user";
+import { StorageProvider } from "@/types";
 
 export const projectsApi = {
   // Create new project with files (multipart/form-data)
-  createProject: async (formData: { name: string; files?: File[], file_locations?: S3Location[], storage_provider: "b2" | "dropbox" }) => {
+  createProject: async (formData: { name: string; files?: File[], file_locations?: S3Location[], storage_provider: StorageProvider }) => {
     const data = new FormData();
     data.append("name", formData.name);
     if (formData.storage_provider) data.append("storage_provider", formData.storage_provider)

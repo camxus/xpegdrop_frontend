@@ -8,6 +8,7 @@ import { S3Location } from "@/types/user";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "./useAuth";
 import { useTenants } from "@/components/tenants-provider";
+import { StorageProvider } from "@/types";
 
 export function useProjects() {
   const { user } = useAuth()
@@ -83,7 +84,7 @@ export function useProjects() {
       name: string;
       files?: File[];
       file_locations?: S3Location[];
-      storage_provider: "b2" | "dropbox"
+      storage_provider: StorageProvider
     }) => projectsApi.createProject(formData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });
