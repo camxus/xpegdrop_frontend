@@ -85,7 +85,7 @@ export function SuccessClient() {
         </div>
 
         <div className="text-center">
-          <a href="/billing" className="text-primary hover:underline font-medium">
+          <a href="/preferences/billing" className="text-primary hover:underline font-medium">
             Manage your billing →
           </a>
         </div>

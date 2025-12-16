@@ -37,7 +37,7 @@ export async function startCheckoutSession(productId: string, userId: string, tr
       : undefined,
 
     success_url: `${process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'}/success?session_id={CHECKOUT_SESSION_ID}&plan=${product.id}`,
-    cancel_url: `${process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'}/billing`,
+    cancel_url: `${process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'}/preferences/billing`,
   })
 
   return session.url

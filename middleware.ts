@@ -4,7 +4,7 @@ import { TOKEN_KEY } from "./lib/api/token";
 
 // Define public routes that don't require authentication
 const publicRoutes = ["/", "/login", "/signup"];
-const authorizedRoutes = ["/new", "/upgrade", "/billing", "/success", "/preferences"];
+const authorizedRoutes = ["/new", "/upgrade", "/success", "/preferences"];
 
 function isPublicPath(pathname: string): boolean {
   // Dynamic username route match — adjust if you have stricter rules

@@ -233,7 +233,7 @@ export default function PreferencesPage() {
         animate="show"
         className="mt-8"
       >
-        <Link href="/billing">
+        <Link href="/preferences/billing">
           <Button variant="default">Manage Billing</Button>
         </Link>
       </motion.div>
