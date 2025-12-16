@@ -6,7 +6,7 @@ export default function StorageIndicator({ percentage, isDropbox = false }: { pe
   return (
     <>
       <span className="text-xs text-muted-foreground">
-        {isDropbox ? "Dropbox" : "ffraemss"}{" "}Storage{" "}
+        {isDropbox ? "Dropbox" : "fframess"}{" "}Storage{" "}
         {percentage >= 90
           ? "Full"
           : percentage >= 70
