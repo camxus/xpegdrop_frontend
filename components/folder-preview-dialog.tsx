@@ -107,13 +107,15 @@ export function FolderPreviewActions({
     <div className="flex w-full justify-between">
       {/* Toggle */}
       <div className="flex items-center space-x-2">
-        <Switch
-          className="data-[state=checked]:bg-blue-200"
-          checked={storageProvider === "dropbox"}
-          disabled={!user?.dropbox?.access_token}
-          onCheckedChange={(value) => setStorageProvider(value ? "dropbox" : "b2")}
-        />
-        <span className="text-sm text-muted-foreground">Use Dropbox Storage</span>
+        {
+          isNewUpload && <Switch
+            className="data-[state=checked]:bg-blue-200"
+            checked={storageProvider === "dropbox"}
+            disabled={!user?.dropbox?.access_token}
+            onCheckedChange={(value) => setStorageProvider(value ? "dropbox" : "b2")}
+          />
+          <span className="text-sm text-muted-foreground">Use Dropbox Storage</span>
+        }
       </div>
 
       {/* Action Buttons */}

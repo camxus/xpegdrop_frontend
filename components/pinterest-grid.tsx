@@ -188,12 +188,14 @@ const PinterestImage = memo(function PinterestImage({
   const { user } = useAuth()
   const { localUser, setLocalUser } = useUser()
 
+  const {removeProjectFile: {mutateAsync: removeProjectFile}} = useProjects()
+
   const modal = useModal();
   const dialog = useDialog();
 
   const [editOpen, setEditOpen] = useState(false);
 
-  const handleShowImageNotes = (image: ImageFile) => {
+  const handleShowImageNotes = () => {
     modal.show({
       title: `Notes`,
       content: () => (
@@ -203,6 +205,10 @@ const PinterestImage = memo(function PinterestImage({
       width: "500px",
     });
   };
+
+  const handleDeleteImage = async () => {
+    await removeProjectFile({ projectId, fileName: image.name })
+  }
 
   const handleRatingChange = (value: number) => {
 
@@ -283,13 +289,13 @@ const PinterestImage = memo(function PinterestImage({
               Duplicate (beta)
             </ContextMenuItem>
             <ContextMenuSeparator />
-            <ContextMenuItem onClick={() => handleShowImageNotes(image)}>
+            <ContextMenuItem onClick={() => handleShowImageNotes()}>
               Show Notes
             </ContextMenuItem>
             {/* <ContextMenuSeparator /> */}
-            {/* <ContextMenuItem onClick={() => console.log("Delete", image.id)}>
+            <ContextMenuItem onClick={() => handleDeleteImage()}>
             Delete
-          </ContextMenuItem> */}
+          </ContextMenuItem>
           </ContextMenuContent>
         </ContextMenu>
 
@@ -307,7 +313,7 @@ const PinterestImage = memo(function PinterestImage({
           {!!imageNotes.length && (
             <MessageSquareText
               className="cursor-pointer absolute w-4 h-4 right-0"
-              onClick={() => handleShowImageNotes(image)}
+              onClick={() => handleShowImageNotes()}
             />
           )}
         </div>

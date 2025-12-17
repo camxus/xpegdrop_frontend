@@ -365,6 +365,9 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
             currentFolderIndex: number,
             storageProvider: StorageProvider
           ) => {
+
+            const storageProvider = project.b2_folder_path ? "b2" : project.dropbox_folder_path ? "dropbox" : storageProvider;
+            
             Promise.all(
               confirmedFolders.map(
                 async (folder) => {

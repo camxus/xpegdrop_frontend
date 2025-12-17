@@ -160,9 +160,14 @@ export function UploadView() {
           ) => {
             setFolders((prev) => [...prev, ...confirmedFolders]);
             setCurrentFolderIndex(confirmedFolders.length ? 0 : 0);
-            Promise.all(
+
+const storageProvider = project.b2_folder_path ? "b2" :
+                        project.dropbox_folder_path ? "dropbox" :
+                        storageProvider;
+
+                        Promise.all(
               confirmedFolders.map(
-                async (folder) => await handleUpload(folder, currentFolderIndex, storageProvider)
+                async (folder) => await handleUpload(folder, currentFolderIndex, project.b2_folder_path ?  storageProvider)
               )
             );
             hide();
@@ -219,6 +224,11 @@ export function UploadView() {
           ) => {
             setFolders((prev) => [...prev, ...confirmedFolders]);
             setCurrentFolderIndex(confirmedFolders.length ? 0 : 0);
+
+const storageProvider = project.b2_folder_path ? "b2" :
+                        project.dropbox_folder_path ? "dropbox" :
+                        storageProvider;
+
             Promise.all(
               confirmedFolders.map(
                 async (folder) =>

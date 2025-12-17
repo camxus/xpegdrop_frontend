@@ -7,6 +7,8 @@ export interface Project {
   share_url: string;
   dropbox_folder_path?: string;
   dropbox_shared_link?: string;
+  b2_folder_path?: string;
+  b2_shared_link?: string;
   created_at: string;
   is_public: boolean;
   approved_emails: string[];
