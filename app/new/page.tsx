@@ -426,7 +426,7 @@ export function UploadView() {
     return
   }
 
-  if (authUrl.data && !user?.dropbox?.access_token) {
+  if (false && authUrl.data && !user?.dropbox?.access_token) {
     return (
       <motion.div
         className={cn("min-h-dvh bg-background relative overflow-hidden")}

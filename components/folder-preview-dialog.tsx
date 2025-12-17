@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { useDialog } from "@/hooks/use-dialog";
 import { Switch } from "./ui/switch";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/api/useAuth";
 
 interface FolderPreviewContentProps {
   folders: Folder[];
@@ -99,6 +100,7 @@ export function FolderPreviewActions({
   onUpload,
   isNewUpload = true,
 }: FolderPreviewActionsProps) {
+  const { user } = useAuth()
   const [storageProvider, setStorageProvider] = useState<StorageProvider>("b2");
 
   return (
@@ -108,6 +110,7 @@ export function FolderPreviewActions({
         <Switch
           className="data-[state=checked]:bg-blue-200"
           checked={storageProvider === "dropbox"}
+          disabled={!user?.dropbox?.access_token}
           onCheckedChange={(value) => setStorageProvider(value ? "dropbox" : "b2")}
         />
         <span className="text-sm text-muted-foreground">Use Dropbox Storage</span>
@@ -119,7 +122,7 @@ export function FolderPreviewActions({
           Cancel
         </Button>
         <Button
-          className={"bg-blue-200"}
+          // className={cn("transition-all", storageProvider === "dropbox" && "bg-blue-200")}
           onClick={() => onUpload(folders, currentIndex, storageProvider)}
         >
           {isNewUpload
