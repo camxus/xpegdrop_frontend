@@ -76,8 +76,6 @@ export function SiteHeader({ children }: SiteHeaderProps) {
     stats: { data: dropboxStats },
   } = useDropbox();
 
-  const isActive = (path: string) => pathname === path;
-
   const sidebarItems =
     [...(currentTenant && !!tenantProjects.length ? tenantProjects : personalProjects)]
       .filter((project) => project.status === "created")
@@ -252,7 +250,7 @@ export function SiteHeader({ children }: SiteHeaderProps) {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className={`group relative flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all ${isActive(item.href)
+                    className={`group relative flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all ${pathname === item.href
                       ? "bg-white/5 text-white"
                       : "text-white/80 hover:bg-white/10"
                       }`}
