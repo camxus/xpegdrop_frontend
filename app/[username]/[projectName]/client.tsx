@@ -289,7 +289,7 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
       const updated = await getProject(project.project_id);
       setProject({ ...project, ...updated });
       if (typeof window !== "undefined") {
-        window.history.replaceState(null, "", `/${username}/${updated.name}`);
+        window.history.replaceState(null, "", new URL(updated.share_url).pathname);
       }
     } catch (e) {
       console.error(e);
