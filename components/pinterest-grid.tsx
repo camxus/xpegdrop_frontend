@@ -26,8 +26,9 @@ import { useUser } from "@/hooks/api/useUser";
 import { useDialog } from "@/hooks/use-dialog";
 import UnauthorizedRatingDialog, { UnauthorizedRatingDialogActions } from "./unauthorized-rating-dialog";
 import { useProjects } from "@/hooks/api/useProjects";
+import { MasonryGrid } from "./layout/mansonry";
 
-interface PinterestGridProps {
+interface ImagesMansonryProps {
   projectId: string;
   projectNotes: Note[];
   ratingDisabled?: boolean;
@@ -40,7 +41,7 @@ interface PinterestGridProps {
   onDuplicateImage?: (image: ImageFile) => void;
 }
 
-export function PinterestGrid({
+export function ImagesMansonry({
   projectId,
   projectNotes,
   ratingDisabled = false,
@@ -51,7 +52,7 @@ export function PinterestGrid({
   onImageHoverChange,
   onRatingChange,
   onDuplicateImage,
-}: PinterestGridProps) {
+}: ImagesMansonryProps) {
   const { user } = useAuth();
 
   const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
@@ -121,12 +122,7 @@ export function PinterestGrid({
     projectNotes?.filter((note) => note.image_name === image.name);
 
   return (
-    <div
-      className={cn(
-        "columns-2 gap-4 sm:columns-3 md:columns-4 lg:columns-5",
-        className
-      )}
-    >
+    <MasonryGrid>
       {images.map((image: ImageFile, index: number) => (
         <PinterestImage
           projectId={projectId}
@@ -149,8 +145,8 @@ export function PinterestGrid({
           onDuplicateImage={handleDuplicateImage}
         />
       ))}
-    </div>
-  );
+    </MasonryGrid>
+  )
 }
 
 const PinterestImage = memo(function PinterestImage({
