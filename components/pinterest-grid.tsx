@@ -25,6 +25,7 @@ import { MessageSquareText } from "lucide-react";
 import { useUser } from "@/hooks/api/useUser";
 import { useDialog } from "@/hooks/use-dialog";
 import UnauthorizedRatingDialog, { UnauthorizedRatingDialogActions } from "./unauthorized-rating-dialog";
+import { useProjects } from "@/hooks/api/useProjects";
 
 interface PinterestGridProps {
   projectId: string;
@@ -188,7 +189,8 @@ const PinterestImage = memo(function PinterestImage({
   const { user } = useAuth()
   const { localUser, setLocalUser } = useUser()
 
-  const {removeProjectFile: {mutateAsync: removeProjectFile}} = useProjects()
+  const { removeProjectFile: { mutateAsync: removeProjectFile } } = useProjects()
+
 
   const modal = useModal();
   const dialog = useDialog();
@@ -208,6 +210,7 @@ const PinterestImage = memo(function PinterestImage({
 
   const handleDeleteImage = async () => {
     await removeProjectFile({ projectId, fileName: image.name })
+
   }
 
   const handleRatingChange = (value: number) => {
@@ -294,8 +297,8 @@ const PinterestImage = memo(function PinterestImage({
             </ContextMenuItem>
             {/* <ContextMenuSeparator /> */}
             <ContextMenuItem onClick={() => handleDeleteImage()}>
-            Delete
-          </ContextMenuItem>
+              <span className="text-destructive-foreground">Delete</span>
+            </ContextMenuItem>
           </ContextMenuContent>
         </ContextMenu>
 

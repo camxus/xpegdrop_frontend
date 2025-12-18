@@ -380,162 +380,14 @@ export function TenantUsersTable({ tenant, users }: TenantUsersTableProps) {
 
 
 export function InviteMemberButton({ tenant }: { tenant: Tenant }) {
-    const { show, hide } = useDialog();
-
-    const InviteContent = () => {
-        const { inviteMember } = useTenants();
-        const { searchByUsername } = useUser();
-
-        const [search, setSearch] = useState("");
-        const [selectedUser, setSelectedUser] = useState<User | null>(null);
-        const [role, setRole] = useState<"admin" | "editor" | "viewer">("editor");
-        const [loading, setLoading] = useState(false);
-        const [searchResults, setSearchResults] = useState<User[] | null>(null);
-        const [popoverOpen, setPopoverOpen] = useState(false);
-
-        const inputRef = useRef<HTMLInputElement>(null);
-
-        useEffect(() => { console.log(searchResults) }, [searchResults])
-
-        // Debounce search
-        useEffect(() => {
-            if (!search) {
-                setSearchResults(null);
-                setPopoverOpen(false);
-                return;
-            }
-
-            const handler = setTimeout(async () => {
-                try {
-                    const result = await searchByUsername.mutateAsync(search);
-                    console.log(result)
-                    if (result) {
-                        setSearchResults(result);
-                        setPopoverOpen(true);
-                    } else {
-                        setSearchResults([]);
-                        setPopoverOpen(false);
-                    }
-                } catch (err) {
-                    console.error("User search failed", err);
-                    setSearchResults(null);
-                    setPopoverOpen(false);
-                }
-            }, 400);
-
-            return () => clearTimeout(handler);
-        }, [search]);
-
-        const handleInvite = async () => {
-            if (!selectedUser) return;
-            setLoading(true);
-
-            try {
-                await inviteMember.mutateAsync({
-                    tenantId: tenant.tenant_id,
-                    data: { user_id: selectedUser.user_id, role },
-                });
-                hide();
-            } catch (err) {
-                console.error("Failed to invite member", err);
-            } finally {
-                setLoading(false);
-                setPopoverOpen(false);
-            }
-        };
-
-        return (<div className="space-y-4 relative w-full" >
-            <Popover open={!!(searchResults && popoverOpen)} onOpenChange={setPopoverOpen}>
-                <PopoverTrigger asChild>
-                    {selectedUser ? (
-                        <div
-                            onClick={() => {
-                                setSelectedUser(null);
-
-                                // wait a bit so React renders the Input
-                                requestAnimationFrame(() => {
-                                    inputRef.current?.focus();
-                                });
-                            }}
-                            className="flex items-center gap-2 p-2 border rounded-md cursor-pointer hover:bg-accent"
-                        >
-                            <Avatar className="h-6 w-6">
-                                <AvatarImage src={selectedUser?.avatar as string} />
-                                <AvatarFallback className="text-xs">
-                                    {getInitials(selectedUser?.first_name || "", "")}
-                                </AvatarFallback>
-                            </Avatar>
-                            <span className="text-sm">{selectedUser.username}</span>
-                        </div>
-                    ) : (
-                        <Input
-                            ref={inputRef}
-                            type="search"
-                            placeholder="Search by username"
-                            value={search}
-                            autoComplete="off"
-                            onChange={(e) => {
-                                setSearch(e.target.value);
-                                setSelectedUser(null);
-                            }}
-                            onFocus={() => {
-                                if (searchResults?.length) setPopoverOpen(true);
-                            }}
-                        />
-                    )}
-                </PopoverTrigger>
-
-                <PopoverContent className="p-0 w-full max-h-40 overflow-y-auto pointer-events-auto">
-                    {searchResults && searchResults.length ? (
-                        searchResults.map((u) => (
-                            <div
-                                key={u.user_id}
-                                className={`flex items-center gap-2 p-2 cursor-pointer text-sm hover:bg-primary/20 ${selectedUser?.user_id === u.user_id ? "bg-primary/30" : ""
-                                    }`}
-                                onClick={() => {
-                                    setSelectedUser(u);
-                                    setSearch(u.username);
-                                    setPopoverOpen(false);
-                                }}
-                            >
-                                <Avatar className="h-6 w-6">
-                                    <AvatarImage src={u?.avatar as string} />
-                                    <AvatarFallback className="text-xs">
-                                        {getInitials(u?.first_name || "", "")}
-                                    </AvatarFallback>
-                                </Avatar>
-                                <span>{u?.username}</span>
-                            </div>
-                        ))
-                    ) : (
-                        <div className="p-2 text-sm text-muted-foreground">No users found</div>
-                    )}
-                </PopoverContent>
-            </Popover>
-
-            < Select value={role} onValueChange={(value: "admin" | "viewer" | "editor") => setRole(value as "admin" | "editor" | "viewer")}>
-                <SelectTrigger variant="ghost" className="h-min w-full" >
-                    <SelectValue placeholder="Select role" />
-                </SelectTrigger>
-                < SelectContent >
-                    <SelectItem value="admin" > Admin </SelectItem>
-                    < SelectItem value="editor" > Editor </SelectItem>
-                    < SelectItem value="viewer" > Viewer </SelectItem>
-                </SelectContent>
-            </Select>
-
-            < Button onClick={handleInvite} disabled={loading || !selectedUser} className="w-full" >
-                {loading ? "Inviting..." : "Invite"}
-            </Button>
-        </div>)
-    };
+    const { show } = useDialog();
 
     return (
         <Button
             onClick={() =>
                 show({
                     title: "Invite Member",
-                    content: InviteContent,
+                    content: () => <InviteMemberDialog tenantId={tenant.tenant_id} />,
                 })
             }
         >
@@ -543,3 +395,151 @@ export function InviteMemberButton({ tenant }: { tenant: Tenant }) {
         </Button>
     );
 }
+
+const InviteMemberDialog = ({ tenantId }: { tenantId: string }) => {
+    const { hide } = useDialog();
+
+    const { inviteMember } = useTenants();
+    const { searchByUsername } = useUser();
+
+    const [search, setSearch] = useState("");
+    const [selectedUser, setSelectedUser] = useState<User | null>(null);
+    const [role, setRole] = useState<"admin" | "editor" | "viewer">("editor");
+    const [loading, setLoading] = useState(false);
+    const [searchResults, setSearchResults] = useState<User[] | null>(null);
+    const [popoverOpen, setPopoverOpen] = useState(false);
+
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    // Debounce search
+    useEffect(() => {
+        if (!search) {
+            setSearchResults(null);
+            setPopoverOpen(false);
+            return;
+        }
+
+        const handler = setTimeout(async () => {
+            try {
+                const result = await searchByUsername.mutateAsync(search);
+
+                if (result) {
+                    setSearchResults(result);
+                    setPopoverOpen(true);
+                } else {
+                    setSearchResults([]);
+                    setPopoverOpen(false);
+                }
+            } catch (err) {
+                console.error("User search failed", err);
+                setSearchResults(null);
+                setPopoverOpen(false);
+            }
+        }, 400);
+
+        return () => clearTimeout(handler);
+    }, [search]);
+
+    const handleInvite = async () => {
+        if (!selectedUser) return;
+        setLoading(true);
+
+        try {
+            await inviteMember.mutateAsync({
+                tenantId,
+                data: { user_id: selectedUser.user_id, role },
+            });
+            hide();
+        } catch (err) {
+            console.error("Failed to invite member", err);
+        } finally {
+            setLoading(false);
+            setPopoverOpen(false);
+        }
+    };
+
+    return (<div className="space-y-4 relative w-full" >
+        <Popover open={!!(searchResults && popoverOpen)} onOpenChange={setPopoverOpen}>
+            <PopoverTrigger asChild>
+                {selectedUser ? (
+                    <div
+                        onClick={() => {
+                            setSelectedUser(null);
+
+                            // wait a bit so React renders the Input
+                            requestAnimationFrame(() => {
+                                inputRef.current?.focus();
+                            });
+                        }}
+                        className="flex items-center gap-2 p-2 border rounded-md cursor-pointer hover:bg-accent"
+                    >
+                        <Avatar className="h-6 w-6">
+                            <AvatarImage src={selectedUser?.avatar as string} />
+                            <AvatarFallback className="text-xs">
+                                {getInitials(selectedUser?.first_name || "", "")}
+                            </AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm">{selectedUser.username}</span>
+                    </div>
+                ) : (
+                    <Input
+                        ref={inputRef}
+                        type="search"
+                        placeholder="Search by username"
+                        value={search}
+                        autoComplete="off"
+                        onChange={(e) => {
+                            setSearch(e.target.value);
+                            setSelectedUser(null);
+                        }}
+                        onFocus={() => {
+                            if (searchResults?.length) setPopoverOpen(true);
+                        }}
+                    />
+                )}
+            </PopoverTrigger>
+
+            <PopoverContent className="p-0 w-full max-h-40 overflow-y-auto pointer-events-auto">
+                {searchResults && searchResults.length ? (
+                    searchResults.map((u) => (
+                        <div
+                            key={u.user_id}
+                            className={`flex items-center gap-2 p-2 cursor-pointer text-sm hover:bg-primary/20 ${selectedUser?.user_id === u.user_id ? "bg-primary/30" : ""
+                                }`}
+                            onClick={() => {
+                                setSelectedUser(u);
+                                setSearch(u.username);
+                                setPopoverOpen(false);
+                            }}
+                        >
+                            <Avatar className="h-6 w-6">
+                                <AvatarImage src={u?.avatar as string} />
+                                <AvatarFallback className="text-xs">
+                                    {getInitials(u?.first_name || "", "")}
+                                </AvatarFallback>
+                            </Avatar>
+                            <span>{u?.username}</span>
+                        </div>
+                    ))
+                ) : (
+                    <div className="p-2 text-sm text-muted-foreground">No users found</div>
+                )}
+            </PopoverContent>
+        </Popover>
+
+        < Select value={role} onValueChange={(value: "admin" | "viewer" | "editor") => setRole(value as "admin" | "editor" | "viewer")}>
+            <SelectTrigger variant="ghost" className="h-min w-full" >
+                <SelectValue placeholder="Select role" />
+            </SelectTrigger>
+            < SelectContent >
+                <SelectItem value="admin" > Admin </SelectItem>
+                < SelectItem value="editor" > Editor </SelectItem>
+                < SelectItem value="viewer" > Viewer </SelectItem>
+            </SelectContent>
+        </Select>
+
+        < Button onClick={handleInvite} disabled={loading || !selectedUser} className="w-full" >
+            {loading ? "Inviting..." : "Invite"}
+        </Button>
+    </div>)
+};

@@ -366,12 +366,14 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
             storageProvider: StorageProvider
           ) => {
 
-            const storageProvider = project.b2_folder_path ? "b2" : project.dropbox_folder_path ? "dropbox" : storageProvider;
-            
+            const provider = project?.b2_folder_path ? "b2" :
+              project?.dropbox_folder_path ? "dropbox" :
+                storageProvider;
+
             Promise.all(
               confirmedFolders.map(
                 async (folder) => {
-                  await handleAddProjectFiles(folder, currentFolderIndex, storageProvider)
+                  await handleAddProjectFiles(folder, currentFolderIndex, provider)
                   loadProject()
                 }
               )

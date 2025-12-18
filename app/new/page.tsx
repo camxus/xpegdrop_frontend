@@ -130,6 +130,7 @@ export function UploadView() {
           content: () => <UpgradePage />,
           containerProps: { className: "max-w-[90%]" }
         })
+        return
       }
 
       if (files.length === 0) return;
@@ -161,13 +162,13 @@ export function UploadView() {
             setFolders((prev) => [...prev, ...confirmedFolders]);
             setCurrentFolderIndex(confirmedFolders.length ? 0 : 0);
 
-const storageProvider = project.b2_folder_path ? "b2" :
-                        project.dropbox_folder_path ? "dropbox" :
-                        storageProvider;
+            const provider = project?.b2_folder_path ? "b2" :
+              project?.dropbox_folder_path ? "dropbox" :
+                storageProvider;
 
-                        Promise.all(
+            Promise.all(
               confirmedFolders.map(
-                async (folder) => await handleUpload(folder, currentFolderIndex, project.b2_folder_path ?  storageProvider)
+                async (folder) => await handleUpload(folder, currentFolderIndex, provider)
               )
             );
             hide();
@@ -225,14 +226,14 @@ const storageProvider = project.b2_folder_path ? "b2" :
             setFolders((prev) => [...prev, ...confirmedFolders]);
             setCurrentFolderIndex(confirmedFolders.length ? 0 : 0);
 
-const storageProvider = project.b2_folder_path ? "b2" :
-                        project.dropbox_folder_path ? "dropbox" :
-                        storageProvider;
+            const provider = project?.b2_folder_path ? "b2" :
+              project?.dropbox_folder_path ? "dropbox" :
+                storageProvider;
 
             Promise.all(
               confirmedFolders.map(
                 async (folder) =>
-                  await handleAddProjectFiles(folder, currentFolderIndex, storageProvider)
+                  await handleAddProjectFiles(folder, currentFolderIndex, provider)
               )
             );
             hide();

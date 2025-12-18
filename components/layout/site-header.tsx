@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useState } from "react";
+import { ReactNode, useRef, useState } from "react";
 import Link from "next/link";
 import {
   ChevronLeft,
@@ -11,6 +11,7 @@ import {
   Mails,
   ChevronsUpDown,
   CircleFadingArrowUp,
+  Search,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -37,6 +38,7 @@ import { useTenants } from "../tenants-provider";
 import UpgradePage from "@/app/upgrade/page";
 import { useStorage } from "@/hooks/api/useStorage";
 import StorageIndicator from "../ui/storage-indicator";
+import { Input } from "../ui/input";
 
 
 const SIDEBAR_WIDTH = 256
@@ -49,6 +51,8 @@ interface SiteHeaderProps {
 export function SiteHeader({ children }: SiteHeaderProps) {
   const { tenants, currentTenant, setCurrentTenant } = useTenants()
   const { referrals } = useReferrals()
+  const [search, setSearch] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
 
   const pathname = usePathname();
@@ -77,6 +81,11 @@ export function SiteHeader({ children }: SiteHeaderProps) {
   const sidebarItems =
     [...(currentTenant && !!tenantProjects.length ? tenantProjects : personalProjects)]
       .filter((project) => project.status === "created")
+      .filter((project) =>
+        search
+          ? project.name.toLowerCase().includes(search.toLowerCase())
+          : true
+      )
       ?.sort((a, b) => {
         return (
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
@@ -194,63 +203,108 @@ export function SiteHeader({ children }: SiteHeaderProps) {
         <nav className="flex flex-1 flex-col px-2 overflow-hidden">
           {/* Scrollable sidebar items */}
           <div className="flex-1 overflow-y-auto">
-            {!!sidebarItems.length ? (
-              sidebarItems.map((item, index) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`group relative flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all ${isActive(item.href)
-                    ? "bg-white/5 text-white"
-                    : "text-white/80 hover:bg-white/10"
-                    }`}
-                >
-                  {/* Icon */}
-                  <motion.div initial={false} animate={{ opacity: 1 }}>
-                    <item.icon width={20} height={20} />
+            <div className="mb-3">
+              <AnimatePresence mode="wait">
+                {isSidebarCollapsed ? (
+                  <motion.div
+                    key="icon"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    transition={{ duration: 0.15, ease: "easeOut" }}
+                    className={`flex h-9 items-center px-3 rounded-lg transition-all hover:bg-white/10 cursor-pointer`}
+                    onClick={() => {
+                      setIsSidebarCollapsed(false)
+                      // wait a bit so React renders the Input
+                      setTimeout(() => {
+                        requestAnimationFrame(() => {
+                          searchInputRef.current?.focus();
+                        });
+                      }, 300)
+                    }}
+                  >
+                    <Search width={20} height={20} />
                   </motion.div>
-
-                  {/* Label */}
-                  <motion.span
-                    custom={index}
-                    variants={{
-                      visible: (i: number) => ({
-                        opacity: 1,
-                        display: "block",
-                        transition: {
-                          opacity: { duration: 0.1, delay: i * 0.15 },
-                        },
-                      }),
-                      hidden: {
-                        opacity: 0,
-                        display: "none",
-                        transition: {
-                          opacity: { duration: 0.1 },
-                        },
-                      },
-                    }}
-                    initial="visible"
-                    animate={isSidebarCollapsed ? "hidden" : "visible"}
-                    className="whitespace-nowrap overflow-hidden flex-1"
+                ) : (
+                  <motion.div
+                    key="input"
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.15, ease: "easeOut" }}
+                    className="h-9"
                   >
-                    {item.label}
-                  </motion.span>
-
-                  {/* X Button (prevents Link navigation) */}
-                  <motion.button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleDeleteProject(item.id);
-                    }}
-                    className={cn(
-                      "cursor-pointer absolute right-3 opacity-0 group-hover:opacity-100 text-white/60 hover:text-destructive-foreground transition-[opacity,colors] duration-200",
-                      isSidebarCollapsed ? "hidden" : "block"
-                    )}
+                    <Input
+                      ref={searchInputRef}
+                      type="search"
+                      placeholder="Search Projects"
+                      value={search}
+                      autoComplete="off"
+                      onChange={(e) => setSearch(e.target.value)}
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+            {!!sidebarItems.length ? (
+              <>
+                {sidebarItems.map((item, index) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`group relative flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all ${isActive(item.href)
+                      ? "bg-white/5 text-white"
+                      : "text-white/80 hover:bg-white/10"
+                      }`}
                   >
-                    <X className="w-4 h-4" />
-                  </motion.button>
-                </Link>
-              ))
+                    {/* Icon */}
+                    <motion.div initial={false} animate={{ opacity: 1 }}>
+                      <item.icon width={20} height={20} />
+                    </motion.div>
+
+                    {/* Label */}
+                    <motion.span
+                      custom={index}
+                      variants={{
+                        visible: (i: number) => ({
+                          opacity: 1,
+                          display: "block",
+                          transition: {
+                            opacity: { duration: 0.1, delay: i * 0.15 },
+                          },
+                        }),
+                        hidden: {
+                          opacity: 0,
+                          display: "none",
+                          transition: {
+                            opacity: { duration: 0.1 },
+                          },
+                        },
+                      }}
+                      initial="visible"
+                      animate={isSidebarCollapsed ? "hidden" : "visible"}
+                      className="whitespace-nowrap overflow-hidden flex-1"
+                    >
+                      {item.label}
+                    </motion.span>
+
+                    {/* X Button (prevents Link navigation) */}
+                    <motion.button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleDeleteProject(item.id);
+                      }}
+                      className={cn(
+                        "cursor-pointer absolute right-3 opacity-0 group-hover:opacity-100 text-white/60 hover:text-destructive-foreground transition-[opacity,colors] duration-200",
+                        isSidebarCollapsed ? "hidden" : "block"
+                      )}
+                    >
+                      <X className="w-4 h-4" />
+                    </motion.button>
+                  </Link>
+                ))}
+              </>
             ) : (
               <motion.span
                 variants={{
@@ -273,7 +327,7 @@ export function SiteHeader({ children }: SiteHeaderProps) {
                 animate={isSidebarCollapsed ? "hidden" : "visible"}
                 className="whitespace-nowrap text-center text-muted-foreground"
               >
-                No projects added
+                No projects {search ? "found" : "added"}
               </motion.span>
             )}
           </div>
@@ -489,7 +543,7 @@ export function SiteHeader({ children }: SiteHeaderProps) {
 
               >
                 {storageStats && <StorageIndicator percentage={storageStats.used_percent} />}
-                {dropboxStats && <StorageIndicator percentage={dropboxStats.used_percent} isDropbox/>}
+                {dropboxStats && <StorageIndicator percentage={dropboxStats.used_percent} isDropbox />}
                 {
                   authUrl.data && !user?.dropbox?.access_token && <>
                     <Button className="mt-1">Connect your Dropbox</Button></>
@@ -501,6 +555,6 @@ export function SiteHeader({ children }: SiteHeaderProps) {
 
         <main className="flex-1 overflow-y-auto">{children}</main>
       </div>
-    </div>
+    </div >
   );
 }
