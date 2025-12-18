@@ -16,7 +16,6 @@ import { User } from "@/types/user";
 import { isTokenExpired } from "@/middleware";
 import { jwtDecode } from "jwt-decode";
 import { userApi } from "@/lib/api/usersApi";
-import { useReferrals } from "./useReferrals";
 
 export const AUTH_USER_KEY = "user";
 
@@ -31,7 +30,7 @@ export function useAuth() {
     queryFn: async () => {
       const tokens = JSON.parse(await getCookieClient(TOKEN_KEY) || "{}")
       if (isTokenExpired(jwtDecode(tokens.accessToken))) {
-        authApi.refreshToken(tokens.refreshToken)
+        refresh({ refreshToken: tokens.refreshToken })
         return null
       }
 
