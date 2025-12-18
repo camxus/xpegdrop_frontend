@@ -36,7 +36,6 @@ export function MultiSelect({
     const checkOverflow = () => {
       if (containerRef.current) {
         const el = containerRef.current;
-        console.log(el.scrollWidth, el.clientWidth)
         setIsOverflowing(el.scrollWidth > el.clientWidth);
       }
     };
