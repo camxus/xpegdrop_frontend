@@ -571,6 +571,7 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
                 onRatingChange={handleRatingChange}
                 onImageHoverChange={(hover) => setIsHovered(hover)}
                 onDuplicateImage={handleDuplicateImage}
+                canEdit={canEdit}
               />
               <ImageCarousel
                 images={filteredImages}

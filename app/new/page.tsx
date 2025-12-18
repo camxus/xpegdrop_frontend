@@ -554,6 +554,7 @@ export function UploadView() {
                         onRatingChange={handleRatingChange}
                         onImageHoverChange={handleImageHoverChange}
                         projectNotes={[]}
+                        canEdit={user?.user_id === project?.user_id}
                       />
                     </div>
 

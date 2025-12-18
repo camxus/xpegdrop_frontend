@@ -35,6 +35,7 @@ interface ImagesMansonryProps {
   images: ImageFile[];
   ratings?: Rating[];
   className?: string;
+  canEdit?: boolean;
   onImageClick?: (imageIndex: number) => void;
   onImageHoverChange?: (isHovering: boolean) => void;
   onRatingChange?: (imageId: string, value: number, ratingId?: string) => void;
@@ -48,6 +49,7 @@ export function ImagesMansonry({
   images,
   ratings,
   className,
+  canEdit,
   onImageClick,
   onImageHoverChange,
   onRatingChange,
@@ -135,6 +137,7 @@ export function ImagesMansonry({
           index={index}
           isHovered={hoveredImage === image.id}
           isLoaded={loadedImages.has(image.id)}
+          canEdit={canEdit}
           onHover={() => handleMouseEnter(image.id)}
           onLeave={handleMouseLeave}
           onClick={() => handleImageClick(index)}
@@ -159,6 +162,7 @@ const PinterestImage = memo(function PinterestImage({
   isLoaded,
   ratings,
   rating,
+  canEdit,
   onHover,
   onLeave,
   onClick,
@@ -175,6 +179,7 @@ const PinterestImage = memo(function PinterestImage({
   index: number;
   isHovered: boolean;
   isLoaded: boolean;
+  canEdit?: boolean;  
   onHover: () => void;
   onLeave: () => void;
   onClick: () => void;
@@ -292,9 +297,9 @@ const PinterestImage = memo(function PinterestImage({
               Show Notes
             </ContextMenuItem>
             {/* <ContextMenuSeparator /> */}
-            <ContextMenuItem onClick={() => handleDeleteImage()}>
+            {canEdit && <ContextMenuItem onClick={() => handleDeleteImage()}>
               <span className="text-destructive-foreground">Delete</span>
-            </ContextMenuItem>
+            </ContextMenuItem>}
           </ContextMenuContent>
         </ContextMenu>
 
