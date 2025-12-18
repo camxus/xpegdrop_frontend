@@ -140,7 +140,9 @@ export function useDownload() {
         description: renderFiles(progressState, retryFile),
         id: toastId,
       });
-      setTimeout(() => dismiss(), 2000);
+      if (progressState.every(item => item.status === 'done')) {
+        setTimeout(() => dismiss(), 2000);
+      }
     } catch (err: any) {
       setError(err.message || "Download failed");
       update({
@@ -169,9 +171,8 @@ function renderFiles(
           <div key={idx} className="space-y-1">
             <div className="flex items-center justify-between">
               <p
-                className={`text-sm ${
-                  isFailed ? "text-red-300 font-medium" : ""
-                }`}
+                className={`text-sm ${isFailed ? "text-red-300 font-medium" : ""
+                  }`}
               >
                 {file.file.name} ({file.percent}%)
               </p>

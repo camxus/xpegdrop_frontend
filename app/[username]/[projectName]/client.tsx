@@ -271,9 +271,9 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
     downloadFiles(
       images.map((image) => ({
         name: image.name,
-        url: image.preview_url || "",
+        url: image.preview_url+"?dl=1" || "",
       })),
-      `${project.name}.zip`
+      project.name
     );
   };
 
