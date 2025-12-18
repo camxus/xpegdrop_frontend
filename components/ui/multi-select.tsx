@@ -36,6 +36,7 @@ export function MultiSelect({
     const checkOverflow = () => {
       if (containerRef.current) {
         const el = containerRef.current;
+        console.log(el.scrollWidth, el.clientWidth)
         setIsOverflowing(el.scrollWidth > el.clientWidth);
       }
     };
@@ -113,13 +114,13 @@ export function MultiSelect({
                 {placeholder}
               </span>
             )}
-            {isOverflowing && (
+            {!!value.length && isOverflowing && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.2 }}
-                className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-black/80 to-transparent pointer-events-none"
+                className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background/80 to-transparent pointer-events-none"
               />
             )}
           </motion.div>
