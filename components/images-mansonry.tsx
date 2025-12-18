@@ -255,7 +255,7 @@ const PinterestImage = memo(function PinterestImage({
             >
               <div
                 className={cn(
-                  "absolute inset-0 border-2 border-transparent transition-all duration-300 rounded-lg z-20 pointer-events-none",
+                  "absolute inset-0 border-2 border-transparent transition-all duration-300 rounded-lg z-20 pointer-events-none hover:border-white shadow-[0_0_20px_rgba(255,255,255,0.5)]",
                   isHovered &&
                   "border-white shadow-[0_0_20px_rgba(255,255,255,0.5)]"
                 )}

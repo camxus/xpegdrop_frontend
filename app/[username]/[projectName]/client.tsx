@@ -2,7 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
-import { ImagesMansonry } from "@/components/pinterest-grid";
+import { ImagesMansonry } from "@/components/images-mansonry";
 import { ImageCarousel } from "@/components/image-carousel";
 import { useProjects } from "@/hooks/api/useProjects";
 import { useRatings } from "@/hooks/api/useRatings";

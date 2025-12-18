@@ -5,7 +5,7 @@ import { useState, useCallback, useEffect, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FileUploader } from "@/components/ui/file-uploader";
-import { ImagesMansonry } from "@/components/pinterest-grid";
+import { ImagesMansonry } from "@/components/images-mansonry";
 import { FolderNavigation } from "@/components/folder-navigation";
 import { EditableTitle } from "@/components/editable-title";
 import { useToast } from "@/hooks/use-toast";
