@@ -12,7 +12,7 @@ interface MasonryGridProps {
 
 export function MasonryGrid({
   children,
-  columns = 3,
+  columns,
   gap = 12,
   asChild = false,
   className,
@@ -25,6 +25,7 @@ export function MasonryGrid({
     <Comp
       className={cn("grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5", className)}
       style={{
+        gridTemplateColumns: columns && `repeat(${columns}, minmax(0, 1fr))`,
         gridAutoRows: autoRows,
         gap,
         ["--masonry-row" as any]: `${autoRows}px`,
