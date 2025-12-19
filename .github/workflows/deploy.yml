@@ -42,8 +42,7 @@ jobs:
 
       - name: Install SST
         run: |
-          yarn dlx sst --version
-          yarn dlx pnpm --version
+          yarn install sst pnpm
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
