@@ -31,7 +31,7 @@ jobs:
 
       - name: Install dependencies
         run: yarn install --immutable
-
+        
       - name: Cache node modules
         uses: actions/cache@v3
         with:
@@ -41,8 +41,7 @@ jobs:
             ${{ runner.os }}-yarn-
 
       - name: Install SST
-        run: |
-          yarn install sst pnpm
+        run: yarn install pnpm
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
