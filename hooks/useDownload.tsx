@@ -134,7 +134,7 @@ export function useDownload() {
 
       const content = await zip.generateAsync({ type: "blob" });
       saveAs(content, `${zipName}.zip`);
-
+      
       update({
         title: "Download complete",
         description: renderFiles(progressState, retryFile),
