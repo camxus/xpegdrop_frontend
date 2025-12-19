@@ -40,8 +40,8 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-yarn-
 
-      - name: Install SST
-        run: yarn install pnpm
+      - name: Install PNPM
+        run: yarn dlx pnpm --version
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
