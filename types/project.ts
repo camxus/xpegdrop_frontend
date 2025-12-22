@@ -14,5 +14,7 @@ export interface Project {
   approved_emails: string[];
   can_download: boolean;
   updated_at?: string;
+  approved_users: { user_id: string }[]
+  approved_tenant_users: { user_id: string, role: string }[]
   status: "created" | "initiated"
 }

@@ -1,9 +1,10 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { tenantsApi, Tenant, S3Location } from "@/lib/api/tenantsApi";
+import { tenantsApi, Tenant, S3Location, CreateTenantDto } from "@/lib/api/tenantsApi";
 import { useToast } from "../use-toast";
 import { useAuth } from "./useAuth";
+import { User } from "@/types/user";
 
 export function useTenants() {
   const { user } = useAuth();
@@ -40,21 +41,16 @@ export function useTenants() {
   /**
    * Fetch a single tenant by ID
    */
-  const getTenantByHandle = (handle: string) =>
-    useQuery({
-      queryKey: ["tenant", handle],
-      queryFn: async () => {
-        if (!handle) throw new Error("Tenant handle is required");
-        return await tenantsApi.getTenantByHandle(handle);
-      },
-      staleTime: 1000 * 60 * 5, // cache for 5 minutes
-    });
+  const getTenantByHandle = useMutation<Tenant, Error, string>({
+    mutationFn: (handle: string) => tenantsApi.getTenantByHandle(handle),
+  });
+
 
   /**
    * Create tenant
    */
   const createTenant = useMutation({
-    mutationFn: async (payload: { name: string; description?: string }) => {
+    mutationFn: async (payload: CreateTenantDto) => {
       if (!user?.user_id) throw new Error("User not logged in");
       return await tenantsApi.createTenant(payload);
     },
@@ -242,11 +238,20 @@ export function useTenants() {
     },
   });
 
+  // Get user by public username
+  const searchByUsername = useMutation<User[], Error, { tenantId: string; query: string }>({
+    mutationFn: ({ tenantId, query }) => tenantsApi.searchTenantUsers(tenantId, query),
+    onError: (err) => {
+      console.error("Search tenant users error:", err);
+    },
+  });
+
   return {
     tenants: tenantsQuery.data ?? [],
     isLoading: tenantsQuery.isLoading,
     getTenant,
     getTenantByHandle,
+    searchByUsername,
     createTenant,
     updateTenant,
     deleteTenant,

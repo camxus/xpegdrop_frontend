@@ -19,10 +19,10 @@ interface ImagesFilterProps {
 
 export function ImagesFilter({ ratings, onFilterChange }: ImagesFilterProps) {
   const { user } = useAuth();
-  const usersQueries = useUsers(ratings.map((rating) => rating.user_id));
+  const userQueries = useUsers(ratings.map((rating) => rating.user_id));
 
   const uniqueUsers = Array.from(
-    new Map(usersQueries.map((user) => [user.data?.user_id, user.data])).values()
+    new Map(userQueries.map((user) => [user.data?.user_id, user.data])).values()
   );
 
   const [selectedUserIds, setSelectedUserIds] = React.useState<string[]>([]);

@@ -38,10 +38,10 @@ export function NotesModal({ projectId, imageName }: NotesViewProps) {
     deleteNote: { mutateAsync: deleteNote },
   } = useNotes();
 
-  const usersQueries = useUsers(notes.map((note) => note.user_id));
+  const userQueries = useUsers(notes.map((note) => note.user_id));
 
   const uniqueUsers = Array.from(
-    new Map(usersQueries.map((u) => [u.data?.user_id, u.data])).values()
+    new Map(userQueries.map((u) => [u.data?.user_id, u.data])).values()
   );
 
   const [noteContent, setNoteContent] = useState(""); // used for bottom textarea

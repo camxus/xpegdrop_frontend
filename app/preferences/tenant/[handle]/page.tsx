@@ -28,13 +28,12 @@ import { blurFadeInVariants, staggeredContainerVariants } from "@/lib/motion";
 export default function TenantPreferencesPage() {
     const { handle } = useParams<{ handle: string }>();
 
-    const { updateTenant, getTenantByHandle } = useTenants();
+    const { updateTenant, getTenantByHandle: { mutateAsync: getTenantByHandle, data: tenant } } = useTenants();
 
-    const { data: tenant } = getTenantByHandle(handle)
-    const usersQueries = useUsers(tenant?.members.map(member => member.user_id) || [])
+    const userQueries = useUsers(tenant?.members.map(member => member.user_id) || [])
 
     const uniqueUsers = Array.from(
-        new Map(usersQueries.map((user) => [user.data?.user_id, user.data])).values()
+        new Map(userQueries.map((user) => [user.data?.user_id, user.data])).values()
     ).filter(user => !!user);
 
     const { show, hide } = useDialog();
@@ -120,6 +119,10 @@ export default function TenantPreferencesPage() {
         });
     };
 
+    useEffect(() => {
+        getTenantByHandle(handle)
+    }, [handle])
+
     if (!tenant || !tenantState) return (
         <div className="flex items-center justify-center h-[80vh]">
             <div className="absolute inset-0 flex items-center justify-center">
@@ -183,6 +186,7 @@ export default function TenantPreferencesPage() {
                     <Input
                         id="name"
                         value={tenantState.handle}
+                        disabled
                         onChange={(e) =>
                             setTenantState((prev) => ({ ...prev, handle: e.target.value }))
                         }
@@ -211,25 +215,28 @@ export default function TenantPreferencesPage() {
 }
 
 interface TenantUsersTableProps {
-    tenant: Tenant;
+    tenant?: Tenant;
     users: User[];
+    onDeleteSelected?: (selected: string[]) => void
+    onChangeRoleSelected?: (selected: string[], newRole: string) => void
+    onInvite?: (selectedUser: User) => void
 }
 
 
-export function TenantUsersTable({ tenant, users }: TenantUsersTableProps) {
+export function TenantUsersTable({ tenant, users, onDeleteSelected, onChangeRoleSelected, onInvite }: TenantUsersTableProps) {
     const { removeMember, updateMember } = useTenants()
     const [rowSelection, setRowSelection] = useState<Record<number, any>>({});
     // Map users with their tenant membership info
     const data = users
         .map((user) => {
-            const member = tenant.members.find((m) => m.user_id === user.user_id);
+            const member = tenant?.members.find((m) => m.user_id === user.user_id);
             if (!member) return null;
             return {
                 id: user.user_id, // for selection tracking
                 name: `${user.first_name} ${user.last_name}`,
                 email: user.email,
                 role: member.role,
-                joinedAt: new Date(member.joined_at).toLocaleDateString(),
+                joinedAt: member.joined_at && new Date(member.joined_at).toLocaleDateString(),
             };
         })
         .filter(Boolean) as {
@@ -318,6 +325,8 @@ export function TenantUsersTable({ tenant, users }: TenantUsersTableProps) {
 
     // Mass actions handlers
     const handleDeleteSelected = async (rows: typeof data) => {
+        onDeleteSelected?.(data.map((item) => item.id))
+        if (!tenant) return
         await Promise.all(
             rows.map((row) =>
                 removeMember.mutateAsync({
@@ -331,6 +340,8 @@ export function TenantUsersTable({ tenant, users }: TenantUsersTableProps) {
     };
 
     const handleChangeRoleSelected = async (rows: typeof data, newRole: "admin" | "viewer" | "editor") => {
+        onChangeRoleSelected?.(rows.map((item) => item.id), newRole)
+        if (!tenant) return
         await Promise.all(
             rows.map((row) =>
                 updateMember.mutateAsync({
@@ -344,7 +355,7 @@ export function TenantUsersTable({ tenant, users }: TenantUsersTableProps) {
 
     return (
         <div>
-            <InviteMemberButton tenant={tenant} />
+            <InviteMemberButton tenant={tenant} onInvite={onInvite} />
 
             {/* Mass Actions Toolbar */}
             <div className="mb-4 flex gap-2 justify-end w-full">
@@ -379,7 +390,7 @@ export function TenantUsersTable({ tenant, users }: TenantUsersTableProps) {
 }
 
 
-export function InviteMemberButton({ tenant }: { tenant: Tenant }) {
+export function InviteMemberButton({ tenant, onInvite }: { tenant?: Tenant, onInvite?: (selectedUser: User) => void }) {
     const { show } = useDialog();
 
     return (
@@ -387,7 +398,7 @@ export function InviteMemberButton({ tenant }: { tenant: Tenant }) {
             onClick={() =>
                 show({
                     title: "Invite Member",
-                    content: () => <InviteMemberDialog tenantId={tenant.tenant_id} />,
+                    content: () => <InviteMemberDialog tenantId={tenant?.tenant_id} onInvite={onInvite} />,
                 })
             }
         >
@@ -396,7 +407,7 @@ export function InviteMemberButton({ tenant }: { tenant: Tenant }) {
     );
 }
 
-const InviteMemberDialog = ({ tenantId }: { tenantId: string }) => {
+const InviteMemberDialog = ({ tenantId, onInvite }: { tenantId?: string, onInvite?: (selectedUser: User) => void }) => {
     const { hide } = useDialog();
 
     const { inviteMember } = useTenants();
@@ -441,7 +452,9 @@ const InviteMemberDialog = ({ tenantId }: { tenantId: string }) => {
     }, [search]);
 
     const handleInvite = async () => {
-        if (!selectedUser) return;
+        if (!selectedUser) return
+        onInvite?.(selectedUser)
+        if (!tenantId) return;
         setLoading(true);
 
         try {

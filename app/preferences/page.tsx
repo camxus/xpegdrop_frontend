@@ -26,6 +26,13 @@ export default function PreferencesPage() {
   const { updateUser } = useUser();
   const { show, hide } = useDialog();
 
+  const {
+    getUserByUsername: {
+      mutateAsync: getUserByUsername,
+      isPending: isCheckingUsername,
+      data: foundUser,
+    },
+  } = useUser();
 
   const {
     stats: { data: storageStats },
@@ -37,6 +44,7 @@ export default function PreferencesPage() {
   } = useDropbox();
 
   const [userState, setUserState] = useState<User>(user!);
+  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
   const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
 
   // Debounce effect to update userState changes
@@ -63,6 +71,25 @@ export default function PreferencesPage() {
 
     return () => clearTimeout(timer);
   }, [userState]);
+
+  // Debounce username input
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (userState.username.length > 0) {
+        getUserByUsername(userState.username);
+      } else {
+        setUsernameAvailable(null);
+      }
+    }, 500);
+    return () => clearTimeout(timeout);
+  }, [userState.username]);
+
+  useEffect(() => {
+    if (!userState.username.length) setUsernameAvailable(null);
+    else if (foundUser) setUsernameAvailable(false);
+    else if (!isCheckingUsername && !foundUser) setUsernameAvailable(true);
+  }, [foundUser, userState.username, isCheckingUsername]);
+
 
   const handleAvatarClick = () => {
     show({
@@ -210,7 +237,7 @@ export default function PreferencesPage() {
         className="mt-8 flex flex-col gap-2 items-center"
       >
         {storageStats && <StorageIndicator percentage={storageStats.used_percent} />}
-        {dropboxStats && <StorageIndicator percentage={dropboxStats.used_percent} isDropbox/>}
+        {dropboxStats && <StorageIndicator percentage={dropboxStats.used_percent} isDropbox />}
       </motion.div>
 
       {

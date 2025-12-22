@@ -31,61 +31,87 @@ export const DialogContext = createContext<DialogContextType | undefined>(
 );
 
 export function DialogProvider({ children }: { children: ReactNode }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [dialogOptions, setDialogOptions] = useState<DialogOptions>({});
+  const [stack, setStack] = useState<DialogOptions[]>([]);
 
   const show = (options: DialogOptions) => {
-    setDialogOptions(options);
-    setIsOpen(true);
+    setStack((prev) => [...prev, options]);
   };
 
   const hide = () => {
-    setIsOpen(false);
-    setDialogOptions({});
+    setStack((prev) => prev.slice(0, -1));
   };
 
   const updateProps = (newProps: Record<string, unknown>) => {
-    setDialogOptions((prev) => ({
-      ...prev,
-      contentProps: {
-        ...prev.contentProps,
-        ...newProps,
-      },
-    }));
-  };
+    setStack((prev) => {
+      if (prev.length === 0) return prev;
 
-  const Component = dialogOptions.content;
-  const Actions = dialogOptions.actions;
+      const last = prev[prev.length - 1];
+      const updated = {
+        ...last,
+        contentProps: {
+          ...last.contentProps,
+          ...newProps,
+        },
+      };
+
+      return [...prev.slice(0, -1), updated];
+    });
+  };
 
   return (
     <DialogContext.Provider value={{ show, hide, updateProps }}>
       {children}
-      <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent
-          {...dialogOptions.containerProps}
-          className={cn("overflow-hidden flex flex-col", dialogOptions.containerProps?.className)}
-          style={{ maxHeight: "calc(100vh - 4rem)", ...dialogOptions.containerProps?.style }}
-        >
-          {dialogOptions.title && (
-            <DialogHeader className="flex-shrink-0">
-              <DialogTitle>{dialogOptions.title}</DialogTitle>
-              {dialogOptions.description && (
-                <DialogDescription>
-                  {dialogOptions.description}
-                </DialogDescription>
+
+      {stack.map((dialogOptions, index) => {
+        const isTop = index === stack.length - 1;
+        const Component = dialogOptions.content;
+        const Actions = dialogOptions.actions;
+
+        return (
+          <Dialog
+            key={index}
+            open
+            onOpenChange={(open) => {
+              if (!open && isTop) hide();
+            }}
+          >
+            <DialogContent
+              {...dialogOptions.containerProps}
+              className={cn(
+                "overflow-hidden flex flex-col",
+                dialogOptions.containerProps?.className
               )}
-            </DialogHeader>
-          )}
-          <div className="flex-1 overflow-y-auto">
-            {Component ? <Component {...dialogOptions.contentProps} /> : null}
-          </div>
-          {dialogOptions.actions && (
-            <DialogFooter className="flex-shrink-0 pt-4 border-t">
-              {Actions ? <Actions {...dialogOptions.contentProps} /> : null}
-            </DialogFooter>
-          )}
-        </DialogContent>
-      </Dialog>
+              style={{
+                maxHeight: "calc(100vh - 4rem)",
+                ...dialogOptions.containerProps?.style,
+                // Optional: visual depth
+                transform: `translateY(${index * 4}px)`,
+              }}
+            >
+              {dialogOptions.title && (
+                <DialogHeader className="flex-shrink-0">
+                  <DialogTitle>{dialogOptions.title}</DialogTitle>
+                  {dialogOptions.description && (
+                    <DialogDescription>
+                      {dialogOptions.description}
+                    </DialogDescription>
+                  )}
+                </DialogHeader>
+              )}
+
+              <div className="flex-1 overflow-y-auto">
+                {Component ? <Component {...dialogOptions.contentProps} /> : null}
+              </div>
+
+              {Actions && (
+                <DialogFooter className="flex-shrink-0 pt-4 border-t">
+                  <Actions {...dialogOptions.contentProps} />
+                </DialogFooter>
+              )}
+            </DialogContent>
+          </Dialog>
+        );
+      })}
     </DialogContext.Provider>
   );
 }

@@ -115,9 +115,7 @@ export function SignUpPageContent() {
   const [avatarFile, setAvatarFile] = useState<File>();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(
-    null
-  );
+  const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
 
   const { signup, isSigningUp, error } = useAuth();
   const {

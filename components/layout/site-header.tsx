@@ -39,6 +39,9 @@ import UpgradePage from "@/app/upgrade/page";
 import { useStorage } from "@/hooks/api/useStorage";
 import StorageIndicator from "../ui/storage-indicator";
 import { Input } from "../ui/input";
+import { useUsers } from "@/hooks/api/useUser";
+import { Project } from "@/types/project";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../ui/accordion";
 
 
 const SIDEBAR_WIDTH = 256
@@ -64,7 +67,6 @@ export function SiteHeader({ children }: SiteHeaderProps) {
     deleteProject: { mutateAsync: deleteProject },
   } = useProjects();
 
-
   const projects = [...personalProjects, ...tenantProjects]
 
   const {
@@ -76,25 +78,6 @@ export function SiteHeader({ children }: SiteHeaderProps) {
     stats: { data: dropboxStats },
   } = useDropbox();
 
-  const sidebarItems =
-    [...(currentTenant && !!tenantProjects.length ? tenantProjects : personalProjects)]
-      .filter((project) => project.status === "created")
-      .filter((project) =>
-        search
-          ? project.name.toLowerCase().includes(search.toLowerCase())
-          : true
-      )
-      ?.sort((a, b) => {
-        return (
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        );
-      })
-      .map((project) => ({
-        id: project.project_id,
-        icon: Folder,
-        href: project.share_url,
-        label: project.name,
-      })) || [];
 
   const handleDeleteProject = (projectId: string) => {
     const project = projects.find(
@@ -244,65 +227,22 @@ export function SiteHeader({ children }: SiteHeaderProps) {
                 )}
               </AnimatePresence>
             </div>
-            {!!sidebarItems.length ? (
-              <>
-                {sidebarItems.map((item, index) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`group relative flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all ${pathname === item.href
-                      ? "bg-white/5 text-white"
-                      : "text-white/80 hover:bg-white/10"
-                      }`}
-                  >
-                    {/* Icon */}
-                    <motion.div initial={false} animate={{ opacity: 1 }}>
-                      <item.icon width={20} height={20} />
-                    </motion.div>
-
-                    {/* Label */}
-                    <motion.span
-                      custom={index}
-                      variants={{
-                        visible: (i: number) => ({
-                          opacity: 1,
-                          display: "block",
-                          transition: {
-                            opacity: { duration: 0.1, delay: i * 0.15 },
-                          },
-                        }),
-                        hidden: {
-                          opacity: 0,
-                          display: "none",
-                          transition: {
-                            opacity: { duration: 0.1 },
-                          },
-                        },
-                      }}
-                      initial="visible"
-                      animate={isSidebarCollapsed ? "hidden" : "visible"}
-                      className="whitespace-nowrap overflow-hidden flex-1"
-                    >
-                      {item.label}
-                    </motion.span>
-
-                    {/* X Button (prevents Link navigation) */}
-                    <motion.button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        handleDeleteProject(item.id);
-                      }}
-                      className={cn(
-                        "cursor-pointer absolute right-3 opacity-0 group-hover:opacity-100 text-white/60 hover:text-destructive-foreground transition-[opacity,colors] duration-200",
-                        isSidebarCollapsed ? "hidden" : "block"
-                      )}
-                    >
-                      <X className="w-4 h-4" />
-                    </motion.button>
-                  </Link>
-                ))}
-              </>
+            {!!projects.length ? (
+              tenantProjects.length ? (
+                renderTenantSidebarItems({
+                  tenantProjects,
+                  search,
+                  isSidebarCollapsed,
+                  handleDeleteProject,
+                })
+              ) : (
+                renderPersonalSidebarItems({
+                  personalProjects,
+                  search,
+                  isSidebarCollapsed,
+                  handleDeleteProject,
+                })
+              )
             ) : (
               <motion.span
                 variants={{
@@ -554,5 +494,272 @@ export function SiteHeader({ children }: SiteHeaderProps) {
         <main className="flex-1 overflow-y-auto">{children}</main>
       </div>
     </div >
+  );
+}
+
+interface RenderPersonalSidebarItemsProps {
+  personalProjects: Project[];
+  search: string;
+  isSidebarCollapsed: boolean;
+  handleDeleteProject: (projectId: string) => void;
+}
+
+export function renderPersonalSidebarItems({
+  personalProjects,
+  search,
+  isSidebarCollapsed,
+  handleDeleteProject,
+}: RenderPersonalSidebarItemsProps) {
+  const pathname = usePathname()
+
+  const sidebarItems =
+    [...personalProjects]
+      .filter((project) => project.status === "created")
+      .filter((project) =>
+        search
+          ? project.name.toLowerCase().includes(search.toLowerCase())
+          : true
+      )
+      ?.sort((a, b) => {
+        return (
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+      })
+      .map((project) => ({
+        id: project.project_id,
+        icon: Folder,
+        href: project.share_url,
+        label: project.name,
+      })) || [];
+
+
+  return <>
+    {sidebarItems.map((item, index) => (
+      <Link
+        key={item.href}
+        href={item.href}
+        className={`group relative flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all ${pathname === item.href
+          ? "bg-white/5 text-white"
+          : "text-white/80 hover:bg-white/10"
+          }`}
+      >
+        {/* Icon */}
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          <item.icon width={20} height={20} />
+        </motion.div>
+
+        {/* Label */}
+        <motion.span
+          custom={index}
+          variants={{
+            visible: (i: number) => ({
+              opacity: 1,
+              display: "block",
+              transition: {
+                opacity: { duration: 0.1, delay: i * 0.15 },
+              },
+            }),
+            hidden: {
+              opacity: 0,
+              display: "none",
+              transition: {
+                opacity: { duration: 0.1 },
+              },
+            },
+          }}
+          initial="visible"
+          animate={isSidebarCollapsed ? "hidden" : "visible"}
+          className="whitespace-nowrap overflow-hidden flex-1"
+        >
+          {item.label}
+        </motion.span>
+
+        {/* X Button (prevents Link navigation) */}
+        <motion.button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleDeleteProject(item.id);
+          }}
+          className={cn(
+            "cursor-pointer absolute right-3 opacity-0 group-hover:opacity-100 text-white/60 hover:text-destructive-foreground transition-[opacity,colors] duration-200",
+            isSidebarCollapsed ? "hidden" : "block"
+          )}
+        >
+          <X className="w-4 h-4" />
+        </motion.button>
+      </Link>
+    ))}
+  </>
+}
+
+interface RenderTenantSidebarItemsProps {
+  tenantProjects: Project[];
+  search: string;
+  isSidebarCollapsed: boolean;
+  handleDeleteProject: (projectId: string) => void;
+}
+
+export function renderTenantSidebarItems({
+  tenantProjects,
+  search,
+  isSidebarCollapsed,
+  handleDeleteProject,
+}: RenderTenantSidebarItemsProps) {
+  const pathname = usePathname();
+  const { currentTenant } = useTenants()
+  const { user } = useAuth()
+
+  // Group tenantProjects by user_id
+  const tenantProjectsByUser = tenantProjects.reduce<Record<string, Project[]>>(
+    (acc, project) => {
+      if (!acc[project.user_id]) acc[project.user_id] = [];
+      acc[project.user_id].push(project);
+      return acc;
+    },
+    {}
+  );
+
+  const member = currentTenant?.members.find((m) => m.user_id === user?.user_id);
+
+  // Apply filtering based on role
+  const isAdmin = member?.role === "admin"
+
+
+  // Get user info
+  const userQueries = useUsers(Object.keys(tenantProjectsByUser));
+
+  const tenantUsers = Array.from(
+    new Map(userQueries.map((u) => [u.data?.user_id, u.data])).values()
+  );
+
+  return (
+    <Accordion type="multiple" className="flex relative flex-col items-center gap-3 px-3 py-2 rounded-lg text-sm" value={isSidebarCollapsed ? [] : undefined}>
+      {Object.keys(tenantProjectsByUser).map((userId, index) => {
+        const userProjects = tenantProjectsByUser[userId];
+        const userInfo = tenantUsers.find((u) => u?.user_id === userId);
+
+        const userProjectItems = userProjects
+          .filter((project) => project.status === "created")
+          .filter((project) =>
+            search
+              ? project.name.toLowerCase().includes(search.toLowerCase())
+              : true
+          )
+          .sort(
+            (a, b) =>
+              new Date(b.created_at).getTime() -
+              new Date(a.created_at).getTime()
+          )
+          .map((project) => ({
+            id: project.project_id,
+            user_id: project.user_id,
+            icon: Folder,
+            href: project.share_url,
+            label: project.name,
+          })) || []
+
+        if (!userInfo) return null;
+
+        return (
+          <motion.div
+            key={userId}
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.15, delay: index * 0.05 }}
+          >
+            <AccordionItem value={userId}>
+              <AccordionTrigger className={cn("flex items-center gap-2 ", pathname.includes(userInfo.username)) ? "bg-white/5" : "hover:bg-white/10"}>
+                {/* Avatar */}
+                <motion.div
+                  initial={{ opacity: 1 }}
+                  animate={{ opacity: isSidebarCollapsed ? 0 : 1 }}
+                  className="flex-shrink-0"
+                >
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={userInfo.avatar as string} />
+                    <AvatarFallback className="text-sm">
+                      {getInitials(userInfo.first_name || "", userInfo.last_name || "")}
+                    </AvatarFallback>
+                  </Avatar>
+                </motion.div>
+
+                {/* User Name */}
+                <motion.span
+                  initial={{ opacity: 1, width: "auto" }}
+                  animate={{
+                    opacity: isSidebarCollapsed ? 0 : 1,
+                    width: isSidebarCollapsed ? 0 : "auto",
+                  }}
+                  transition={{ duration: 0.2 }}
+                  className="whitespace-nowrap overflow-hidden flex-1"
+                >
+                  {userInfo.first_name} {userInfo.last_name}
+                </motion.span>
+              </AccordionTrigger>
+
+              <AccordionContent>
+                {userProjectItems
+                  .map((item, index) => (
+                    <Link
+                      key={item.id}
+                      href={item.href}
+                      className={cn(
+                        "group relative flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all",
+                        pathname === item.href
+                          ? "bg-white/5 text-white"
+                          : "text-white/80 hover:bg-white/10"
+                      )}
+                    >
+                      <motion.div initial={false} animate={{ opacity: 1 }}>
+                        <Folder width={20} height={20} />
+                      </motion.div>
+
+                      <motion.span
+                        custom={index}
+                        variants={{
+                          visible: (i: number) => ({
+                            opacity: 1,
+                            display: "block",
+                            transition: {
+                              opacity: { duration: 0.1, delay: i * 0.05 },
+                            },
+                          }),
+                          hidden: {
+                            opacity: 0,
+                            display: "none",
+                            transition: { opacity: { duration: 0.1 } },
+                          },
+                        }}
+                        initial="visible"
+                        animate="visible"
+                        className="whitespace-nowrap overflow-hidden flex-1"
+                      >
+                        {item.label}
+                      </motion.span>
+
+                      {
+                        isAdmin || item.user_id === userId &&
+                        <motion.button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleDeleteProject(item.id);
+                          }}
+                          className={cn(
+                            "cursor-pointer absolute right-3 opacity-0 group-hover:opacity-100 text-white/60 hover:text-destructive-foreground transition-[opacity,colors] duration-200"
+                          )}
+                        >
+                          <X className="w-4 h-4" />
+                        </motion.button>
+                      }
+                    </Link>
+                  ))}
+              </AccordionContent>
+            </AccordionItem>
+          </motion.div>
+        );
+      })}
+    </Accordion >
   );
 }

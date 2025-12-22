@@ -1,3 +1,4 @@
+import { User } from "@/types/user";
 import { api } from "./client";
 
 export interface S3Location {
@@ -6,26 +7,42 @@ export interface S3Location {
   url?: string;
 }
 
+export class Member {
+  user_id: string;
+  role: "admin" | "editor" | "viewer";
+  joined_at?: string;
+
+  constructor(user_id: string, role?: "admin" | "editor" | "viewer", joined_at?: string) {
+    this.user_id = user_id;
+    this.role = role || "viewer";
+    this.joined_at = joined_at;
+  }
+}
 export interface Tenant {
   tenant_id: string;
   handle: string;
   name: string;
   description?: string;
-  members: {
-    user_id: string;
-    role: "admin" | "editor" | "viewer";
-    joined_at: string;
-  }[];
+  members: Member[];
   avatar?: S3Location | string;
   created_at: string;
+  created_by: string;
   updated_at?: string;
 }
+
+export type CreateTenantDto = Omit<
+  Tenant,
+  "tenant_id" | "created_at" | "created_by" | "updated_at" | "avatar"
+> & {
+  avatar?: File | null,
+  members?: Member[]; // optional on creation
+};
 
 export const tenantsApi = {
   /**
    * Create a new tenant
    */
-  createTenant: async (data: { name: string; description?: string }) => {
+  createTenant: async (data: CreateTenantDto) => {
     return await api.post<Tenant>("/tenants", data);
   },
 
@@ -133,4 +150,14 @@ export const tenantsApi = {
       `/tenants/${tenantId}/${userId}`
     );
   },
+
+  /**
+ * Search users in a tenant by username
+ */
+  searchTenantUsers: async (tenantId: string, query: string) => {
+    return await api.get<User[]>(`/tenants/${tenantId}/users/search`, {
+      params: { q: query },
+    });
+  },
+
 };
