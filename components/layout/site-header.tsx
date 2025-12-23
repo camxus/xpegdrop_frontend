@@ -12,6 +12,7 @@ import {
   ChevronsUpDown,
   CircleFadingArrowUp,
   Search,
+  Plus,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -58,7 +59,6 @@ export function SiteHeader({ children }: SiteHeaderProps) {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
 
-  const pathname = usePathname();
   const { user, logout } = useAuth();
   const { show, hide } = useDialog();
   const {
@@ -228,20 +228,20 @@ export function SiteHeader({ children }: SiteHeaderProps) {
               </AnimatePresence>
             </div>
             {!!projects.length ? (
-              tenantProjects.length ? (
-                renderTenantSidebarItems({
-                  tenantProjects,
-                  search,
-                  isSidebarCollapsed,
-                  handleDeleteProject,
-                })
+              currentTenant ? (
+                <TenantSidebarItems
+                  tenantProjects={tenantProjects}
+                  search={search}
+                  isSidebarCollapsed={isSidebarCollapsed}
+                  handleDeleteProject={handleDeleteProject}
+                />
               ) : (
-                renderPersonalSidebarItems({
-                  personalProjects,
-                  search,
-                  isSidebarCollapsed,
-                  handleDeleteProject,
-                })
+                <PersonalSidebarItems
+                  personalProjects={personalProjects}
+                  search={search}
+                  isSidebarCollapsed={isSidebarCollapsed}
+                  handleDeleteProject={handleDeleteProject}
+                />
               )
             ) : (
               <motion.span
@@ -263,7 +263,7 @@ export function SiteHeader({ children }: SiteHeaderProps) {
                 }}
                 initial="visible"
                 animate={isSidebarCollapsed ? "hidden" : "visible"}
-                className="whitespace-nowrap text-center text-muted-foreground"
+                className="whitespace-nowrap text-sm text-center text-muted-foreground"
               >
                 No projects {search ? "found" : "added"}
               </motion.span>
@@ -421,34 +421,65 @@ export function SiteHeader({ children }: SiteHeaderProps) {
                       <DropdownMenuItem
                         key={tenant.tenant_id}
                         onClick={() => setCurrentTenant(tenant)}
-                        className="flex items-start gap-2 w-full"
+                        className={cn(
+                          "group flex w-full gap-2 items-center",
+                          tenant.tenant_id === currentTenant?.tenant_id &&
+                          "bg-foreground text-background"
+                        )}
                       >
                         <Avatar className="h-8 w-8">
-                          <AvatarImage src={tenant?.avatar as string} />
-                          <AvatarFallback className="text-sm">
-                            {getInitials(tenant?.name || "", "")}
+                          <AvatarImage src={tenant.avatar as string | undefined} />
+                          <AvatarFallback className="text-sm text-white">
+                            {getInitials(tenant.name ?? "", "")}
                           </AvatarFallback>
                         </Avatar>
-                        <span>{tenant.name}</span>
+
+                        <span
+                          className={cn(
+                            "truncate transition-colors",
+                            tenant.tenant_id === currentTenant?.tenant_id
+                              ? "text-background group-hover:text-foreground"
+                              : "group-hover:text-foreground"
+                          )}
+                        >
+                          {tenant.name}
+                        </span>
                       </DropdownMenuItem>
                     ))}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       key={user.user_id}
                       onClick={() => setCurrentTenant(null)}
-                      className="flex items-start gap-2 w-full"
+                      className={cn("group flex gap-2 w-full", !currentTenant && "bg-foreground")}
                     >
                       <Avatar className="h-8 w-8">
                         <AvatarImage src={user?.avatar as string} />
-                        <AvatarFallback className="text-sm">
+                        <AvatarFallback className="text-sm text-white">
                           {getInitials(user?.first_name || "", user?.last_name || "")}
                         </AvatarFallback>
                       </Avatar>
-                      <span>{user.username}</span>
+                      <span className={cn(
+                        "truncate transition-colors",
+                        !currentTenant
+                          ? "text-background group-hover:text-foreground"
+                          : "group-hover:text-foreground"
+                      )}
+                      >
+                        {user.username}</span>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                   </>
                 )}
+                {user.membership?.membership_id === "agency" &&
+                  <>
+                    <DropdownMenuItem>
+                      <Link href={'/new/team'} className="space-x-4">
+                        <Plus />
+                        Create New Team
+                      </Link>
+                    </DropdownMenuItem>
+                  </>
+                }
                 <DropdownMenuItem>
                   <Link href={"/preferences"} className="w-full h-full">
                     Preferences
@@ -497,19 +528,19 @@ export function SiteHeader({ children }: SiteHeaderProps) {
   );
 }
 
-interface RenderPersonalSidebarItemsProps {
+interface PersonalSidebarItemsProps {
   personalProjects: Project[];
   search: string;
   isSidebarCollapsed: boolean;
   handleDeleteProject: (projectId: string) => void;
 }
 
-export function renderPersonalSidebarItems({
+export function PersonalSidebarItems({
   personalProjects,
   search,
   isSidebarCollapsed,
   handleDeleteProject,
-}: RenderPersonalSidebarItemsProps) {
+}: PersonalSidebarItemsProps) {
   const pathname = usePathname()
 
   const sidebarItems =
@@ -593,19 +624,19 @@ export function renderPersonalSidebarItems({
   </>
 }
 
-interface RenderTenantSidebarItemsProps {
+interface TenantSidebarItemsProps {
   tenantProjects: Project[];
   search: string;
   isSidebarCollapsed: boolean;
   handleDeleteProject: (projectId: string) => void;
 }
 
-export function renderTenantSidebarItems({
+export function TenantSidebarItems({
   tenantProjects,
   search,
   isSidebarCollapsed,
   handleDeleteProject,
-}: RenderTenantSidebarItemsProps) {
+}: TenantSidebarItemsProps) {
   const pathname = usePathname();
   const { currentTenant } = useTenants()
   const { user } = useAuth()
@@ -632,6 +663,32 @@ export function renderTenantSidebarItems({
   const tenantUsers = Array.from(
     new Map(userQueries.map((u) => [u.data?.user_id, u.data])).values()
   );
+
+  if (!tenantProjects.length) {
+    return <motion.span
+      variants={{
+        visible: (i: number) => ({
+          opacity: 1,
+          display: "block",
+          transition: {
+            opacity: { duration: 0.1, delay: i * 0.15 },
+          },
+        }),
+        hidden: {
+          opacity: 0,
+          display: "none",
+          transition: {
+            opacity: { duration: 0.1 },
+          },
+        },
+      }}
+      initial="visible"
+      animate={isSidebarCollapsed ? "hidden" : "visible"}
+      className="text-sm text-center text-muted-foreground"
+    >
+      No projects {search ? "found" : "added"} for {currentTenant?.name}
+    </motion.span>
+  }
 
   return (
     <Accordion type="multiple" className="flex relative flex-col items-center gap-3 px-3 py-2 rounded-lg text-sm" value={isSidebarCollapsed ? [] : undefined}>

@@ -81,6 +81,7 @@ export function useProjects() {
   // Mutation: Create new project
   const createProject = useMutation({
     mutationFn: (formData: {
+      tenant_id?: string;
       name: string;
       files?: File[];
       file_locations?: S3Location[];

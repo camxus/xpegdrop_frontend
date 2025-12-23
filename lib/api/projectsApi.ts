@@ -5,9 +5,10 @@ import { StorageProvider } from "@/types";
 
 export const projectsApi = {
   // Create new project with files (multipart/form-data)
-  createProject: async (formData: { name: string; files?: File[], file_locations?: S3Location[], storage_provider: StorageProvider }) => {
+  createProject: async (formData: { tenant_id?: string, name: string; files?: File[], file_locations?: S3Location[], storage_provider: StorageProvider }) => {
     const data = new FormData();
     data.append("name", formData.name);
+    if (formData.tenant_id) data.append("tenant_id", formData.tenant_id)
     if (formData.storage_provider) data.append("storage_provider", formData.storage_provider)
     if (formData.file_locations) {
       const fileLocations = formData.file_locations.map((location) =>

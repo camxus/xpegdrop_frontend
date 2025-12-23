@@ -157,7 +157,8 @@ export function UploadView() {
           onUpload: async (
             confirmedFolders: Folder[],
             currentFolderIndex: number,
-            storageProvider: StorageProvider
+            storageProvider: StorageProvider,
+            selectedTenant: string
           ) => {
             setFolders((prev) => [...prev, ...confirmedFolders]);
             setCurrentFolderIndex(confirmedFolders.length ? 0 : 0);
@@ -168,7 +169,7 @@ export function UploadView() {
 
             Promise.all(
               confirmedFolders.map(
-                async (folder) => await handleUpload(folder, currentFolderIndex, provider)
+                async (folder) => await handleUpload(folder, currentFolderIndex, provider, selectedTenant)
               )
             );
             hide();
@@ -221,7 +222,7 @@ export function UploadView() {
           onUpload: async (
             confirmedFolders: Folder[],
             currentFolderIndex: number,
-            storageProvider: StorageProvider
+            storageProvider: StorageProvider,
           ) => {
             setFolders((prev) => [...prev, ...confirmedFolders]);
             setCurrentFolderIndex(confirmedFolders.length ? 0 : 0);
@@ -293,7 +294,7 @@ export function UploadView() {
   const handleNextFolder = () =>
     setCurrentFolderIndex((prev) => Math.min(folders.length - 1, prev + 1));
 
-  const handleUpload = async (folder: Folder, folderIndex = 0, storageProvider: StorageProvider = "dropbox") => {
+  const handleUpload = async (folder: Folder, folderIndex = 0, storageProvider: StorageProvider = "dropbox", selectedTenant?: string) => {
     const uploadFolder = folder || currentFolder;
     if (!uploadFolder) return;
     try {
@@ -301,8 +302,9 @@ export function UploadView() {
       const tempFileLocations = await uploadFiles(imageFiles);
       const project = await createProject({
         name: uploadFolder.name,
+        tenant_id: selectedTenant,
         file_locations: tempFileLocations,
-        storage_provider: storageProvider
+        storage_provider: storageProvider,
       });
       await Promise.all(
         queuedRatings.map(async (rating) =>
@@ -586,7 +588,7 @@ export function UploadView() {
                       onFilesSelected={handleNewFolders}
                       accept={{ "image/*": [] }}
                       maxFiles={1000}
-                      directory={true}
+                      // directory={true}
                       className="h-dvh w-screen max-w-full max-h-full flex items-center justify-center"
                     >
                       <div className="text-center space-y-4">

@@ -1,10 +1,11 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { tenantsApi, Tenant, S3Location, CreateTenantDto } from "@/lib/api/tenantsApi";
+import { Tenant, S3Location, CreateTenantDto, tenantsApi } from "@/lib/api/tenantsApi";
 import { useToast } from "../use-toast";
 import { useAuth } from "./useAuth";
 import { User } from "@/types/user";
+
 
 export function useTenants() {
   const { user } = useAuth();

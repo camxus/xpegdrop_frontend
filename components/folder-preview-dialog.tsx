@@ -9,6 +9,9 @@ import { useDialog } from "@/hooks/use-dialog";
 import { Switch } from "./ui/switch";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/api/useAuth";
+import { useTenants } from "./tenants-provider";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { AnimatePresence, motion } from "framer-motion";
 
 interface FolderPreviewContentProps {
   folders: Folder[];
@@ -89,7 +92,7 @@ interface FolderPreviewActionsProps {
   currentIndex: number,
   folders: Folder[];
   onCancel: () => void;
-  onUpload: (folders: Folder[], currentIndex: number, storageProvider: StorageProvider) => void;
+  onUpload: (folders: Folder[], currentIndex: number, storageProvider: StorageProvider, selectedTenant?: string) => void;
   isNewUpload?: boolean;
 }
 
@@ -100,39 +103,97 @@ export function FolderPreviewActions({
   onUpload,
   isNewUpload = true,
 }: FolderPreviewActionsProps) {
-  const { user } = useAuth()
+  const { tenants, currentTenant } = useTenants();
+  const { user } = useAuth();
   const [storageProvider, setStorageProvider] = useState<StorageProvider>("b2");
+  const [selectedTenant, setSelectedTenant] = useState<string | undefined>(
+    currentTenant?.tenant_id
+  );
+  const [isTenantProject, setIsTenantProject] = useState<boolean>(!!currentTenant || false)
 
   return (
-    <div className="flex w-full justify-between">
-      {/* Toggle */}
-      <div className="flex items-center space-x-2">
-        {
-          isNewUpload && <>
-            <Switch
-              className="data-[state=checked]:bg-blue-200"
-              checked={storageProvider === "dropbox"}
-              disabled={!user?.dropbox?.access_token}
-              onCheckedChange={(value) => setStorageProvider(value ? "dropbox" : "b2")}
-            />
-            <span className="text-sm text-muted-foreground">Use Dropbox Storage</span>
-          </>
-        }
-      </div>
+    <div className="flex flex-col w-full">
+      {/* Tenant Select */}
+      {!!tenants?.length && isNewUpload && (
+        <div className="flex items-center mb-2 gap-2">
+          <Switch
+            checked={isTenantProject}
+            onCheckedChange={(value) => {
+              setSelectedTenant(undefined)
+              setIsTenantProject(value)
+            }}
+          />
+          <span className="text-sm text-muted-foreground">Add to Team</span>
 
-      {/* Action Buttons */}
-      <div className="flex">
-        <Button variant="outline" onClick={onCancel}>
-          Cancel
-        </Button>
-        <Button
-          className={cn(storageProvider === "dropbox" && "bg-blue-200 hover:bg-blue-200/90")}
-          onClick={() => onUpload(folders, currentIndex, storageProvider)}
-        >
-          {isNewUpload
-            ? `Upload ${folders.length > 1 ? `${folders.length} Folders` : "Folder"}`
-            : "Add Files"}
-        </Button>
+          <AnimatePresence>
+            {isTenantProject && (
+              <motion.div
+                key="tenant-select"
+                initial={{ opacity: 0, y: -10, height: 0 }}
+                animate={{ opacity: 1, y: 0, height: "auto" }}
+                exit={{ opacity: 0, y: -10, height: 0 }}
+                transition={{ duration: 0.25 }}
+              >
+                <Select
+                  value={selectedTenant}
+                  onValueChange={(value) => setSelectedTenant(value)}
+                >
+                  <SelectTrigger variant="ghost" className="h-min w-48">
+                    <SelectValue placeholder="Select tenant" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {tenants.map((tenant) => (
+                      <SelectItem key={tenant.tenant_id} value={tenant.tenant_id}>
+                        {tenant.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
+
+      <div className="flex w-full justify-between">
+        {/* Left: Storage & Tenant Select */}
+        <div className="flex items-center gap-2">
+          {/* Storage Toggle */}
+          {isNewUpload && (
+            <>
+              <Switch
+                className="data-[state=checked]:bg-blue-200"
+                checked={storageProvider === "dropbox"}
+                disabled={!user?.dropbox?.access_token}
+                onCheckedChange={(value) =>
+                  setStorageProvider(value ? "dropbox" : "b2")
+                }
+              />
+              <span className="text-sm text-muted-foreground">
+                Use Dropbox Storage
+              </span>
+            </>
+          )}
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button
+            className={cn(
+              storageProvider === "dropbox" && "bg-blue-200 hover:bg-blue-200/90"
+            )}
+            onClick={() =>
+              onUpload(folders, currentIndex, storageProvider, selectedTenant)
+            }
+          >
+            {isNewUpload
+              ? `Upload ${folders.length > 1 ? `${folders.length} Folders` : "Folder"}`
+              : "Add Files"}
+          </Button>
+        </div>
       </div>
     </div>
   );

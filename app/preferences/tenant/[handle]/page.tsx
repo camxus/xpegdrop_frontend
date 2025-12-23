@@ -540,7 +540,7 @@ const InviteMemberDialog = ({ tenantId, onInvite }: { tenantId?: string, onInvit
             </PopoverContent>
         </Popover>
 
-        < Select value={role} onValueChange={(value: "admin" | "viewer" | "editor") => setRole(value as "admin" | "editor" | "viewer")}>
+        {/* <Select value={role} onValueChange={(value: "admin" | "viewer" | "editor") => setRole(value as "admin" | "editor" | "viewer")}>
             <SelectTrigger variant="ghost" className="h-min w-full" >
                 <SelectValue placeholder="Select role" />
             </SelectTrigger>
@@ -549,7 +549,7 @@ const InviteMemberDialog = ({ tenantId, onInvite }: { tenantId?: string, onInvit
                 < SelectItem value="editor" > Editor </SelectItem>
                 < SelectItem value="viewer" > Viewer </SelectItem>
             </SelectContent>
-        </Select>
+        </Select> */}
 
         < Button onClick={handleInvite} disabled={loading || !selectedUser} className="w-full" >
             {loading ? "Inviting..." : "Invite"}
