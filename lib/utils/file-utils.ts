@@ -1,5 +1,6 @@
 import type { ImageFile, Folder } from "@/types"
 import * as UTIF from "utif";
+import * as exifr from "exifr";
 
 const unsupportedButValid = ['image/tiff', 'image/heic', 'image/heif'];
 
@@ -19,6 +20,7 @@ export async function createImageFile(file: File, folder: string): Promise<Image
     url: unsupportedButValid.includes(file.type) ? await getTiffPreviewURL(file) : URL.createObjectURL(file),
     file,
     folder,
+    metadata: await getEXIFData(file)
   }
 }
 
@@ -145,4 +147,17 @@ export async function getTiffPreviewURL(file: File) {
   }
 
   return canvas.toDataURL("image/png");
+}
+
+
+// Get EXIF data from a File
+export async function getEXIFData(file: File): Promise<Record<string, any> | null> {
+  try {
+    if (!file.type.startsWith("image/")) return null;
+    const exif = await exifr.parse(file);
+    return exif || null;
+  } catch (err) {
+    console.warn(`Failed to extract EXIF data from ${file.name}`, err);
+    return null;
+  }
 }

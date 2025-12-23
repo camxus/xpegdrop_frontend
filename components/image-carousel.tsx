@@ -5,27 +5,41 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { X, ChevronLeft, ChevronRight } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { ImageFile } from "@/types";
+import type { EXIFData, ImageFile } from "@/types";
+import { Rating } from "@/lib/api/ratingsApi";
+import StarRatingWithAvatars from "./star-rating-slider";
+import { useAuth } from "@/hooks/api/useAuth";
+import { useRatings } from "@/hooks/api/useRatings";
+import { Project } from "@/types/project";
 
 interface ImageCarouselProps {
+  project: Project
   images: ImageFile[];
+  ratings: Rating[]
   initialIndex: number;
   isOpen: boolean;
   onClose: () => void;
 }
 
 export function ImageCarousel({
+  project,
   images,
+  ratings,
   initialIndex,
   isOpen,
   onClose,
 }: ImageCarouselProps) {
+  const { user } = useAuth()
+  const { handleRatingChange } = useRatings()
+
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [isLoading, setIsLoading] = useState(true);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
+  const [showInfo, setShowInfo] = useState(false);
+
   const carouselRef = useRef<HTMLDivElement>(null);
 
   const minSwipeDistance = 50;
@@ -77,6 +91,10 @@ export function ImageCarousel({
     [isOpen, onClose, handlePrevious, handleNext]
   );
 
+  const handleShowInfo = useCallback(() => {
+    setShowInfo((prev) => !prev); // toggle info panel
+  }, []);
+
   useEffect(() => {
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
@@ -102,6 +120,8 @@ export function ImageCarousel({
 
   const currentImage = images[currentIndex];
 
+  const imageRatings = ratings.filter((rating) => rating.image_name === currentImage.name)
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -115,100 +135,173 @@ export function ImageCarousel({
             filter: { duration: 0.5 },
           }}
         >
-          {/* Header */}
-          <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between p-4 bg-gradient-to-b from-black/50 to-transparent">
-            <div className="text-white">
-              <h3 className="font-semibold">{currentImage?.name}</h3>
-              <p className="text-sm text-white/70">
-                {currentIndex + 1} of {images.length}
-              </p>
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onClose}
-              className="text-white hover:bg-white/20"
-            >
-              <X className="h-6 w-6" />
-            </Button>
-          </div>
+          <div className="flex">
 
-          {/* Main carousel */}
-          <div
-            ref={carouselRef}
-            className="flex items-center justify-center h-full p-4 pt-20 pb-20"
-            onTouchStart={onTouchStart}
-            onTouchMove={onTouchMove}
-            onTouchEnd={onTouchEnd}
-          >
-            {/* Previous button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handlePrevious}
-              disabled={currentIndex === 0}
-              className="absolute left-4 top-1/2 -translate-y-1/2 z-10 text-white hover:bg-white/20 h-12 w-12"
-            >
-              <ChevronLeft className="h-8 w-8" />
-            </Button>
-
-            {/* Image container */}
-            <div className="relative max-w-full max-h-full flex items-center justify-center">
-              <div className="relative">
-                {isLoading && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-                  </div>
-                )}
-                <Image
-                  src={currentImage?.url || "/placeholder.svg"}
-                  alt={currentImage?.name || "Image"}
-                  width={1200}
-                  height={800}
-                  className={cn(
-                    "max-w-full max-h-[80vh] w-auto h-auto object-contain transition-opacity duration-300",
-                    isLoading ? "opacity-0" : "opacity-100"
-                  )}
-                  onLoad={() => setIsLoading(false)}
-                  priority
-                />
+            {/* Header */}
+            <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between p-4 bg-gradient-to-b from-black/50 to-transparent">
+              <div className="text-white">
+                <h3 className="font-semibold">{currentImage?.name}</h3>
+                <p className="text-sm text-white/70">
+                  {currentIndex + 1} of {images.length}
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleShowInfo}
+                  className="text-white hover:bg-white/20"
+                >
+                  <Info className="h-6 w-6" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onClose}
+                  className="text-white hover:bg-white/20"
+                >
+                  <X className="h-6 w-6" />
+                </Button>
               </div>
             </div>
 
-            {/* Next button */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleNext}
-              disabled={currentIndex === images.length - 1}
-              className="absolute right-4 top-1/2 -translate-y-1/2 z-10 text-white hover:bg-white/20 h-12 w-12"
+            {/* Main carousel */}
+            <div
+              ref={carouselRef}
+              className="relative flex flex-1 items-center justify-center h-full p-4 pt-20 pb-20"
+              onTouchStart={onTouchStart}
+              onTouchMove={onTouchMove}
+              onTouchEnd={onTouchEnd}
             >
-              <ChevronRight className="h-8 w-8" />
-            </Button>
-          </div>
+              {/* Previous button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handlePrevious}
+                disabled={currentIndex === 0}
+                className="absolute left-4 top-1/2 -translate-y-1/2 z-10 text-white hover:bg-white/20 h-12 w-12"
+              >
+                <ChevronLeft className="h-8 w-8" />
+              </Button>
 
-          {/* Bottom navigation dots */}
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-background/50 rounded-full px-4 py-2">
-            {images.map((_, idx) => (
-              <button
-                key={idx}
-                onClick={() => {
-                  setCurrentIndex(idx);
-                  setIsLoading(true);
-                }}
-                className={cn(
-                  "w-2 h-2 rounded-full transition-all duration-200",
-                  idx === currentIndex
-                    ? "bg-white scale-125"
-                    : "bg-white/50 hover:bg-white/75"
-                )}
-              />
-            ))}
-          </div>
+              {/* Image container */}
+              <div className="relative max-w-full max-h-full flex items-center justify-center">
+                <div className="relative">
+                  {isLoading && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                    </div>
+                  )}
+                  <Image
+                    src={currentImage?.url || "/placeholder.svg"}
+                    alt={currentImage?.name || "Image"}
+                    width={1200}
+                    height={800}
+                    className={cn(
+                      "max-w-full max-h-[80vh] w-auto h-auto object-contain transition-opacity duration-300",
+                      isLoading ? "opacity-0" : "opacity-100"
+                    )}
+                    onLoad={() => setIsLoading(false)}
+                    priority
+                  />
+                </div>
+              </div>
 
-          {/* Swipe indicator */}
-          <div className="absolute bottom-16 left-1/2 -translate-x-1/2 text-white/50 text-sm">
-            Swipe or use arrow keys to navigate
+              {/* Next button */}
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleNext}
+                disabled={currentIndex === images.length - 1}
+                className="absolute right-4 top-1/2 -translate-y-1/2 z-10 text-white hover:bg-white/20 h-12 w-12"
+              >
+                <ChevronRight className="h-8 w-8" />
+              </Button>
+            </div>
+            <AnimatePresence>
+              {showInfo && (
+                <motion.div
+                  className="h-dvh backdrop-blur text-white p-4 overflow-y-auto border-l"
+                  initial={{ width: 0 }}
+                  animate={{ width: "30vw" }}
+                  exit={{ width: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  {/* Star Rating */}
+                  <StarRatingWithAvatars
+                    value={
+                      imageRatings.find((rating) => rating.user_id === user?.user_id)?.value || 0
+                    }
+                    onRatingChange={(value) =>
+                      handleRatingChange(
+                        currentImage.name,
+                        value,
+                        imageRatings.find((rating) => rating.user_id === user?.user_id)?.rating_id,
+                        project
+                      )
+                    }
+                  />
+
+                  {/* Metadata Display */}
+                  {currentImage.metadata && (
+                    <div className="mt-4 space-y-2 text-sm">
+                      {[
+                        "Make",
+                        "Model",
+                        "Orientation",
+                        "DateTime",
+                        "ISO",
+                        "ShutterSpeedValue",
+                        "FNumber",
+                        "ApertureValue",
+                        "ExifImageHeight",
+                        "ExifImageWeight"
+                      ].map((key) => {
+                        const value = (currentImage.metadata as EXIFData)[key as keyof EXIFData];
+                        if (value === undefined || value === null) return null;
+
+                        let displayValue: string | number | number[] | Date | Record<string, any> = value;
+
+                        if (value instanceof Date) {
+                          displayValue = value.toLocaleString();
+                        } else if (Array.isArray(value)) {
+                          displayValue = value.join(", ");
+                        } else if (typeof value === "object" && value !== null) {
+                          displayValue = JSON.stringify(value, null, 2); // nicely formatted JSON
+                        }
+
+                        return (
+                          <div key={key} className="flex justify-between break-all">
+                            <span className="font-medium">{key}:</span>
+                            <span>{displayValue as string}</span>
+                          </div>
+                        );
+
+                      })}
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Bottom navigation dots */}
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-background/50 rounded-full px-4 py-2">
+              {images.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => {
+                    setCurrentIndex(idx);
+                    setIsLoading(true);
+                  }}
+                  className={cn(
+                    "w-2 h-2 rounded-full transition-all duration-200",
+                    idx === currentIndex
+                      ? "bg-white scale-125"
+                      : "bg-white/50 hover:bg-white/75"
+                  )}
+                />
+              ))}
+            </div>
           </div>
         </motion.div>
       )}

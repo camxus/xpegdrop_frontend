@@ -1,3 +1,5 @@
+import { EXIFData } from ".";
+
 export interface Project {
   project_id: string;
   tenant_id?: string;
@@ -5,6 +7,13 @@ export interface Project {
   name: string;
   description?: string;
   share_url: string;
+  images: {
+    name?: string,
+    preview_url?: string,
+    thumbnail_url?: string,
+    thumbnai?: string,
+    metadata?: EXIFData
+  }[]
   dropbox_folder_path?: string;
   dropbox_shared_link?: string;
   b2_folder_path?: string;

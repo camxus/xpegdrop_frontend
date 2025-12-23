@@ -139,8 +139,8 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
 
   const loadProject = async (email?: string) => {
     try {
-      const data = tenantHandle ? await getTenantProjectByShareUrl(tenantHandle, username, projectName, email) : await getProjectByShareUrl(username, projectName, email);
-      setProject(data?.project || null);
+      const project = tenantHandle ? await getTenantProjectByShareUrl(tenantHandle, username, projectName, email) : await getProjectByShareUrl(username, projectName, email);
+      setProject(project || null);
 
       function createEmptyImage(
         name: string | undefined,
@@ -154,13 +154,14 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
           file: new File([], name || "empty"), // empty File placeholder
           folder,
           preview_url: "", // will be replaced later
+          metadata: null
         };
       }
 
-      async function processImagesInBatches(images: typeof data.images) {
+      async function processImagesInBatches(images: typeof project.images) {
         // 1. create placeholder array with same length
         const placeholders = images.map(
-          (img: { name: string | undefined; thumbnail_url: string }) =>
+          (img: { name?: string | undefined; thumbnail_url?: string }) =>
             createEmptyImage(img.name, projectName, img.thumbnail_url)
         );
 
@@ -168,7 +169,7 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
         setFilteredImages(placeholders);
 
         // 2. progressively fill them batch by batch
-        const result: (ImageFile & { preview_url: string })[] = [
+        const result: (ImageFile & { preview_url?: string })[] = [
           ...placeholders,
         ];
 
@@ -179,13 +180,9 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
 
           const processedBatch = await Promise.all(
             batch.map(
-              async (img: {
-                thumbnail_url: string;
-                name: string | undefined;
-                preview_url: any;
-              }) => {
+              async (img) => {
                 const thumbnailFile = await urlToFile(
-                  img.thumbnail_url,
+                  img.thumbnail_url || "",
                   img.name
                 );
                 return {
@@ -210,13 +207,13 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
       }
 
       // usage
-      const result = await processImagesInBatches(data.images);
+      const result = await processImagesInBatches(project.images);
 
       setImages([...result]);
       setFilteredImages([...result]);
       setIsLoading(false);
 
-      if (data.project?.project_id) await getRatings(data.project.project_id);
+      if (project?.project_id) await getRatings(project.project_id);
       hide();
     } catch (error: any) {
       const status = (error as ApiError)?.status;
@@ -271,7 +268,7 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
     downloadFiles(
       images.map((image) => ({
         name: image.name,
-        url: image.preview_url+"?dl=1" || "",
+        url: image.preview_url + "?dl=1" || "",
       })),
       project.name
     );
@@ -574,6 +571,8 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
                 canEdit={canEdit}
               />
               <ImageCarousel
+                project={project}
+                ratings={ratings}
                 images={filteredImages}
                 initialIndex={carouselStartIndex}
                 isOpen={isCarouselOpen}

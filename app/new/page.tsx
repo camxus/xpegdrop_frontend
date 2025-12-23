@@ -11,7 +11,7 @@ import { EditableTitle } from "@/components/editable-title";
 import { useToast } from "@/hooks/use-toast";
 import { createImageFile, processFolderUpload } from "@/lib/utils/file-utils";
 import { Upload, FolderOpen, Share2, UploadIcon } from "lucide-react";
-import type { Folder, StorageProvider } from "@/types";
+import type { EXIFData, Folder, StorageProvider } from "@/types";
 import { ImageCarousel } from "@/components/image-carousel";
 import { ShareDialog } from "@/components/share-dialog";
 import { cn } from "@/lib/utils";
@@ -80,9 +80,11 @@ export function UploadView() {
 
   const {
     ratings,
+    queuedRatings,
+    setQueuedRatings,
     getRatings: { mutateAsync: getRatings },
     createRating: { mutateAsync: createRating },
-    updateRating: { mutateAsync: updateRating },
+    handleRatingChange
   } = useRatings();
 
   const {
@@ -92,7 +94,6 @@ export function UploadView() {
   const isUploading = isUploadingProject || isUploadingToS3;
 
   const [folders, setFolders] = useState<Folder[]>([]);
-  const [queuedRatings, setQueuedRatings] = useState<Rating[]>([]);
   const [createdProjects, setCreatedProjects] = useState<Project[]>([]);
   const [currentFolderIndex, setCurrentFolderIndex] = useState(0);
   const [isCarouselOpen, setIsCarouselOpen] = useState(false);
@@ -124,14 +125,14 @@ export function UploadView() {
 
   const handleNewFolders = useCallback(
     async (files: File[]) => {
-      if (user?.membership?.membership_id === "artist" && personalProjects.length >= 3) {
-        show({
-          title: "Upgrade",
-          content: () => <UpgradePage />,
-          containerProps: { className: "max-w-[90%]" }
-        })
-        return
-      }
+      // if (user?.membership?.membership_id === "artist" && personalProjects.length >= 3) {
+      //   show({
+      //     title: "Upgrade",
+      //     content: () => <UpgradePage />,
+      //     containerProps: { className: "max-w-[90%]" }
+      //   })
+      //   return
+      // }
 
       if (files.length === 0) return;
       const newFolders = await processFolderUpload(files);
@@ -167,6 +168,9 @@ export function UploadView() {
               project?.dropbox_folder_path ? "dropbox" :
                 storageProvider;
 
+            console.log(confirmedFolders)
+
+            return
             Promise.all(
               confirmedFolders.map(
                 async (folder) => await handleUpload(folder, currentFolderIndex, provider, selectedTenant)
@@ -298,6 +302,17 @@ export function UploadView() {
     const uploadFolder = folder || currentFolder;
     if (!uploadFolder) return;
     try {
+      const fileMetadata: Record<string, EXIFData> = uploadFolder.images.reduce(
+        (acc, img) => {
+          if (img.metadata) {
+            acc[img.name] = img.metadata;
+          }
+          return acc;
+        },
+        {} as Record<string, EXIFData>
+      );
+
+
       const imageFiles = uploadFolder.images.map((img) => img.file);
       const tempFileLocations = await uploadFiles(imageFiles);
       const project = await createProject({
@@ -305,6 +320,7 @@ export function UploadView() {
         tenant_id: selectedTenant,
         file_locations: tempFileLocations,
         storage_provider: storageProvider,
+        file_metadata: fileMetadata
       });
       await Promise.all(
         queuedRatings.map(async (rating) =>
@@ -355,42 +371,6 @@ export function UploadView() {
     setCarouselStartIndex(imageIndex);
     setIsCarouselOpen(true);
   }, []);
-
-  const handleRatingChange = useCallback(
-    async (imageName: string, value: number, ratingId?: string) => {
-      const rating = new Rating();
-      rating.image_name = imageName;
-      rating.value = value;
-      rating.rating_id = ratingId;
-
-      if (!currentProject) {
-        setQueuedRatings((queued) => {
-          const existingIndex = queued.findIndex(
-            (r) => r.image_name === rating.image_name
-          );
-
-          if (existingIndex !== -1) {
-            // Update existing rating
-            const updated = [...queued];
-            updated[existingIndex] = rating;
-            return updated;
-          }
-
-          // Add new rating if not found
-          return [...queued, rating];
-        });
-        return;
-      }
-      if (!ratingId)
-        return await createRating({
-          project_id: currentProject.project_id,
-          image_name: rating.image_name,
-          value: rating.value,
-        });
-      return await updateRating({ ratingId, value });
-    },
-    [currentProject]
-  );
 
   const handleCloseCarousel = useCallback(() => setIsCarouselOpen(false), []);
 
@@ -561,7 +541,9 @@ export function UploadView() {
                     </div>
 
                     <ImageCarousel
+                      project={currentProject}
                       images={currentFolder.images}
+                      ratings={[...queuedRatings, ...ratings]}
                       initialIndex={carouselStartIndex}
                       isOpen={isCarouselOpen}
                       onClose={handleCloseCarousel}

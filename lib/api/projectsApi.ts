@@ -1,20 +1,26 @@
 import { Project } from "@/types/project";
 import { api } from "./client";
 import { S3Location } from "@/types/user";
-import { StorageProvider } from "@/types";
+import { EXIFData, StorageProvider } from "@/types";
 
 export const projectsApi = {
   // Create new project with files (multipart/form-data)
-  createProject: async (formData: { tenant_id?: string, name: string; files?: File[], file_locations?: S3Location[], storage_provider: StorageProvider }) => {
+  createProject: async (formData: {
+    tenant_id?: string,
+    name: string; files?: File[],
+    file_locations?: S3Location[],
+    storage_provider: StorageProvider,
+    file_metadata?: Record<string, EXIFData>
+  }) => {
     const data = new FormData();
     data.append("name", formData.name);
     if (formData.tenant_id) data.append("tenant_id", formData.tenant_id)
     if (formData.storage_provider) data.append("storage_provider", formData.storage_provider)
     if (formData.file_locations) {
-      const fileLocations = formData.file_locations.map((location) =>
-        location
-      );
-      data.append("file_locations", JSON.stringify(fileLocations)); // multiple files under "file_locations"
+      data.append("file_locations", JSON.stringify(formData.file_locations)); // multiple files under "file_locations"
+    }
+    if (formData.file_metadata) {
+      data.append("file_metadata", JSON.stringify(formData.file_metadata)); // multiple files under "file_metadata"
     }
     if (formData.files) formData.files.forEach((file) => {
       data.append("files", file); // multiple files under "files"
@@ -60,7 +66,15 @@ export const projectsApi = {
     projectName: string,
     email?: string
   ) => {
-    return await api.get(
+    return await api.get<Project &
+    {
+      images: {
+        name: string,
+        preview_url: string,
+        thumbnail_url: string,
+        thumbnai: string,
+      }
+    }>(
       `/projects/share/${username}/${encodeURIComponent(projectName)}`,
       { params: { email: email } }
     );
@@ -73,7 +87,7 @@ export const projectsApi = {
     projectName: string,
     email?: string
   ) => {
-    return await api.get(
+    return await api.get<Project>(
       `/projects/share/tenant/${tenantHandle}/${username}/${encodeURIComponent(projectName)}`,
       { params: { email: email } }
     );

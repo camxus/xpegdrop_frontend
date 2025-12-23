@@ -4,16 +4,23 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Rating, ratingsApi } from "@/lib/api/ratingsApi";
 import { api } from "@/lib/api/client";
 import { useToast } from "../use-toast";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useAuth } from "./useAuth";
 import { getLocalStorage, setLocalStorage } from "@/lib/localStorage";
+import { useDialog } from "../use-dialog";
+import { useUser } from "./useUser";
+import UnauthorizedRatingDialog, { UnauthorizedRatingDialogActions } from "@/components/unauthorized-rating-dialog";
+import { Project } from "@/types/project";
 
 export const LOCAL_RATINGS_STORAGE_KEY = "local_ratings";
 
 export function useRatings() {
   const { user } = useAuth()
+  const { localUser, setLocalUser } = useUser()
+  const dialog = useDialog()
   const queryClient = useQueryClient();
   const [ratings, setRatings] = useState<Rating[]>([]);
+  const [queuedRatings, setQueuedRatings] = useState<Rating[]>([]);
   const { toast } = useToast();
 
   const saveLocalRatings = (projectId: string, ratings: Rating[]) => {
@@ -136,13 +143,78 @@ export function useRatings() {
     },
   });
 
+  const handleRating =
+    async (imageName: string, value: number, ratingId?: string, project?: Project) => {
+      const rating = new Rating();
+      rating.image_name = imageName;
+      rating.value = value;
+      rating.rating_id = ratingId;
+
+      if (!project) {
+        setQueuedRatings((queued) => {
+          const existingIndex = queued.findIndex(
+            (r) => r.image_name === rating.image_name
+          );
+
+          if (existingIndex !== -1) {
+            // Update existing rating
+            const updated = [...queued];
+            updated[existingIndex] = rating;
+            return updated;
+          }
+
+          // Add new rating if not found
+          return [...queued, rating];
+        });
+        return;
+      }
+      if (!ratingId)
+        return await createRating.mutateAsync({
+          project_id: project.project_id,
+          image_name: rating.image_name,
+          value: rating.value,
+        });
+      return await updateRating.mutateAsync({ ratingId, value });
+    }
+
+  const handleRatingChange = (imageName: string, value: number, ratingId?: string, project?: Project) => {
+    const firstName = user?.first_name ?? localUser.first_name;
+    const lastName = user?.last_name ?? localUser.last_name;
+
+    if (!firstName || !lastName) {
+      dialog.show({
+        title: "You're currently not signed in",
+        description: "Leave a note with your name so the owner knows who accessed this folder.",
+        content: UnauthorizedRatingDialog,
+        actions: UnauthorizedRatingDialogActions,
+        contentProps: {
+          onSubmit: (firstName: string, lastName: string) => {
+            if (!firstName || !lastName) return
+
+            setLocalUser({ first_name: firstName, last_name: lastName })
+            handleRating(imageName, value, ratingId, project)
+
+            return
+          }
+        }
+      })
+      return
+    }
+
+    handleRating(imageName, value, ratingId, project)
+  }
+
+
   return {
     ratings,
+    queuedRatings,
+    setQueuedRatings,
     userRatings,
     foreignRatings,
     getRatings,
     createRating,
     updateRating,
     deleteRating,
+    handleRatingChange
   };
 }

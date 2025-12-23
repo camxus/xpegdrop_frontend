@@ -126,7 +126,7 @@ export function ImagesMansonry({
   return (
     <MasonryGrid>
       {images.map((image: ImageFile, index: number) => (
-        <PinterestImage
+        <MasonryImage
           projectId={projectId}
           imageNotes={imageNotes(image)}
           disabled={ratingDisabled}
@@ -152,7 +152,7 @@ export function ImagesMansonry({
   )
 }
 
-const PinterestImage = memo(function PinterestImage({
+const MasonryImage = memo(function MasonryImage({
   projectId,
   imageNotes,
   disabled,
@@ -212,34 +212,6 @@ const PinterestImage = memo(function PinterestImage({
   const handleDeleteImage = async () => {
     await removeProjectFile({ projectId, fileName: image.name })
 
-  }
-
-  const handleRatingChange = (value: number) => {
-
-    const firstName = user?.first_name ?? localUser.first_name;
-    const lastName = user?.last_name ?? localUser.last_name;
-
-    if (!firstName || !lastName) {
-      dialog.show({
-        title: "You're currently not signed in",
-        description: "Leave a note with your name so the owner knows who accessed this folder.",
-        content: UnauthorizedRatingDialog,
-        actions: UnauthorizedRatingDialogActions,
-        contentProps: {
-          onSubmit: (firstName: string, lastName: string) => {
-            if (!firstName || !lastName) return
-
-            setLocalUser({ first_name: firstName, last_name: lastName })
-            onRatingChange(value, rating.rating_id)
-
-            return
-          }
-        }
-      })
-      return
-    }
-
-    onRatingChange(value, rating.rating_id)
   }
 
   return (
@@ -311,7 +283,7 @@ const PinterestImage = memo(function PinterestImage({
             disabled={disabled}
             value={rating.value || 0}
             ratings={ratings}
-            onRatingChange={(value) => handleRatingChange(value)}
+            onRatingChange={(value) => onRatingChange(value)}
             className="w-full flex justify-center"
           />
           {!!imageNotes.length && (
