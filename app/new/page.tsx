@@ -125,14 +125,14 @@ export function UploadView() {
 
   const handleNewFolders = useCallback(
     async (files: File[]) => {
-      // if (user?.membership?.membership_id === "artist" && personalProjects.length >= 3) {
-      //   show({
-      //     title: "Upgrade",
-      //     content: () => <UpgradePage />,
-      //     containerProps: { className: "max-w-[90%]" }
-      //   })
-      //   return
-      // }
+      if (user?.membership?.membership_id === "artist" && personalProjects.length >= 3) {
+        show({
+          title: "Upgrade",
+          content: () => <UpgradePage />,
+          containerProps: { className: "max-w-[90%]" }
+        })
+        return
+      }
 
       if (files.length === 0) return;
       const newFolders = await processFolderUpload(files);
@@ -168,9 +168,6 @@ export function UploadView() {
               project?.dropbox_folder_path ? "dropbox" :
                 storageProvider;
 
-            console.log(confirmedFolders)
-
-            return
             Promise.all(
               confirmedFolders.map(
                 async (folder) => await handleUpload(folder, currentFolderIndex, provider, selectedTenant)
