@@ -86,7 +86,6 @@ export function useProjects() {
       files?: File[];
       file_locations?: S3Location[];
       storage_provider: StorageProvider
-      file_metadata?: Record<string, EXIFData>
     }) => projectsApi.createProject(formData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["projects"] });

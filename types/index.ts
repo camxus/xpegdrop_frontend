@@ -104,7 +104,7 @@ export interface ImageFile {
   url: string
   file: File
   folder: string
-  metadata: EXIFData | null
+  metadata?: EXIFData | null
 }
 
 export interface Folder {

@@ -10,7 +10,6 @@ export const projectsApi = {
     name: string; files?: File[],
     file_locations?: S3Location[],
     storage_provider: StorageProvider,
-    file_metadata?: Record<string, EXIFData>
   }) => {
     const data = new FormData();
     data.append("name", formData.name);
@@ -18,9 +17,6 @@ export const projectsApi = {
     if (formData.storage_provider) data.append("storage_provider", formData.storage_provider)
     if (formData.file_locations) {
       data.append("file_locations", JSON.stringify(formData.file_locations)); // multiple files under "file_locations"
-    }
-    if (formData.file_metadata) {
-      data.append("file_metadata", JSON.stringify(formData.file_metadata)); // multiple files under "file_metadata"
     }
     if (formData.files) formData.files.forEach((file) => {
       data.append("files", file); // multiple files under "files"
@@ -66,14 +62,14 @@ export const projectsApi = {
     projectName: string,
     email?: string
   ) => {
-    return await api.get<Project &
-    {
+    return await api.get<{
+      project: Project,
       images: {
-        name: string,
-        preview_url: string,
-        thumbnail_url: string,
-        thumbnai: string,
-      }
+        name?: string,
+        preview_url?: string,
+        thumbnail_url?: string,
+        thumbnai?: string
+      }[]
     }>(
       `/projects/share/${username}/${encodeURIComponent(projectName)}`,
       { params: { email: email } }
@@ -87,7 +83,15 @@ export const projectsApi = {
     projectName: string,
     email?: string
   ) => {
-    return await api.get<Project>(
+    return await api.get<{
+      project: Project,
+      images: {
+        name?: string,
+        preview_url?: string,
+        thumbnail_url?: string,
+        thumbnai?: string
+      }[]
+    }>(
       `/projects/share/tenant/${tenantHandle}/${username}/${encodeURIComponent(projectName)}`,
       { params: { email: email } }
     );

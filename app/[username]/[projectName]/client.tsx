@@ -75,6 +75,7 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
     getRatings: { mutateAsync: getRatings },
     createRating: { mutateAsync: createRating },
     updateRating: { mutateAsync: updateRating },
+    handleRatingChange
   } = useRatings();
 
   const {
@@ -139,8 +140,8 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
 
   const loadProject = async (email?: string) => {
     try {
-      const project = tenantHandle ? await getTenantProjectByShareUrl(tenantHandle, username, projectName, email) : await getProjectByShareUrl(username, projectName, email);
-      setProject(project || null);
+      const data = tenantHandle ? await getTenantProjectByShareUrl(tenantHandle, username, projectName, email) : await getProjectByShareUrl(username, projectName, email);
+      setProject(data.project || null);
 
       function createEmptyImage(
         name: string | undefined,
@@ -158,7 +159,7 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
         };
       }
 
-      async function processImagesInBatches(images: typeof project.images) {
+      async function processImagesInBatches(images: typeof data.images) {
         // 1. create placeholder array with same length
         const placeholders = images.map(
           (img: { name?: string | undefined; thumbnail_url?: string }) =>
@@ -207,13 +208,13 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
       }
 
       // usage
-      const result = await processImagesInBatches(project.images);
+      const result = await processImagesInBatches(data.images);
 
       setImages([...result]);
       setFilteredImages([...result]);
       setIsLoading(false);
 
-      if (project?.project_id) await getRatings(project.project_id);
+      if (data.project?.project_id) await getRatings(data.project.project_id);
       hide();
     } catch (error: any) {
       const status = (error as ApiError)?.status;
@@ -247,20 +248,6 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
     setIsLoading(true);
     await loadProject(email);
   };
-
-  const handleRatingChange = useCallback(
-    async (imageName: string, value: number, ratingId?: string) => {
-      if (!project) return;
-      if (!ratingId)
-        return await createRating({
-          project_id: project.project_id,
-          image_name: imageName,
-          value,
-        });
-      return await updateRating({ ratingId, value });
-    },
-    [project, createRating, updateRating]
-  );
 
   const handleDownload = async () => {
     if (!project || images.length === 0) return;
@@ -565,7 +552,7 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
                   setCarouselStartIndex(i);
                   setIsCarouselOpen(true);
                 }}
-                onRatingChange={handleRatingChange}
+                onRatingChange={(imageId, value, ratingId) => handleRatingChange(imageId, value, ratingId, project)}
                 onImageHoverChange={(hover) => setIsHovered(hover)}
                 onDuplicateImage={handleDuplicateImage}
                 canEdit={canEdit}

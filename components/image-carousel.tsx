@@ -11,8 +11,11 @@ import type { EXIFData, ImageFile } from "@/types";
 import { Rating } from "@/lib/api/ratingsApi";
 import StarRatingWithAvatars from "./star-rating-slider";
 import { useAuth } from "@/hooks/api/useAuth";
-import { useRatings } from "@/hooks/api/useRatings";
+import { LOCAL_RATINGS_STORAGE_KEY, useRatings } from "@/hooks/api/useRatings";
 import { Project } from "@/types/project";
+import { useMetadata } from "@/hooks/api/useMetadata";
+import { getLocalStorage } from "@/lib/localStorage";
+import { staggeredContainerVariants } from "@/lib/motion";
 
 interface ImageCarouselProps {
   project: Project
@@ -31,9 +34,6 @@ export function ImageCarousel({
   isOpen,
   onClose,
 }: ImageCarouselProps) {
-  const { user } = useAuth()
-
-
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [isLoading, setIsLoading] = useState(true);
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -246,7 +246,7 @@ export function ImageCarousel({
                   <DetailsInfo
                     project={project}
                     image={currentImage}
-                    ratings={ratings}
+                    initialRatings={imageRatings}
                   />
                 </motion.div>
               )}
@@ -277,65 +277,120 @@ export function ImageCarousel({
 }
 
 
-function DetailsInfo({ project, image, ratings }: { project: Project, image: ImageFile, ratings: Rating[] }) {
+function DetailsInfo({ project, image, initialRatings }: { project: Project, image: ImageFile, initialRatings: Rating[] }) {
   const { user } = useAuth()
-  const { handleRatingChange } = useRatings()
+  const { getImageMetadata } = useMetadata()
+  const { ratings: ratingsData, handleRatingChange } = useRatings()
+
+  const ratings = ratingsData || initialRatings
+
+  const { data: imageMetadata } = getImageMetadata(project.project_id, image.name)
+
+  const metadata = image.metadata || imageMetadata?.exif_data
+
+  const localRatings =
+    project.project_id && (getLocalStorage(LOCAL_RATINGS_STORAGE_KEY) || {})[project.project_id];
+
+  const imageRatings = (image: ImageFile) =>
+    ratings?.filter((rating) => rating.image_name === image.name) || [];
+
+  const rating = (image: ImageFile) =>
+    (ratings?.find(
+      (r) => r.image_name === image.name && user?.user_id === r.user_id
+    ) ??
+      localRatings?.find((r: Rating) => r.image_name === image.name)) as Rating ||
+    new Rating();
+
+  const renderMetadata = () => {
+    if (!metadata) return null;
+
+    const labelMap: Record<string, string> = {
+      Make: "Camera Make",
+      Model: "Camera Model",
+      Orientation: "Orientation",
+      DateTime: "Date/Time",
+      ISO: "ISO",
+      ShutterSpeedValue: "Shutter Speed",
+      FNumber: "F Number",
+      ApertureValue: "Aperture Value",
+      ExifImageHeight: "Image Height",
+      ExifImageWeight: "Image Width",
+    };
+
+    const itemVariants = {
+      hidden: { opacity: 0, y: 10 },
+      visible: { opacity: 1, y: 0 },
+    };
+
+    return (
+      <motion.div
+        variants={staggeredContainerVariants}
+        initial="hidden"
+        animate="visible"
+        className="space-y-2"
+      >
+        {Object.keys(labelMap).map((key) => {
+          const value = (metadata as EXIFData)[key as keyof EXIFData];
+          if (value === undefined || value === null) return null;
+
+          let displayValue: string | number | number[] | Date | Record<string, any> = value;
+
+          if (value instanceof Date) {
+            displayValue = value.toLocaleString();
+          } else if (Array.isArray(value)) {
+            displayValue = value.join(", ");
+          } else if (typeof value === "object" && value !== null) {
+            displayValue = JSON.stringify(value, null, 2);
+          }
+
+          return (
+            <motion.div
+              key={key}
+              className="w-full flex justify-between break-all"
+              variants={itemVariants}
+            >
+              <span className="text-muted-foreground text-sm">{labelMap[key]}</span>
+              <span className="text-sm">{String(displayValue)}</span>
+            </motion.div>
+          );
+        })}
+      </motion.div>
+    );
+  };
+
 
   return (
-    <div>
-      {/* Star Rating */}
-      <StarRatingWithAvatars
-        value={
-          ratings.find((rating) => rating.user_id === user?.user_id)?.value || 0
-        }
-        onRatingChange={(value) =>
-          handleRatingChange(
-            image.name,
-            value,
-            ratings.find((rating) => rating.user_id === user?.user_id)?.rating_id,
-            project
-          )
-        }
-      />
-
+    <motion.div
+      className="flex flex-col justify-center items-center h-full w-full"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 10 }}
+      transition={{ duration: 0.3 }}
+    >
       {/* Metadata Display */}
-      {image.metadata && (
-        <div className="mt-4 space-y-2 text-sm">
-          {[
-            "Make",
-            "Model",
-            "Orientation",
-            "DateTime",
-            "ISO",
-            "ShutterSpeedValue",
-            "FNumber",
-            "ApertureValue",
-            "ExifImageHeight",
-            "ExifImageWeight"
-          ].map((key) => {
-            const value = (image.metadata as EXIFData)[key as keyof EXIFData];
-            if (value === undefined || value === null) return null;
-
-            let displayValue: string | number | number[] | Date | Record<string, any> = value;
-
-            if (value instanceof Date) {
-              displayValue = value.toLocaleString();
-            } else if (Array.isArray(value)) {
-              displayValue = value.join(", ");
-            } else if (typeof value === "object" && value !== null) {
-              displayValue = JSON.stringify(value, null, 2); // nicely formatted JSON
-            }
-
-            return (
-              <div key={key} className="flex justify-between break-all">
-                <span className="font-medium">{key}:</span>
-                <span>{displayValue as string}</span>
-              </div>
-            );
-
-          })}
+      <div className="w-90 max-w-[30vw] flex flex-col gap-2 p-4">
+        <div className="w-full flex justify-between break-all">
+          <span className="text-muted-foreground">Rating</span>
+          {/* Star Rating */}
+          <div className="w-min">
+            <StarRatingWithAvatars
+              value={
+                rating(image).value || 0
+              }
+              onRatingChange={(value) =>
+                handleRatingChange(
+                  image.name,
+                  value,
+                  rating(image).rating_id,
+                  project
+                )
+              }
+            />
+          </div>
         </div>
-      )}
-    </div>
+
+        {renderMetadata()}
+      </div>
+    </motion.div>
   )
 }

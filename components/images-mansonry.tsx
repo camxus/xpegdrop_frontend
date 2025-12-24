@@ -108,8 +108,8 @@ export function ImagesMansonry({
   );
 
   const localRatings =
-    ratings?.[0]?.project_id &&
-    (getLocalStorage(LOCAL_RATINGS_STORAGE_KEY) || {})[ratings?.[0].project_id];
+    projectId && (getLocalStorage(LOCAL_RATINGS_STORAGE_KEY) || {})[projectId];
+
   const imageRatings = (image: ImageFile) =>
     ratings?.filter((rating) => rating.image_name === image.name) || [];
 
@@ -179,7 +179,7 @@ const MasonryImage = memo(function MasonryImage({
   index: number;
   isHovered: boolean;
   isLoaded: boolean;
-  canEdit?: boolean;  
+  canEdit?: boolean;
   onHover: () => void;
   onLeave: () => void;
   onClick: () => void;
@@ -187,14 +187,10 @@ const MasonryImage = memo(function MasonryImage({
   onRatingChange: (value: number, ratingId?: string) => void;
   onDuplicateImage: (image: ImageFile) => void;
 }) {
-  const { user } = useAuth()
-  const { localUser, setLocalUser } = useUser()
-
   const { removeProjectFile: { mutateAsync: removeProjectFile } } = useProjects()
 
 
   const modal = useModal();
-  const dialog = useDialog();
 
   const [editOpen, setEditOpen] = useState(false);
 
@@ -283,7 +279,7 @@ const MasonryImage = memo(function MasonryImage({
             disabled={disabled}
             value={rating.value || 0}
             ratings={ratings}
-            onRatingChange={(value) => onRatingChange(value)}
+            onRatingChange={(value) => onRatingChange(value, rating.rating_id)}
             className="w-full flex justify-center"
           />
           {!!imageNotes.length && (

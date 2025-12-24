@@ -31,7 +31,7 @@ export async function generateMetadata({
       projectName
     );
 
-    const project = projectData;
+    const project = projectData.project;
 
     const images =
       projectData.images?.map((image: any) => image.thumbnail_url) ?? [];

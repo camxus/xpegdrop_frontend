@@ -35,6 +35,7 @@ import { Rating } from "@/lib/api/ratingsApi";
 import { blurFadeInVariants } from "@/lib/motion";
 import UpgradePage from "../upgrade/page";
 import { useStorage } from "@/hooks/api/useStorage";
+import { useMetadata } from "@/hooks/api/useMetadata";
 
 export default function UploadViewWrapper() {
   return (
@@ -77,6 +78,8 @@ export function UploadView() {
     getProject: { mutateAsync: getProject },
     addProjectFiles: { mutateAsync: addProjectFiles },
   } = useProjects();
+
+  const { batchCreateImageMetadata: { mutateAsync: batchCreateImageMetadata } } = useMetadata()
 
   const {
     ratings,
@@ -125,14 +128,14 @@ export function UploadView() {
 
   const handleNewFolders = useCallback(
     async (files: File[]) => {
-      if (user?.membership?.membership_id === "artist" && personalProjects.length >= 3) {
-        show({
-          title: "Upgrade",
-          content: () => <UpgradePage />,
-          containerProps: { className: "max-w-[90%]" }
-        })
-        return
-      }
+      // if (user?.membership?.membership_id === "artist" && personalProjects.length >= 3) {
+      //   show({
+      //     title: "Upgrade",
+      //     content: () => <UpgradePage />,
+      //     containerProps: { className: "max-w-[90%]" }
+      //   })
+      //   return
+      // }
 
       if (files.length === 0) return;
       const newFolders = await processFolderUpload(files);
@@ -309,16 +312,22 @@ export function UploadView() {
         {} as Record<string, EXIFData>
       );
 
-
       const imageFiles = uploadFolder.images.map((img) => img.file);
       const tempFileLocations = await uploadFiles(imageFiles);
+
       const project = await createProject({
         name: uploadFolder.name,
         tenant_id: selectedTenant,
         file_locations: tempFileLocations,
         storage_provider: storageProvider,
-        file_metadata: fileMetadata
       });
+
+      if (!!Object.keys(fileMetadata).length) {
+        await batchCreateImageMetadata({
+          project_id: project.project_id,
+          file_metadata: fileMetadata,
+        });
+      }
       await Promise.all(
         queuedRatings.map(async (rating) =>
           createRating({
@@ -530,7 +539,7 @@ export function UploadView() {
                         images={currentFolder.images}
                         ratings={[...queuedRatings, ...ratings]}
                         onImageClick={handleImageClick}
-                        onRatingChange={handleRatingChange}
+                        onRatingChange={(imageId, value, ratingId) => handleRatingChange(imageId, value, ratingId, currentProject)}
                         onImageHoverChange={handleImageHoverChange}
                         projectNotes={[]}
                         canEdit={user?.user_id === project?.user_id}

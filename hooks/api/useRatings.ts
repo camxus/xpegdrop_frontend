@@ -150,6 +150,7 @@ export function useRatings() {
       rating.value = value;
       rating.rating_id = ratingId;
 
+      console.log(rating, project)
       if (!project) {
         setQueuedRatings((queued) => {
           const existingIndex = queued.findIndex(

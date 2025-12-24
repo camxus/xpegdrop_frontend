@@ -3,7 +3,7 @@
 import { useAuth } from "@/hooks/api/useAuth";
 import { useTenants as useTenantsHook } from "@/hooks/api/useTenants";
 import { Tenant } from "@/lib/api/tenantsApi";
-import { createContext, useContext, useState, useMemo, ReactNode } from "react";
+import { createContext, useContext, useState, useMemo, ReactNode, useEffect } from "react";
 
 type TenantsContextValue = ReturnType<typeof useTenantsHook> & {
   isTenantAdmin: boolean;
@@ -31,6 +31,25 @@ export function TenantsProvider({ children }: { children: ReactNode }) {
   //     setCurrentTenant(tenants[0]);
   //   }
   // }, [tenants]);
+
+  useEffect(() => {
+    if (!currentTenant?.handle) return;
+
+    const hostname = window.location.hostname;
+    const parts = hostname.split(".");
+
+    // Replace subdomain (assumes structure: sub.domain.tld)
+    const newHostname = [
+      currentTenant.handle,
+      ...parts.slice(-2),
+    ].join(".");
+
+    const newUrl = `${window.location.protocol}//${newHostname}${window.location.pathname}${window.location.search}`;
+
+    if (newHostname !== hostname) {
+      window.location.href = newUrl;
+    }
+  }, [currentTenant]);
 
   const value = useMemo(
     () => ({
