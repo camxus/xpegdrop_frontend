@@ -553,6 +553,7 @@ export function UploadView() {
                       initialIndex={carouselStartIndex}
                       isOpen={isCarouselOpen}
                       onClose={handleCloseCarousel}
+                      onRatingChange={(imageId, value, ratingId) => handleRatingChange(imageId, value, ratingId, currentProject)}
                     />
                   </div>
                 </>

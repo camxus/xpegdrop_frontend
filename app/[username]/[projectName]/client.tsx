@@ -564,6 +564,7 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
                 initialIndex={carouselStartIndex}
                 isOpen={isCarouselOpen}
                 onClose={() => setIsCarouselOpen(false)}
+                onRatingChange={(imageId, value, ratingId) => handleRatingChange(imageId, value, ratingId, project)}
               />
             </>
           ) : (

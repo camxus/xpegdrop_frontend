@@ -26,6 +26,8 @@ interface ImageCarouselProps {
   initialIndex: number;
   isOpen: boolean;
   onClose: () => void;
+  onRatingChange?: (imageId: string, value: number, ratingId?: string) => void;
+
 }
 
 export function ImageCarousel({
@@ -35,6 +37,7 @@ export function ImageCarousel({
   initialIndex,
   isOpen,
   onClose,
+  onRatingChange
 }: ImageCarouselProps) {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [isLoading, setIsLoading] = useState(true);
@@ -127,6 +130,13 @@ export function ImageCarousel({
   const currentImage = images[currentIndex];
 
   const imageRatings = ratings.filter((rating) => rating.image_name === currentImage.name)
+
+  const handleRatingChange = useCallback(
+    (imageName: string, value: number, ratingId?: string) => {
+      onRatingChange?.(imageName, value, ratingId);
+    },
+    [onRatingChange]
+  );
 
   return (
     <AnimatePresence>
@@ -249,7 +259,10 @@ export function ImageCarousel({
                   <DetailsInfo
                     project={project}
                     image={currentImage}
-                    initialRatings={imageRatings}
+                    ratings={imageRatings}
+                    onRatingChange={(value, ratingId) =>
+                      handleRatingChange(currentImage.name, value, ratingId)
+                    }
                   />
                 </motion.div>
               )}
@@ -280,12 +293,19 @@ export function ImageCarousel({
 }
 
 
-function DetailsInfo({ project, image, initialRatings }: { project: Project, image: ImageFile, initialRatings: Rating[] }) {
+function DetailsInfo({
+  project,
+  image,
+  ratings,
+  onRatingChange
+}: {
+  project: Project,
+  image: ImageFile,
+  ratings: Rating[],
+  onRatingChange: (value: number, ratingId?: string) => void;
+}) {
   const { user } = useAuth()
   const { getImageMetadata } = useMetadata()
-  const { ratings: ratingsData, handleRatingChange } = useRatings()
-
-  const ratings = ratingsData || initialRatings
 
   const { data: imageMetadata } = getImageMetadata(project.project_id, image.name)
 
@@ -293,9 +313,6 @@ function DetailsInfo({ project, image, initialRatings }: { project: Project, ima
 
   const localRatings =
     project.project_id && (getLocalStorage(LOCAL_RATINGS_STORAGE_KEY) || {})[project.project_id];
-
-  const imageRatings = (image: ImageFile) =>
-    ratings?.filter((rating) => rating.image_name === image.name) || [];
 
   const rating = (image: ImageFile) =>
     (ratings?.find(
@@ -381,11 +398,9 @@ function DetailsInfo({ project, image, initialRatings }: { project: Project, ima
                 rating(image).value || 0
               }
               onRatingChange={(value) =>
-                handleRatingChange(
-                  image.name,
+                onRatingChange(
                   value,
-                  rating(image).rating_id,
-                  project
+                  rating(image).rating_id
                 )
               }
             />
