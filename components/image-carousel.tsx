@@ -17,6 +17,8 @@ import { useMetadata } from "@/hooks/api/useMetadata";
 import { getLocalStorage } from "@/lib/localStorage";
 import { staggeredContainerVariants } from "@/lib/motion";
 
+const MOBILE_HEIGHT = "80vh"
+
 interface ImageCarouselProps {
   project: Project
   images: ImageFile[];
@@ -202,7 +204,8 @@ export function ImageCarousel({
                     width={1200}
                     height={800}
                     className={cn(
-                      "max-w-full max-h-[80vh] w-auto h-auto object-contain transition-opacity duration-300",
+                      "max-w-full w-auto h-auto object-contain transition-opacity duration-300",
+                      `max-h-${MOBILE_HEIGHT}`,
                       isLoading ? "opacity-0" : "opacity-100"
                     )}
                     onLoad={() => setIsLoading(false)}
@@ -368,7 +371,7 @@ function DetailsInfo({ project, image, initialRatings }: { project: Project, ima
       transition={{ duration: 0.3 }}
     >
       {/* Metadata Display */}
-      <div className="w-90 max-w-[30vw] flex flex-col gap-2 p-4">
+      <div className={cn("w-90 md:max-w-[30vw] flex flex-col gap-2 p-4 overflow-scroll", `max-h-${MOBILE_HEIGHT}`)}>
         <div className="w-full flex justify-between break-all">
           <span className="text-muted-foreground">Rating</span>
           {/* Star Rating */}
