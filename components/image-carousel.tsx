@@ -32,7 +32,7 @@ export function ImageCarousel({
   onClose,
 }: ImageCarouselProps) {
   const { user } = useAuth()
-  const { handleRatingChange } = useRatings()
+
 
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [isLoading, setIsLoading] = useState(true);
@@ -118,6 +118,10 @@ export function ImageCarousel({
     else if (isRightSwipe) handlePrevious();
   };
 
+  const isMobile = typeof window !== "undefined"
+    ? window.matchMedia("(max-width: 768px)").matches
+    : false;
+
   const currentImage = images[currentIndex];
 
   const imageRatings = ratings.filter((rating) => rating.image_name === currentImage.name)
@@ -135,7 +139,7 @@ export function ImageCarousel({
             filter: { duration: 0.5 },
           }}
         >
-          <div className="flex">
+          <div className="h-full flex flex-col md:flex-row">
 
             {/* Header */}
             <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between p-4 bg-gradient-to-b from-black/50 to-transparent">
@@ -221,69 +225,32 @@ export function ImageCarousel({
             <AnimatePresence>
               {showInfo && (
                 <motion.div
-                  className="h-dvh backdrop-blur text-white p-4 overflow-y-auto border-l"
-                  initial={{ width: 0 }}
-                  animate={{ width: "30vw" }}
-                  exit={{ width: 0 }}
+                  className="h-dvh w-full backdrop-blur text-white p-4 overflow-y-auto border-l"
+                  initial={
+                    isMobile
+                      ? { height: 0 }
+                      : { width: 0 }
+                  }
+                  animate={
+                    isMobile
+                      ? { height: "60vh" }
+                      : { width: "30vw" }
+                  }
+                  exit={
+                    isMobile
+                      ? { height: "60vh" }
+                      : { width: 0 }
+                  }
                   transition={{ duration: 0.3 }}
                 >
-                  {/* Star Rating */}
-                  <StarRatingWithAvatars
-                    value={
-                      imageRatings.find((rating) => rating.user_id === user?.user_id)?.value || 0
-                    }
-                    onRatingChange={(value) =>
-                      handleRatingChange(
-                        currentImage.name,
-                        value,
-                        imageRatings.find((rating) => rating.user_id === user?.user_id)?.rating_id,
-                        project
-                      )
-                    }
+                  <DetailsInfo
+                    project={project}
+                    image={currentImage}
+                    ratings={ratings}
                   />
-
-                  {/* Metadata Display */}
-                  {currentImage.metadata && (
-                    <div className="mt-4 space-y-2 text-sm">
-                      {[
-                        "Make",
-                        "Model",
-                        "Orientation",
-                        "DateTime",
-                        "ISO",
-                        "ShutterSpeedValue",
-                        "FNumber",
-                        "ApertureValue",
-                        "ExifImageHeight",
-                        "ExifImageWeight"
-                      ].map((key) => {
-                        const value = (currentImage.metadata as EXIFData)[key as keyof EXIFData];
-                        if (value === undefined || value === null) return null;
-
-                        let displayValue: string | number | number[] | Date | Record<string, any> = value;
-
-                        if (value instanceof Date) {
-                          displayValue = value.toLocaleString();
-                        } else if (Array.isArray(value)) {
-                          displayValue = value.join(", ");
-                        } else if (typeof value === "object" && value !== null) {
-                          displayValue = JSON.stringify(value, null, 2); // nicely formatted JSON
-                        }
-
-                        return (
-                          <div key={key} className="flex justify-between break-all">
-                            <span className="font-medium">{key}:</span>
-                            <span>{displayValue as string}</span>
-                          </div>
-                        );
-
-                      })}
-                    </div>
-                  )}
                 </motion.div>
               )}
             </AnimatePresence>
-
             {/* Bottom navigation dots */}
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-background/50 rounded-full px-4 py-2">
               {images.map((_, idx) => (
@@ -307,4 +274,68 @@ export function ImageCarousel({
       )}
     </AnimatePresence>
   );
+}
+
+
+function DetailsInfo({ project, image, ratings }: { project: Project, image: ImageFile, ratings: Rating[] }) {
+  const { user } = useAuth()
+  const { handleRatingChange } = useRatings()
+
+  return (
+    <div>
+      {/* Star Rating */}
+      <StarRatingWithAvatars
+        value={
+          ratings.find((rating) => rating.user_id === user?.user_id)?.value || 0
+        }
+        onRatingChange={(value) =>
+          handleRatingChange(
+            image.name,
+            value,
+            ratings.find((rating) => rating.user_id === user?.user_id)?.rating_id,
+            project
+          )
+        }
+      />
+
+      {/* Metadata Display */}
+      {image.metadata && (
+        <div className="mt-4 space-y-2 text-sm">
+          {[
+            "Make",
+            "Model",
+            "Orientation",
+            "DateTime",
+            "ISO",
+            "ShutterSpeedValue",
+            "FNumber",
+            "ApertureValue",
+            "ExifImageHeight",
+            "ExifImageWeight"
+          ].map((key) => {
+            const value = (image.metadata as EXIFData)[key as keyof EXIFData];
+            if (value === undefined || value === null) return null;
+
+            let displayValue: string | number | number[] | Date | Record<string, any> = value;
+
+            if (value instanceof Date) {
+              displayValue = value.toLocaleString();
+            } else if (Array.isArray(value)) {
+              displayValue = value.join(", ");
+            } else if (typeof value === "object" && value !== null) {
+              displayValue = JSON.stringify(value, null, 2); // nicely formatted JSON
+            }
+
+            return (
+              <div key={key} className="flex justify-between break-all">
+                <span className="font-medium">{key}:</span>
+                <span>{displayValue as string}</span>
+              </div>
+            );
+
+          })}
+        </div>
+      )}
+    </div>
+  )
 }
