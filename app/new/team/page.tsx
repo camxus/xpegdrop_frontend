@@ -169,7 +169,7 @@ export default function NewTeamWizard() {
         </div>
     }
 
-    if (user.membership?.membership_id !== "agency") {
+    if (user?.membership?.membership_id !== "agency") {
         return <UpgradePage />
     }
 
