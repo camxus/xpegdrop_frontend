@@ -22,7 +22,7 @@ export const mockTenantProjects: Project[] = [
       { user_id: "user_001", role: "admin" },
       { user_id: "user_002", role: "editor" }
     ],
-    status: "initiated",
+    status: "created",
   },
   {
     project_id: "proj_002",
@@ -63,6 +63,6 @@ export const mockTenantProjects: Project[] = [
       { user_id: "user_005", role: "admin" },
       { user_id: "user_006", role: "editor" }
     ],
-    status: "initiated",
+    status: "created",
   },
 ];

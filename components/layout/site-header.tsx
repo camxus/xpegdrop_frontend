@@ -601,6 +601,7 @@ export function PersonalSidebarItems({
           initial="visible"
           animate={isSidebarCollapsed ? "hidden" : "visible"}
           className="whitespace-nowrap overflow-hidden flex-1"
+          style={{ textOverflow: "ellipsis", maxWidth: "calc(100% - 3rem)" }}
         >
           {item.label}
         </motion.span>
@@ -696,6 +697,8 @@ export function TenantSidebarItems({
         const userProjects = tenantProjectsByUser[userId];
         const userInfo = tenantUsers.find((u) => u?.user_id === userId);
 
+
+
         const userProjectItems = userProjects
           .filter((project) => project.status === "created")
           .filter((project) =>
@@ -724,9 +727,10 @@ export function TenantSidebarItems({
             initial={{ opacity: 0, y: -4 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.15, delay: index * 0.05 }}
+            className="w-full"
           >
             <AccordionItem value={userId}>
-              <AccordionTrigger className={cn("flex items-center gap-2 ", pathname.includes(userInfo.username)) ? "bg-white/5" : "hover:bg-white/10"}>
+              <AccordionTrigger className={cn("flex items-center gap-2 p-0", pathname.includes(userInfo?.username) ? "bg-white/5" : "hover:bg-white/10")}>
                 {/* Avatar */}
                 <motion.div
                   initial={{ opacity: 1 }}
@@ -734,9 +738,9 @@ export function TenantSidebarItems({
                   className="flex-shrink-0"
                 >
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={userInfo.avatar as string} />
+                    <AvatarImage src={userInfo?.avatar as string} />
                     <AvatarFallback className="text-sm">
-                      {getInitials(userInfo.first_name || "", userInfo.last_name || "")}
+                      {getInitials(userInfo?.first_name || "", userInfo?.last_name || "")}
                     </AvatarFallback>
                   </Avatar>
                 </motion.div>
@@ -749,9 +753,9 @@ export function TenantSidebarItems({
                     width: isSidebarCollapsed ? 0 : "auto",
                   }}
                   transition={{ duration: 0.2 }}
-                  className="whitespace-nowrap overflow-hidden flex-1"
+                  className="whitespace-nowrap overflow-hidden flex-1 truncate"
                 >
-                  {userInfo.first_name} {userInfo.last_name}
+                  {userInfo?.first_name} {userInfo?.last_name}
                 </motion.span>
               </AccordionTrigger>
 
@@ -777,26 +781,24 @@ export function TenantSidebarItems({
                         variants={{
                           visible: (i: number) => ({
                             opacity: 1,
-                            display: "block",
-                            transition: {
-                              opacity: { duration: 0.1, delay: i * 0.05 },
-                            },
+                            display: "inline-block",
+                            transition: { opacity: { duration: 0.1, delay: i * 0.05 } },
                           }),
                           hidden: {
                             opacity: 0,
-                            display: "none",
+                            display: "inline-block",
                             transition: { opacity: { duration: 0.1 } },
                           },
                         }}
                         initial="visible"
                         animate="visible"
-                        className="whitespace-nowrap overflow-hidden flex-1"
+                        className="whitespace-nowrap overflow-hidden text-ellipsis flex-1 min-w-0"
+                        style={{ textOverflow: "ellipsis", maxWidth: "calc(100% - 3rem)" }}
                       >
                         {item.label}
                       </motion.span>
 
-                      {
-                        isAdmin || item.user_id === userId &&
+                      {(isAdmin || item.user_id === userId) && (
                         <motion.button
                           onClick={(e) => {
                             e.preventDefault();
@@ -809,7 +811,7 @@ export function TenantSidebarItems({
                         >
                           <X className="w-4 h-4" />
                         </motion.button>
-                      }
+                      )}
                     </Link>
                   ))}
               </AccordionContent>
