@@ -15,6 +15,8 @@ import { getInitials } from "@/lib/utils";
 import { useDialog } from "@/hooks/use-dialog";
 import { TenantUsersTable } from "@/app/preferences/tenant/[handle]/page";
 import { Member, Tenant } from "@/lib/api/tenantsApi";
+import { useAuth } from "@/hooks/api/useAuth";
+import UpgradePage from "@/app/upgrade/page";
 
 const fadeInVariants = {
     hidden: { opacity: 0, y: 10 },
@@ -22,6 +24,7 @@ const fadeInVariants = {
 };
 
 export default function NewTeamWizard() {
+    const { user } = useAuth();
     const { show, hide } = useDialog();
     const {
         createTenant: { mutateAsync: createTenant },
@@ -155,6 +158,20 @@ export default function NewTeamWizard() {
             ,
         }));
     }, [tenantUsers])
+
+    if (!user) {
+        <div className="w-full h-full">
+            <div className="flex items-center justify-center h-[80vh]">
+                <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                </div>
+            </div>
+        </div>
+    }
+
+    if (user.membership?.membership_id !== "agency") {
+        return <UpgradePage />
+    }
 
     return (
         <div className="p-8 max-w-4xl mx-auto">
