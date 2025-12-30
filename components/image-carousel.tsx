@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { X, ChevronLeft, ChevronRight, Info } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Info, MessageSquareText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { EXIFData, ImageFile } from "@/types";
 import { Rating } from "@/lib/api/ratingsApi";
@@ -16,6 +16,8 @@ import { Project } from "@/types/project";
 import { useMetadata } from "@/hooks/api/useMetadata";
 import { getLocalStorage } from "@/lib/localStorage";
 import { staggeredContainerVariants } from "@/lib/motion";
+import { NotesModal } from "./notes-modal";
+import { useModal } from "@/hooks/use-modal";
 
 const MOBILE_HEIGHT = "80vh"
 
@@ -39,6 +41,7 @@ export function ImageCarousel({
   onClose,
   onRatingChange
 }: ImageCarouselProps) {
+  const modal = useModal()
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [isLoading, setIsLoading] = useState(true);
   const [touchStart, setTouchStart] = useState<number | null>(null);
@@ -95,6 +98,19 @@ export function ImageCarousel({
     },
     [isOpen, onClose, handlePrevious, handleNext]
   );
+
+  const handleShowNotes = useCallback(() => {
+    if (!currentImage) return
+
+    modal.show({
+      title: `Notes`,
+      content: () => (
+        <NotesModal projectId={project.project_id} imageName={currentImage.name} />
+      ),
+      height: "400px",
+      width: "500px",
+    });
+  }, []);
 
   const handleShowInfo = useCallback(() => {
     setShowInfo((prev) => !prev); // toggle info panel
@@ -162,6 +178,14 @@ export function ImageCarousel({
                 </p>
               </div>
               <div className="flex gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleShowNotes}
+                  className="text-white hover:bg-white/20"
+                >
+                  <MessageSquareText className="h-6 w-6" />
+                </Button>
                 <Button
                   variant="ghost"
                   size="icon"
