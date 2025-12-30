@@ -163,7 +163,7 @@ export function ShareDialog({ project, onClose }: ShareDialogProps) {
       <AnimatePresence initial={false}>
         {!isPublic && (
           <motion.div
-            key="emails"
+            key="approved"
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
@@ -171,166 +171,170 @@ export function ShareDialog({ project, onClose }: ShareDialogProps) {
               opacity: { duration: 0.1 },
               height: { duration: 0.3 },
             }}
-            className="space-y-2 overflow-hidden"
           >
-            <Label>Approved Emails</Label>
-            <div className="flex gap-2">
-              <Input
-                placeholder="Add email..."
-                value={newEmail}
-                onChange={(e) => setNewEmail(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleAddEmail()}
-              />
-              <Button type="button" size="icon" onClick={handleAddEmail}>
-                <Plus className="h-4 w-4" />
+            <div
+              className="space-y-2 overflow-hidden"
+            >
+              <Label>Approved Emails</Label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Add email..."
+                  value={newEmail}
+                  onChange={(e) => setNewEmail(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleAddEmail()}
+                />
+                <Button type="button" size="icon" onClick={handleAddEmail}>
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
+              {emails.length > 0 && (
+                <ul className="space-y-1">
+                  {emails.map((email) => (
+                    <li
+                      key={email}
+                      className="flex items-center justify-between rounded-md border p-2 text-sm"
+                    >
+                      {email}
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                        onClick={() => handleRemoveEmail(email)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            
+            {/* Approved users */}
+            <div className="flex flex-col gap-2">
+              <Label>Project Users</Label>
+              <div className="space-y-1 py-2">
+                {approvedUsers.map((projectUser) => {
+                  const user = projectUsers.find(u => u.user_id === projectUser.user_id);
+                  return (
+                    <div key={projectUser.user_id} className="flex items-center justify-between px-2 rounded">
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-6 w-6">
+                          <AvatarImage src={user?.avatar as string || ""} />
+                          <AvatarFallback>{getInitials(user?.first_name || "", user?.last_name || "")}</AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm">{user?.username || projectUser.user_id}</span>
+                      </div>
+                      <Button size="icon" variant="ghost" onClick={() => handleRemoveApprovedUser(projectUser.user_id)}>
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  );
+                })}
+              </div>
+              <Button onClick={
+                () => show({
+                  title: "Add Project User",
+                  content: () => <AddUserDialog />,
+                  actions: ({
+                    selectedUser, isLoading, setSelectedUser, setSearch
+                  }) => {
+
+                    const handleAddUser = () => {
+                      if (!selectedUser) return;
+                      setSelectedUser(null);
+                      setSearch("");
+                      handleAddApprovedUser(selectedUser.user_id)
+                    };
+
+                    return (
+                      <Button onClick={handleAddUser} disabled={!selectedUser || isLoading || selectedUser.user_id === user?.user_id} className="w-full">
+                        Add User
+                      </Button>
+                    )
+                  },
+                })
+              } size="sm" className="mt-1 self-end">
+                <Plus className="w-4 h-4 mr-2" /> Add User
               </Button>
             </div>
-            {emails.length > 0 && (
-              <ul className="space-y-1">
-                {emails.map((email) => (
-                  <li
-                    key={email}
-                    className="flex items-center justify-between rounded-md border p-2 text-sm"
-                  >
-                    {email}
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                      onClick={() => handleRemoveEmail(email)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            )}
+
+            {/* Tenant users */}
+            {
+              project.tenant_id && (
+                <div className="flex flex-col gap-2">
+                  <Label>Team Users with Access</Label>
+                  <div className="space-y-1 py-2">
+                    {tenantUsers.map((tenantUser) => {
+                      const user = projectUsers.find(u => u.user_id === tenantUser?.user_id);
+                      return (
+                        <div key={tenantUser.user_id} className="flex items-center justify-between px-2 rounded">
+                          <div className="flex items-center gap-2">
+                            <Avatar className="h-6 w-6">
+                              <AvatarImage src={user?.avatar as string || ""} />
+                              <AvatarFallback>{getInitials(user?.first_name || "", user?.last_name || "")}</AvatarFallback>
+                            </Avatar>
+                            <span className="text-sm">{user?.username || tenantUser.user_id}</span>
+                          </div>
+
+                          <Select
+                            value={tenantUser.role}
+                            onValueChange={(value) =>
+                              setTenantUsers((prev) =>
+                                prev.map((user) =>
+                                  user.user_id === tenantUser.user_id
+                                    ? { ...tenantUser, role: value }
+                                    : user
+                                )
+                              )
+                            }
+                          >
+                            <SelectTrigger size="sm" className="w-[120px]">
+                              <SelectValue placeholder="Role" />
+                            </SelectTrigger>
+
+                            <SelectContent>
+                              <SelectItem value="editor">Editor</SelectItem>
+                              <SelectItem value="viewer">Viewer</SelectItem>
+                            </SelectContent>
+                          </Select>
+
+                          <Button size="icon" variant="ghost" onClick={() => handleRemoveTenantUser(tenantUser.user_id)}>
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <Button onClick={() => show({
+                    title: "Add Team User",
+                    content: () => <AddUserDialog isTenantUser withRole />,
+                    actions: ({
+                      role, selectedUser, isLoading, setSelectedUser, setSearch
+                    }) => {
+
+                      const handleAddUser = () => {
+                        if (!selectedUser) return;
+                        setSelectedUser(null);
+                        setSearch("");
+                        handleAddTenantUser(selectedUser.user_id, role)
+                      };
+
+                      return (
+                        <Button onClick={handleAddUser} disabled={!selectedUser || isLoading || selectedUser.user_id === user?.user_id} className="w-full">
+                          Add Team User
+                        </Button>
+                      )
+                    },
+                  })} size="sm" className="mt-1 self-end">
+                    <Plus className="w-4 h-4 mr-2" /> Add Team User
+                  </Button>
+                </div>
+              )
+            }
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Approved users */}
-      <div className="flex flex-col gap-2">
-        <Label>Project Users</Label>
-        <div className="space-y-1 py-2">
-          {approvedUsers.map((projectUser) => {
-            const user = projectUsers.find(u => u.user_id === projectUser.user_id);
-            return (
-              <div key={projectUser.user_id} className="flex items-center justify-between px-2 rounded">
-                <div className="flex items-center gap-2">
-                  <Avatar className="h-6 w-6">
-                    <AvatarImage src={user?.avatar as string || ""} />
-                    <AvatarFallback>{getInitials(user?.first_name || "", user?.last_name || "")}</AvatarFallback>
-                  </Avatar>
-                  <span className="text-sm">{user?.username || projectUser.user_id}</span>
-                </div>
-                <Button size="icon" variant="ghost" onClick={() => handleRemoveApprovedUser(projectUser.user_id)}>
-                  <X className="w-4 h-4" />
-                </Button>
-              </div>
-            );
-          })}
-        </div>
-        <Button onClick={
-          () => show({
-            title: "Add Project User",
-            content: () => <AddUserDialog />,
-            actions: ({
-              selectedUser, isLoading, setSelectedUser, setSearch
-            }) => {
-
-              const handleAddUser = () => {
-                if (!selectedUser) return;
-                setSelectedUser(null);
-                setSearch("");
-                handleAddApprovedUser(selectedUser.user_id)
-              };
-
-              return (
-                <Button onClick={handleAddUser} disabled={!selectedUser || isLoading || selectedUser.user_id === user?.user_id} className="w-full">
-                  Add User
-                </Button>
-              )
-            },
-          })
-        } size="sm" className="mt-1 self-end">
-          <Plus className="w-4 h-4 mr-2" /> Add User
-        </Button>
-      </div>
-
-      {/* Tenant users */}
-      {
-        project.tenant_id && (
-          <div className="flex flex-col gap-2">
-            <Label>Team Users with Access</Label>
-            <div className="space-y-1 py-2">
-              {tenantUsers.map((tenantUser) => {
-                const user = projectUsers.find(u => u.user_id === tenantUser?.user_id);
-                return (
-                  <div key={tenantUser.user_id} className="flex items-center justify-between px-2 rounded">
-                    <div className="flex items-center gap-2">
-                      <Avatar className="h-6 w-6">
-                        <AvatarImage src={user?.avatar as string || ""} />
-                        <AvatarFallback>{getInitials(user?.first_name || "", user?.last_name || "")}</AvatarFallback>
-                      </Avatar>
-                      <span className="text-sm">{user?.username || tenantUser.user_id}</span>
-                    </div>
-
-                    <Select
-                      value={tenantUser.role}
-                      onValueChange={(value) =>
-                        setTenantUsers((prev) =>
-                          prev.map((user) =>
-                            user.user_id === tenantUser.user_id
-                              ? { ...tenantUser, role: value }
-                              : user
-                          )
-                        )
-                      }
-                    >
-                      <SelectTrigger size="sm" className="w-[120px]">
-                        <SelectValue placeholder="Role" />
-                      </SelectTrigger>
-
-                      <SelectContent>
-                        <SelectItem value="editor">Editor</SelectItem>
-                        <SelectItem value="viewer">Viewer</SelectItem>
-                      </SelectContent>
-                    </Select>
-
-                    <Button size="icon" variant="ghost" onClick={() => handleRemoveTenantUser(tenantUser.user_id)}>
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                );
-              })}
-            </div>
-            <Button onClick={() => show({
-              title: "Add Team User",
-              content: () => <AddUserDialog isTenantUser withRole />,
-              actions: ({
-                role, selectedUser, isLoading, setSelectedUser, setSearch
-              }) => {
-
-                const handleAddUser = () => {
-                  if (!selectedUser) return;
-                  setSelectedUser(null);
-                  setSearch("");
-                  handleAddTenantUser(selectedUser.user_id, role)
-                };
-
-                return (
-                  <Button onClick={handleAddUser} disabled={!selectedUser || isLoading || selectedUser.user_id === user?.user_id} className="w-full">
-                    Add Team User
-                  </Button>
-                )
-              },
-            })} size="sm" className="mt-1 self-end">
-              <Plus className="w-4 h-4 mr-2" /> Add Team User
-            </Button>
-          </div>
-        )
-      }
 
       {/* Public toggle */}
       <div className="flex items-center justify-between border rounded-lg p-3">
