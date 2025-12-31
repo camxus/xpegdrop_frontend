@@ -37,6 +37,9 @@ import { useUser } from "@/hooks/api/useUser";
 import { useTenants } from "@/components/tenants-provider";
 import UpgradePage from "@/app/upgrade/page";
 import { useStorage } from "@/hooks/api/useStorage";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 interface IPublicProjectPage {
   tenantHandle: string | null
@@ -94,6 +97,7 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
   const [images, setImages] = useState<
     (ImageFile & { preview_url?: string })[]
   >([]);
+  const [selectedImages, setSelectedImages] = useState<Set<ImageFile["id"]>>(new Set());
   const [filteredImages, setFilteredImages] = useState<
     (ImageFile & { preview_url?: string })[]
   >([]);
@@ -250,12 +254,18 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
   };
 
   const handleDownload = async () => {
-    if (!project || images.length === 0) return;
+    if (!project || selectedImages.size === 0) return;
+
+    const selected = images.filter((image) =>
+      selectedImages.has(image.id)
+    );
+
+    if (selected.length === 0) return;
 
     downloadFiles(
-      images.map((image) => ({
+      selected.map((image) => ({
         name: image.name,
-        url: image.preview_url + "?dl=1" || "",
+        url: `${image.preview_url}?dl=1`,
       })),
       project.name
     );
@@ -523,7 +533,7 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
                   {(project.can_download || isProjectUser || isTenantMember) && (
                     <Button disabled={isDownloading} onClick={handleDownload}>
                       <Download className="h-4 w-4" />
-                      Download
+                      Download {!!selectedImages.size && "Selected"}
                     </Button>
                   )}
                   {project.share_url && canEdit && (
@@ -542,12 +552,37 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
                 onFilterChange={handleFilterChange}
               />
 
+              <div className="flex items-center justify-end p-4 gap-2">
+                <Checkbox
+                  id="select-all"
+                  className="cursor-pointer"
+                  checked={
+                    images.length > 0 &&
+                    selectedImages.size === images.length
+                  }
+                  onClick={(e) => {
+                    setSelectedImages((selected) =>
+                      selected.size !== images.length
+                        ? new Set(images.map((img) => img.id))
+                        : new Set()
+                    );
+                  }}
+                />
+                <Label
+                  htmlFor="select-all"
+                  className={cn("cursor-pointer select-none transition-all", !!selectedImages.size ? "text-muted-foreground" : "text-foreground")}
+                >
+                  Select All
+                </Label>
+              </div>
+
               <ImagesMansonry
                 projectId={project.project_id}
                 projectNotes={projectNotes}
                 ratingDisabled={!project}
                 images={filteredImages}
                 ratings={ratings}
+                selectedImages={selectedImages}
                 onImageClick={(i) => {
                   setCarouselStartIndex(i);
                   setIsCarouselOpen(true);
@@ -556,6 +591,7 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
                 onImageHoverChange={(hover) => setIsHovered(hover)}
                 onDuplicateImage={handleDuplicateImage}
                 canEdit={canEdit}
+                onSelectChange={setSelectedImages}
               />
               <ImageCarousel
                 project={project}

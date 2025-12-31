@@ -36,10 +36,12 @@ interface ImagesMansonryProps {
   ratings?: Rating[];
   className?: string;
   canEdit?: boolean;
+  selectedImages?: Set<string>
   onImageClick?: (imageIndex: number) => void;
   onImageHoverChange?: (isHovering: boolean) => void;
   onRatingChange?: (imageId: string, value: number, ratingId?: string) => void;
   onDuplicateImage?: (image: ImageFile) => void;
+  onSelectChange?: (value: Set<ImageFile["id"]>) => void;
 }
 
 export function ImagesMansonry({
@@ -50,10 +52,12 @@ export function ImagesMansonry({
   ratings,
   className,
   canEdit,
+  selectedImages,
   onImageClick,
   onImageHoverChange,
   onRatingChange,
   onDuplicateImage,
+  onSelectChange,
 }: ImagesMansonryProps) {
   const { user } = useAuth();
 
@@ -107,6 +111,20 @@ export function ImagesMansonry({
     [onDuplicateImage]
   );
 
+  const hanldeSelectImage = useCallback(
+    (image: ImageFile) => {
+      if (!selectedImages) return
+      if (!selectedImages.has(image.id)) {
+        selectedImages.add(image.id)
+      } else {
+        selectedImages.delete(image.id)
+      }
+      onSelectChange?.(selectedImages);
+    },
+    [onSelectChange, selectedImages]
+  );
+
+
   const localRatings =
     projectId && (getLocalStorage(LOCAL_RATINGS_STORAGE_KEY) || {})[projectId];
 
@@ -138,6 +156,7 @@ export function ImagesMansonry({
           isHovered={hoveredImage === image.id}
           isLoaded={loadedImages.has(image.id)}
           canEdit={canEdit}
+          isSelected={!!selectedImages?.has(image.id)}
           onHover={() => handleMouseEnter(image.id)}
           onLeave={handleMouseLeave}
           onClick={() => handleImageClick(index)}
@@ -146,6 +165,7 @@ export function ImagesMansonry({
             handleRatingChange(image.name, value, ratingId)
           }
           onDuplicateImage={handleDuplicateImage}
+          onToggleSelect={hanldeSelectImage}
         />
       ))}
     </MasonryGrid>
@@ -163,12 +183,14 @@ const MasonryImage = memo(function MasonryImage({
   ratings,
   rating,
   canEdit,
+  isSelected,
   onHover,
   onLeave,
   onClick,
   onLoad,
   onRatingChange,
   onDuplicateImage,
+  onToggleSelect,
 }: {
   projectId: string;
   imageNotes: Note[];
@@ -180,12 +202,14 @@ const MasonryImage = memo(function MasonryImage({
   isHovered: boolean;
   isLoaded: boolean;
   canEdit?: boolean;
+  isSelected: boolean;
   onHover: () => void;
   onLeave: () => void;
   onClick: () => void;
   onLoad: () => void;
   onRatingChange: (value: number, ratingId?: string) => void;
   onDuplicateImage: (image: ImageFile) => void;
+  onToggleSelect: (image: ImageFile) => void;
 }) {
   const { removeProjectFile: { mutateAsync: removeProjectFile } } = useProjects()
 
@@ -221,7 +245,11 @@ const MasonryImage = memo(function MasonryImage({
         <ContextMenu>
           <ContextMenuTrigger asChild>
             <div
-              className="group relative overflow-hidden rounded-lg bg-muted cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-xl"
+              className={cn(
+                "group relative overflow-hidden rounded-lg bg-muted cursor-pointer transition-all duration-300 hover:shadow-xl",
+                isHovered && "hover:scale-[1.02]",
+                isSelected && "scale-[0.96] ring-2 ring-foreground"
+              )}
               onMouseEnter={onHover}
               onMouseLeave={onLeave}
               onClick={onClick}
@@ -254,6 +282,9 @@ const MasonryImage = memo(function MasonryImage({
             </div>
           </ContextMenuTrigger>
           <ContextMenuContent>
+            <ContextMenuItem onClick={() => onToggleSelect(image)}>
+              {isSelected ? "Deselect" : "Select"}
+            </ContextMenuItem>
             {/* <ContextMenuItem onClick={() => setEditOpen(true)}>
               Edit
             </ContextMenuItem> */}
