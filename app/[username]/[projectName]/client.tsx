@@ -557,13 +557,13 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
                   id="select-all"
                   className="cursor-pointer"
                   checked={
-                    images.length > 0 &&
-                    selectedImages.size === images.length
+                    filteredImages.length > 0 &&
+                    selectedImages.size === filteredImages.length
                   }
                   onClick={(e) => {
                     setSelectedImages((selected) =>
-                      selected.size !== images.length
-                        ? new Set(images.map((img) => img.id))
+                      selected.size !== filteredImages.length
+                        ? new Set(filteredImages.map((img) => img.id))
                         : new Set()
                     );
                   }}
