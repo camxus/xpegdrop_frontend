@@ -19,6 +19,7 @@ import { getInitials } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { useDialog } from "@/hooks/use-dialog";
 import UnauthorizedNoteDialog, { UnauthorizedNoteDialogActions } from "./unauthorized-note-dialog";
+import { Separator } from "./ui/seperator";
 
 interface NotesViewProps {
   projectId: string;
@@ -148,6 +149,33 @@ export function NotesModal({ projectId, imageName }: NotesViewProps) {
         {sortedKeys.map((timeKey) => {
           const time = new Date(timeKey);
           const notesInGroup = groupedNotes[timeKey];
+
+          const getAuthorKey = (note: Note) =>
+            note.user_id.includes("anonymous")
+              ? `anonymous:${note.author?.first_name}-${note.author?.last_name}`
+              : note.user_id;
+
+          const groupByConsecutiveAuthor = (notes: Note[]) => {
+            const groups: Note[][] = [];
+
+            notes.forEach((note) => {
+              const lastGroup = groups[groups.length - 1];
+
+              if (
+                lastGroup &&
+                getAuthorKey(lastGroup[0]) === getAuthorKey(note)
+              ) {
+                lastGroup.push(note);
+              } else {
+                groups.push([note]);
+              }
+            });
+
+            return groups;
+          };
+
+          const authorGroups = groupByConsecutiveAuthor(notesInGroup);
+
           return (
             <div key={timeKey} className="flex flex-col gap-2">
               {/* Time Header */}
@@ -155,57 +183,84 @@ export function NotesModal({ projectId, imageName }: NotesViewProps) {
                 {formatDistanceToNow(time, { addSuffix: true })}
               </p>
 
-              {/* Notes in this group */}
-              {notesInGroup.map((note: Note) => (
-                <div
-                  key={note.note_id}
-                  className="relative p-2 flex flex-col gap-2"
-                >
-                  <div className="flex justify-between items-start gap-2">
-                    <Avatar className="h-6 w-6 text-xs">
-                      <AvatarImage
-                        src={(getNoteUser(note)?.avatar as string) || ""}
-                        alt={getNoteUser(note)?.username}
-                      />
-                      <AvatarFallback>
-                        {getInitials(
-                          note.user_id.includes("anonymous") ? note.author?.first_name : getNoteUser(note)?.first_name || "",
-                          note.user_id.includes("anonymous") ? note.author?.last_name : getNoteUser(note)?.last_name || ""
-                        )}
-                      </AvatarFallback>
-                    </Avatar>
+              {authorGroups.map((group, groupIndex) => {
+                const firstNote = group[0];
+
+                const isMe = firstNote.user_id === user?.user_id;
+                const isAnonymous = firstNote.user_id.includes("anonymous");
+
+                const firstName = isAnonymous
+                  ? firstNote.author?.first_name
+                  : getNoteUser(firstNote)?.first_name;
+
+                const lastName = isAnonymous
+                  ? firstNote.author?.last_name
+                  : getNoteUser(firstNote)?.last_name;
+
+                return (
+                  <div
+                    key={`${firstNote.note_id}-${groupIndex}`}
+                    className="flex flex-col gap-2 bg-background rounded-sm p-2 shadow-xl border-foreground/80"
+                  >
+                    {/* Author header */}
+                    <div className="flex items-start gap-2">
+                      <Avatar className="h-6 w-6 text-xs">
+                        <AvatarImage
+                          src={(getNoteUser(firstNote)?.avatar as string) || ""}
+                        />
+                        <AvatarFallback>
+                          {getInitials(firstName || "", lastName || "")}
+                        </AvatarFallback>
+                      </Avatar>
+
+                      <p className="text-sm font-medium">
+                        {isMe ? "You" : `${firstName ?? ""} ${lastName ?? ""}`}
+                      </p>
+                    </div>
+
+                    {/* Notes */}
+                    <div className="flex flex-col gap-0 py-2 pl-8">
+                      {group.map((note, index) => (
+                        <div key={note.note_id} className="relative">
+                          <p className="whitespace-pre-wrap text-sm">
+                            {note.content}
+                          </p>
 
 
-                    <p className="flex-1 p-0.5 whitespace-pre-wrap text-sm">
-                      {note.user_id.includes("anonymous") ? note.author?.first_name : getNoteUser(note)?.first_name} {note.user_id.includes("anonymous") ? note.author?.last_name : getNoteUser(note)?.last_name}
-                    </p>
+                          {index < group.length - 1 && (
+                            <Separator className="my-3" />
+                          )}
 
-                    {user?.user_id === note.user_id && (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="ml-auto mr-2">
-                            <MoreHorizontal size={10} />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent sideOffset={4}>
-                          <DropdownMenuItem onSelect={() => handleEdit(note)}>
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onSelect={() => handleDelete(note.note_id!)}
-                          >
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
+                          {isMe && (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="absolute right-0 -top-2"
+                                >
+                                  <MoreHorizontal size={10} />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent sideOffset={4}>
+                                <DropdownMenuItem onSelect={() => handleEdit(note)}>
+                                  Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onSelect={() => handleDelete(note.note_id!)}
+                                  className="text-destructive-foreground"
+                                >
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
-
-                  <p className="flex-1 p-0.5 whitespace-pre-wrap text-sm">
-                    {note.content}
-                  </p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           );
         })}

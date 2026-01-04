@@ -134,7 +134,7 @@ export function ModalProvider({ children }: { children: ReactNode }) {
           />
 
           {/* Modal Panel */}
-          <div className={cn("bg-background border-white/10",
+          <div className={cn("bg-background/80 backdrop-blur-lg border-white/10",
             position === Position.TOP && "border-b",
             position === Position.BOTTOM && "border-t",
             position === Position.LEFT && "border-r",
