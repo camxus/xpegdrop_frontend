@@ -2,7 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
-import { ImagesMansonry } from "@/components/images-mansonry";
+import { ImagesMasonry } from "@/components/images-masonry";
 import { ImageCarousel } from "@/components/image-carousel";
 import { useProjects } from "@/hooks/api/useProjects";
 import { useRatings } from "@/hooks/api/useRatings";
@@ -576,7 +576,7 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
                 </Label>
               </div>
 
-              <ImagesMansonry
+              <ImagesMasonry
                 projectId={project.project_id}
                 projectNotes={projectNotes}
                 ratingDisabled={!project}

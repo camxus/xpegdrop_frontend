@@ -5,7 +5,7 @@ import { useState, useCallback, useEffect, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FileUploader } from "@/components/ui/file-uploader";
-import { ImagesMansonry } from "@/components/images-mansonry";
+import { ImagesMasonry } from "@/components/images-masonry";
 import { FolderNavigation } from "@/components/folder-navigation";
 import { EditableTitle } from "@/components/editable-title";
 import { useToast } from "@/hooks/use-toast";
@@ -534,7 +534,7 @@ export function UploadView() {
                         </Button>
                       </div>
 
-                      <ImagesMansonry
+                      <ImagesMasonry
                         projectId={project?.project_id || ""}
                         images={currentFolder.images}
                         ratings={[...queuedRatings, ...ratings]}

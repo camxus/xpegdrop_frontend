@@ -11,7 +11,7 @@ function randomHeight() {
   return heights[Math.floor(Math.random() * heights.length)];
 }
 
-export function ImagesMansonryBackground() {
+export function ImagesMasonryBackground() {
   // Motion values for mouse position (percent)
   const x = useMotionValue(50);
   const y = useMotionValue(50);

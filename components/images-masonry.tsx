@@ -26,9 +26,9 @@ import { useUser } from "@/hooks/api/useUser";
 import { useDialog } from "@/hooks/use-dialog";
 import UnauthorizedRatingDialog, { UnauthorizedRatingDialogActions } from "./unauthorized-rating-dialog";
 import { useProjects } from "@/hooks/api/useProjects";
-import { MasonryGrid } from "./layout/mansonry";
+import { MasonryGrid } from "./layout/masonry";
 
-interface ImagesMansonryProps {
+interface ImagesMasonryProps {
   projectId: string;
   projectNotes: Note[];
   ratingDisabled?: boolean;
@@ -44,7 +44,7 @@ interface ImagesMansonryProps {
   onSelectChange?: (value: Set<ImageFile["id"]>) => void;
 }
 
-export function ImagesMansonry({
+export function ImagesMasonry({
   projectId,
   projectNotes,
   ratingDisabled = false,
@@ -58,7 +58,7 @@ export function ImagesMansonry({
   onRatingChange,
   onDuplicateImage,
   onSelectChange,
-}: ImagesMansonryProps) {
+}: ImagesMasonryProps) {
   const { user } = useAuth();
 
   const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
