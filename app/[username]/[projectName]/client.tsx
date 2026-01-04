@@ -533,7 +533,7 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
                   {(project.can_download || isProjectUser || isTenantMember) && (
                     <Button disabled={isDownloading} onClick={handleDownload}>
                       <Download className="h-4 w-4" />
-                      Download {!!selectedImages.size && "Selected"}
+                      Download {!!selectedImages.size && selectedImages.size}
                     </Button>
                   )}
                   {project.share_url && canEdit && (
@@ -570,7 +570,7 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
                 />
                 <Label
                   htmlFor="select-all"
-                  className={cn("cursor-pointer select-none transition-all", !!selectedImages.size ? "text-muted-foreground" : "text-foreground")}
+                  className={cn("cursor-pointer select-none transition-all", !!selectedImages.size ? "text-foreground" : "text-muted-foreground")}
                 >
                   Select All
                 </Label>
