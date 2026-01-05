@@ -1,7 +1,7 @@
 // scripts/build-sw.js
-import fs from 'fs';
-import path from 'path';
-import dotenv from 'dotenv';
+const fs = require('fs');
+const path = require('path');
+const dotenv = require('dotenv');
 
 // Load environment variables from .env
 dotenv.config();
