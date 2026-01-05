@@ -52,11 +52,11 @@ export function NotesModal({ projectId, imageName }: NotesViewProps) {
     getImageNotes({ projectId, imageName });
   }, [imageName]);
 
-  const handleCreateOrUpdate = async () => {
+  const handleCreateOrUpdate = async (author?: { firstName: string, lastName: string }) => {
     if (!noteContent.trim()) return;
 
-    const firstName = user?.first_name ?? localUser?.first_name;
-    const lastName = user?.last_name ?? localUser?.last_name;
+    const firstName = user?.first_name ?? localUser?.first_name ?? author?.firstName;
+    const lastName = user?.last_name ?? localUser?.last_name ?? author?.lastName;
 
     if (!firstName || !lastName) {
       show({
@@ -69,7 +69,7 @@ export function NotesModal({ projectId, imageName }: NotesViewProps) {
             if (!firstName || !lastName) return
 
             setLocalUser({ first_name: firstName, last_name: lastName })
-            handleCreateOrUpdate()
+            handleCreateOrUpdate({ firstName, lastName })
             hide()
             return
           }

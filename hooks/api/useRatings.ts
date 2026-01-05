@@ -63,7 +63,7 @@ export function useRatings() {
 
   // Mutation: Create rating
   const createRating = useMutation({
-    mutationFn: (rating: { project_id: string; image_name: string; value: number }) =>
+    mutationFn: (rating: { project_id: string; image_name: string; value: number, author?: { first_name: string, last_name: string } }) =>
       ratingsApi.createRating(rating),
     onSuccess: (data) => {
       if (!data) return;
@@ -144,13 +144,21 @@ export function useRatings() {
   });
 
   const handleRating =
-    async (imageName: string, value: number, ratingId?: string, project?: Project) => {
+    async (imageName: string, value: number, ratingId?: string, project?: Project, author?: { firstName: string, lastName: string }) => {
       const rating = new Rating();
       rating.image_name = imageName;
       rating.value = value;
       rating.rating_id = ratingId;
 
-      console.log(rating, project)
+      let authorData = undefined
+
+      const firstName = user?.first_name ?? localUser?.first_name ?? author?.firstName;
+      const lastName = user?.last_name ?? localUser?.last_name ?? author?.lastName;
+
+      if (firstName && lastName) {
+        authorData = { first_name: firstName, last_name: lastName }
+      }
+
       if (!project) {
         setQueuedRatings((queued) => {
           const existingIndex = queued.findIndex(
@@ -174,6 +182,7 @@ export function useRatings() {
           project_id: project.project_id,
           image_name: rating.image_name,
           value: rating.value,
+          author: authorData
         });
       return await updateRating.mutateAsync({ ratingId, value });
     }
@@ -193,7 +202,7 @@ export function useRatings() {
             if (!firstName || !lastName) return
 
             setLocalUser({ first_name: firstName, last_name: lastName })
-            handleRating(imageName, value, ratingId, project)
+            handleRating(imageName, value, ratingId, project, { firstName, lastName })
 
             return
           }
