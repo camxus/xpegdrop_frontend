@@ -148,7 +148,11 @@ export function NotesModal({ projectId, imageName }: NotesViewProps) {
       <div className="flex-1 overflow-y-auto p-2 flex flex-col gap-3">
         {sortedKeys.map((timeKey) => {
           const time = new Date(timeKey);
-          const notesInGroup = groupedNotes[timeKey];
+          const notesInGroup = groupedNotes[timeKey].sort(
+            (a, b) =>
+              new Date(a.created_at!).getTime() -
+              new Date(b.created_at!).getTime()
+          );;
 
           const getAuthorKey = (note: Note) =>
             note.user_id.includes("anonymous")
@@ -200,7 +204,7 @@ export function NotesModal({ projectId, imageName }: NotesViewProps) {
                 return (
                   <div
                     key={`${firstNote.note_id}-${groupIndex}`}
-                    className="flex flex-col gap-2 bg-background rounded-sm p-2 shadow-xl border-foreground/80"
+                    className="flex flex-col gap-2 bg-background rounded-sm p-2 shadow-xl border-foreground/60"
                   >
                     {/* Author header */}
                     <div className="flex items-start gap-2">
