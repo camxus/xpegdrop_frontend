@@ -204,7 +204,7 @@ export function NotesModal({ projectId, imageName }: NotesViewProps) {
                 return (
                   <div
                     key={`${firstNote.note_id}-${groupIndex}`}
-                    className="flex flex-col gap-2 bg-background rounded-lg p-2 shadow-xl border-foreground/60"
+                    className="flex flex-col gap-2 bg-background/10 backdrop-blur-md rounded-lg p-2 shadow-xl border-foreground/60"
                   >
                     {/* Author header */}
                     <div className="flex items-start gap-2">
