@@ -9,7 +9,7 @@ interface UseServiceWorkerOptions {
 }
 
 export function useServiceWorker({
-  swUrl = "/sw.js",
+  swUrl = process.env.NODE_ENV === "production" ? "/sw.build.js" : "/sw.js",
   onRegistered,
   onError,
 }: UseServiceWorkerOptions = {}) {
