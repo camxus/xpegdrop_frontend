@@ -126,7 +126,7 @@ export function ImagesMasonry({
 
 
   const localRatings =
-    projectId && (getLocalStorage(LOCAL_RATINGS_STORAGE_KEY) || {})[projectId];
+    (projectId && (getLocalStorage(LOCAL_RATINGS_STORAGE_KEY) || {})[projectId]) || undefined;
 
   const imageRatings = (image: ImageFile) =>
     ratings?.filter((rating) => rating.image_name === image.name) || [];
@@ -135,7 +135,7 @@ export function ImagesMasonry({
     (ratings?.find(
       (r) => r.image_name === image.name && user?.user_id === r.user_id
     ) ??
-      (localRatings?.find((r: Rating) => r.image_name === image.name))) ||
+      localRatings?.find((r: Rating) => r.image_name === image.name)) ||
     new Rating();
 
   const imageNotes = (image: ImageFile) =>
