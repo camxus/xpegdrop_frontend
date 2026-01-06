@@ -135,7 +135,7 @@ export function ImagesMasonry({
     (ratings?.find(
       (r) => r.image_name === image.name && user?.user_id === r.user_id
     ) ??
-      localRatings?.find((r: Rating) => r.image_name === image.name)) ||
+      (localRatings?.find((r: Rating) => r.image_name === image.name))) ||
     new Rating();
 
   const imageNotes = (image: ImageFile) =>
