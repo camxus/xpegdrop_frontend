@@ -23,10 +23,10 @@ import { Separator } from "./ui/seperator";
 
 interface NotesViewProps {
   projectId: string;
-  imageName: string;
+  mediaName: string;
 }
 
-export function NotesModal({ projectId, imageName }: NotesViewProps) {
+export function NotesModal({ projectId, mediaName }: NotesViewProps) {
   const { show, hide } = useDialog()
   const { user } = useAuth();
   const { localUser, setLocalUser } = useUser()
@@ -49,8 +49,8 @@ export function NotesModal({ projectId, imageName }: NotesViewProps) {
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
 
   useEffect(() => {
-    getImageNotes({ projectId, imageName });
-  }, [imageName]);
+    getImageNotes({ projectId, mediaName });
+  }, [mediaName]);
 
   const handleCreateOrUpdate = async (author?: { firstName: string, lastName: string }) => {
     if (!noteContent.trim()) return;
@@ -88,7 +88,7 @@ export function NotesModal({ projectId, imageName }: NotesViewProps) {
     } else {
       await createNote({
         project_id: projectId,
-        image_name: imageName,
+        media_name: mediaName,
         content: noteContent,
         author: { first_name: firstName, last_name: lastName }
       });

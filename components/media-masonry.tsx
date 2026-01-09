@@ -3,7 +3,7 @@
 import { useState, memo, useCallback, useEffect } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
-import type { ImageFile } from "@/types";
+import type { MediaFile } from "@/types";
 import StarRatingSlider from "./star-rating-slider";
 import { Rating, ratingsApi } from "@/lib/api/ratingsApi";
 import { useAuth } from "@/hooks/api/useAuth";
@@ -28,155 +28,155 @@ import UnauthorizedRatingDialog, { UnauthorizedRatingDialogActions } from "./una
 import { useProjects } from "@/hooks/api/useProjects";
 import { MasonryGrid } from "./layout/masonry";
 
-interface ImagesMasonryProps {
+interface MediaMasonryProps {
   projectId: string;
   projectNotes: Note[];
   ratingDisabled?: boolean;
-  images: ImageFile[];
+  media: MediaFile[];
   ratings?: Rating[];
   className?: string;
   canEdit?: boolean;
-  selectedImages?: Set<string>
-  onImageClick?: (imageIndex: number) => void;
-  onImageHoverChange?: (isHovering: boolean) => void;
-  onRatingChange?: (imageId: string, value: number, ratingId?: string) => void;
-  onDuplicateImage?: (image: ImageFile) => void;
-  onSelectChange?: (value: Set<ImageFile["id"]>) => void;
+  selectedMedia?: Set<string>
+  onMediaClick?: (imageIndex: number) => void;
+  onMediaHoverChange?: (isHovering: boolean) => void;
+  onRatingChange?: (mediaName: string, value: number, ratingId?: string) => void;
+  onDuplicateMedia?: (image: MediaFile) => void;
+  onSelectChange?: (value: Set<MediaFile["id"]>) => void;
 }
 
-export function ImagesMasonry({
+export function MediaMasonry({
   projectId,
   projectNotes,
   ratingDisabled = false,
-  images,
+  media,
   ratings,
   className,
   canEdit,
-  selectedImages,
-  onImageClick,
-  onImageHoverChange,
+  selectedMedia,
+  onMediaClick,
+  onMediaHoverChange,
   onRatingChange,
-  onDuplicateImage,
+  onDuplicateMedia,
   onSelectChange,
-}: ImagesMasonryProps) {
+}: MediaMasonryProps) {
   const { user } = useAuth();
 
-  const [loadedImages, setLoadedImages] = useState<Set<string>>(new Set());
-  const [hoveredImage, setHoveredImage] = useState<string | null>(null);
+  const [loadedMedias, setLoadedMedias] = useState<Set<string>>(new Set());
+  const [hoveredMedia, setHoveredMedia] = useState<string | null>(null);
 
-  const handleImageLoad = useCallback((imageId: string) => {
-    setLoadedImages((prev) => {
-      if (prev.has(imageId)) return prev;
+  const handleMediaLoad = useCallback((mediaName: string) => {
+    setLoadedMedias((prev) => {
+      if (prev.has(mediaName)) return prev;
       const newSet = new Set(prev);
-      newSet.add(imageId);
+      newSet.add(mediaName);
       return newSet;
     });
   }, []);
 
   const handleMouseEnter = useCallback(
-    (imageId: string) => {
-      if (hoveredImage !== imageId) {
-        setHoveredImage(imageId);
-        onImageHoverChange?.(true);
+    (mediaName: string) => {
+      if (hoveredMedia !== mediaName) {
+        setHoveredMedia(mediaName);
+        onMediaHoverChange?.(true);
       }
     },
-    [hoveredImage, onImageHoverChange]
+    [hoveredMedia, onMediaHoverChange]
   );
 
   const handleMouseLeave = useCallback(() => {
-    if (hoveredImage !== null) {
-      setHoveredImage(null);
-      onImageHoverChange?.(false);
+    if (hoveredMedia !== null) {
+      setHoveredMedia(null);
+      onMediaHoverChange?.(false);
     }
-  }, [hoveredImage, onImageHoverChange]);
+  }, [hoveredMedia, onMediaHoverChange]);
 
-  const handleImageClick = useCallback(
-    (imageIndex: number) => {
-      onImageClick?.(imageIndex);
+  const handleMediaClick = useCallback(
+    (mediaIndex: number) => {
+      onMediaClick?.(mediaIndex);
     },
-    [onImageClick]
+    [onMediaClick]
   );
 
   const handleRatingChange = useCallback(
-    (imageName: string, value: number, ratingId?: string) => {
-      onRatingChange?.(imageName, value, ratingId);
+    (mediaName: string, value: number, ratingId?: string) => {
+      onRatingChange?.(mediaName, value, ratingId);
     },
     [onRatingChange]
   );
 
-  const handleDuplicateImage = useCallback(
-    (image: ImageFile) => {
-      onDuplicateImage?.(image);
+  const handleDuplicateMedia = useCallback(
+    (mediaFile: MediaFile) => {
+      onDuplicateMedia?.(mediaFile);
     },
-    [onDuplicateImage]
+    [onDuplicateMedia]
   );
 
-  const hanldeSelectImage = useCallback(
-    (image: ImageFile) => {
-      if (!selectedImages) return
-      if (!selectedImages.has(image.id)) {
-        selectedImages.add(image.id)
+  const hanldeSelectMedia = useCallback(
+    (mediaFile: MediaFile) => {
+      if (!selectedMedia) return
+      if (!selectedMedia.has(mediaFile.id)) {
+        selectedMedia.add(mediaFile.id)
       } else {
-        selectedImages.delete(image.id)
+        selectedMedia.delete(mediaFile.id)
       }
-      onSelectChange?.(selectedImages);
+      onSelectChange?.(selectedMedia);
     },
-    [onSelectChange, selectedImages]
+    [onSelectChange, selectedMedia]
   );
 
 
   const localRatings =
     (projectId && (getLocalStorage(LOCAL_RATINGS_STORAGE_KEY) || {})[projectId]) || undefined;
 
-  const imageRatings = (image: ImageFile) =>
-    ratings?.filter((rating) => rating.image_name === image.name) || [];
+  const mediaRatings = (mediaFile: MediaFile) =>
+    ratings?.filter((rating) => rating.media_name === mediaFile.name) || [];
 
-  const rating = (image: ImageFile) =>
+  const rating = (mediaFile: MediaFile) =>
     (ratings?.find(
-      (r) => r.image_name === image.name && user?.user_id === r.user_id
+      (r) => r.media_name === mediaFile.name && user?.user_id === r.user_id
     ) ??
-      localRatings?.find((r: Rating) => r.image_name === image.name)) ||
+      localRatings?.find((r: Rating) => r.media_name === mediaFile.name)) ||
     new Rating();
 
-  const imageNotes = (image: ImageFile) =>
-    projectNotes?.filter((note) => note.image_name === image.name);
+  const mediaNotes = (mediaFile: MediaFile) =>
+    projectNotes?.filter((note) => note.media_name === mediaFile.name);
 
   return (
     <MasonryGrid>
-      {images.map((image: ImageFile, index: number) => (
-        <MasonryImage
+      {media.map((mediaFile: MediaFile, index: number) => (
+        <MasonryMedia
           projectId={projectId}
-          imageNotes={imageNotes(image)}
+          mediaNotes={mediaNotes(mediaFile)}
           disabled={ratingDisabled}
-          key={image.id}
-          ratings={imageRatings(image)}
-          rating={rating(image)}
-          image={image}
+          key={mediaFile.id}
+          ratings={mediaRatings(mediaFile)}
+          rating={rating(mediaFile)}
+          mediaFile={mediaFile}
           index={index}
-          isHovered={hoveredImage === image.id}
-          isLoaded={loadedImages.has(image.id)}
+          isHovered={hoveredMedia === mediaFile.id}
+          isLoaded={loadedMedias.has(mediaFile.id)}
           canEdit={canEdit}
-          isSelected={!!selectedImages?.has(image.id)}
-          onHover={() => handleMouseEnter(image.id)}
+          isSelected={!!selectedMedia?.has(mediaFile.id)}
+          onHover={() => handleMouseEnter(mediaFile.id)}
           onLeave={handleMouseLeave}
-          onClick={() => handleImageClick(index)}
-          onLoad={() => handleImageLoad(image.id)}
+          onClick={() => handleMediaClick(index)}
+          onLoad={() => handleMediaLoad(mediaFile.id)}
           onRatingChange={(value, ratingId) =>
-            handleRatingChange(image.name, value, ratingId)
+            handleRatingChange(mediaFile.name, value, ratingId)
           }
-          onDuplicateImage={handleDuplicateImage}
-          onToggleSelect={hanldeSelectImage}
+          onDuplicateMedia={handleDuplicateMedia}
+          onToggleSelect={hanldeSelectMedia}
         />
       ))}
     </MasonryGrid>
   )
 }
 
-const MasonryImage = memo(function MasonryImage({
+const MasonryMedia = memo(function MasonryMedia({
   projectId,
-  imageNotes,
+  mediaNotes,
   disabled,
-  image,
+  mediaFile,
   index,
   isHovered,
   isLoaded,
@@ -189,15 +189,15 @@ const MasonryImage = memo(function MasonryImage({
   onClick,
   onLoad,
   onRatingChange,
-  onDuplicateImage,
+  onDuplicateMedia,
   onToggleSelect,
 }: {
   projectId: string;
-  imageNotes: Note[];
+  mediaNotes: Note[];
   disabled: boolean;
   ratings: Rating[];
   rating: Rating;
-  image: ImageFile;
+  mediaFile: MediaFile;
   index: number;
   isHovered: boolean;
   isLoaded: boolean;
@@ -208,8 +208,8 @@ const MasonryImage = memo(function MasonryImage({
   onClick: () => void;
   onLoad: () => void;
   onRatingChange: (value: number, ratingId?: string) => void;
-  onDuplicateImage: (image: ImageFile) => void;
-  onToggleSelect: (image: ImageFile) => void;
+  onDuplicateMedia: (mediaFile: MediaFile) => void;
+  onToggleSelect: (mediaFile: MediaFile) => void;
 }) {
   const { removeProjectFile: { mutateAsync: removeProjectFile } } = useProjects()
 
@@ -218,19 +218,19 @@ const MasonryImage = memo(function MasonryImage({
 
   const [editOpen, setEditOpen] = useState(false);
 
-  const handleShowImageNotes = () => {
+  const handleShowMediaNotes = () => {
     modal.show({
       title: `Notes`,
       content: () => (
-        <NotesModal projectId={projectId} imageName={image.name} />
+        <NotesModal projectId={projectId} mediaName={mediaFile.name} />
       ),
       height: "400px",
       width: "500px",
     });
   };
 
-  const handleDeleteImage = async () => {
-    await removeProjectFile({ projectId, fileName: image.name })
+  const handleDeleteMedia = async () => {
+    await removeProjectFile({ projectId, fileName: mediaFile.name })
 
   }
 
@@ -262,9 +262,9 @@ const MasonryImage = memo(function MasonryImage({
                 )}
               />
               <Image
-                key={image.name}
-                src={image.url || "/placeholder.svg"}
-                alt={image.name}
+                key={mediaFile.name}
+                src={mediaFile.thumbnail_url || "/placeholder.svg"}
+                alt={mediaFile.name}
                 width={300}
                 height={400}
                 loading="lazy"
@@ -282,28 +282,28 @@ const MasonryImage = memo(function MasonryImage({
             </div>
           </ContextMenuTrigger>
           <ContextMenuContent>
-            <ContextMenuItem onClick={() => onToggleSelect(image)}>
+            <ContextMenuItem onClick={() => onToggleSelect(mediaFile)}>
               {isSelected ? "Deselect" : "Select"}
             </ContextMenuItem>
             {/* <ContextMenuItem onClick={() => setEditOpen(true)}>
               Edit
             </ContextMenuItem> */}
-            <ContextMenuItem onClick={() => onDuplicateImage(image)}>
+            <ContextMenuItem onClick={() => onDuplicateMedia(mediaFile)}>
               Duplicate (beta)
             </ContextMenuItem>
             <ContextMenuSeparator />
-            <ContextMenuItem onClick={() => handleShowImageNotes()}>
+            <ContextMenuItem onClick={() => handleShowMediaNotes()}>
               Show Notes
             </ContextMenuItem>
             {/* <ContextMenuSeparator /> */}
-            {canEdit && <ContextMenuItem onClick={() => handleDeleteImage()}>
+            {canEdit && <ContextMenuItem onClick={() => handleDeleteMedia()}>
               <span className="text-destructive-foreground">Delete</span>
             </ContextMenuItem>}
           </ContextMenuContent>
         </ContextMenu>
 
         <p className="mt-2 truncate text-sm text-muted-foreground group-hover:text-foreground transition-colors">
-          {image.name}
+          {mediaFile.name}
         </p>
         <div className="relative flex items-center gap-1 mt-1">
           <StarRatingSlider
@@ -313,16 +313,16 @@ const MasonryImage = memo(function MasonryImage({
             onRatingChange={(value) => onRatingChange(value, rating.rating_id)}
             className="w-full flex justify-center"
           />
-          {!!imageNotes.length && (
+          {!!mediaNotes.length && (
             <MessageSquareText
               className="cursor-pointer absolute w-4 h-4 right-0"
-              onClick={() => handleShowImageNotes()}
+              onClick={() => handleShowMediaNotes()}
             />
           )}
         </div>
 
         <EditImageView
-          image={image}
+          image={mediaFile}
           isOpen={editOpen}
           onClose={() => setEditOpen(false)}
         />

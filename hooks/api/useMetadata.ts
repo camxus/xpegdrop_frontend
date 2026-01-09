@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { metadataApi } from "@/lib/api/metadataApi";
 import { EXIFData } from "@/types";
 import { useToast } from "@/hooks/use-toast";
+import { isImageFile } from "@/lib/utils/file-utils";
 
 export function useMetadata() {
   const queryClient = useQueryClient();
@@ -17,24 +18,25 @@ export function useMetadata() {
     });
 
   // Fetch metadata for a single image
-  const getImageMetadata = (projectId: string, imageName: string) =>
+  const getImageMetadata = (projectId: string, file: File) =>
     useQuery({
-      queryKey: ["metadata", projectId, imageName],
-      queryFn: () => metadataApi.getImageMetadata(projectId, imageName),
+      queryKey: ["metadata", projectId, file.name],
+      queryFn: () => metadataApi.getImageMetadata(projectId, file.name),
+      enabled: isImageFile(file)
     });
 
   // Create metadata for a single image
   const createImageMetadata = useMutation({
     mutationFn: (data: {
       project_id: string;
-      image_name: string;
+      media_name: string;
       exif_data: EXIFData;
-      image_hash?: string;
+      media_hash?: string;
     }) => metadataApi.createImageMetadata(data),
     onSuccess: (data, variables) => {
       toast({
         title: "Metadata created",
-        description: `Metadata for ${variables.image_name} was successfully created.`,
+        description: `Metadata for ${variables.media_name} was successfully created.`,
       });
       queryClient.invalidateQueries({ queryKey: ["metadata", variables.project_id] });
     },
@@ -69,12 +71,12 @@ export function useMetadata() {
 
   // Delete metadata for a single image
   const deleteImageMetadata = useMutation({
-    mutationFn: (params: { project_id: string; image_name: string }) =>
-      metadataApi.deleteImageMetadata(params.project_id, params.image_name),
+    mutationFn: (params: { project_id: string; media_name: string }) =>
+      metadataApi.deleteImageMetadata(params.project_id, params.media_name),
     onSuccess: (_, variables) => {
       toast({
         title: "Metadata deleted",
-        description: `Metadata for ${variables.image_name} was successfully deleted.`,
+        description: `Metadata for ${variables.media_name} was successfully deleted.`,
       });
       queryClient.invalidateQueries({ queryKey: ["metadata", variables.project_id] });
     },

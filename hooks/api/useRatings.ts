@@ -63,7 +63,7 @@ export function useRatings() {
 
   // Mutation: Create rating
   const createRating = useMutation({
-    mutationFn: (rating: { project_id: string; image_name: string; value: number, author?: { first_name: string, last_name: string } }) =>
+    mutationFn: (rating: { project_id: string; media_name: string; value: number, author?: { first_name: string, last_name: string } }) =>
       ratingsApi.createRating(rating),
     onSuccess: (data) => {
       if (!data) return;
@@ -144,9 +144,9 @@ export function useRatings() {
   });
 
   const handleRating =
-    async (imageName: string, value: number, ratingId?: string, project?: Project, author?: { firstName: string, lastName: string }) => {
+    async (mediaName: string, value: number, ratingId?: string, project?: Project, author?: { firstName: string, lastName: string }) => {
       const rating = new Rating();
-      rating.image_name = imageName;
+      rating.media_name = mediaName;
       rating.value = value;
       rating.rating_id = ratingId;
 
@@ -162,7 +162,7 @@ export function useRatings() {
       if (!project) {
         setQueuedRatings((queued) => {
           const existingIndex = queued.findIndex(
-            (r) => r.image_name === rating.image_name
+            (r) => r.media_name === rating.media_name
           );
 
           if (existingIndex !== -1) {
@@ -180,14 +180,14 @@ export function useRatings() {
       if (!ratingId)
         return await createRating.mutateAsync({
           project_id: project.project_id,
-          image_name: rating.image_name,
+          media_name: rating.media_name,
           value: rating.value,
           author: authorData
         });
       return await updateRating.mutateAsync({ ratingId, value });
     }
 
-  const handleRatingChange = (imageName: string, value: number, ratingId?: string, project?: Project) => {
+  const handleRatingChange = (mediaName: string, value: number, ratingId?: string, project?: Project) => {
     const firstName = user?.first_name ?? localUser.first_name;
     const lastName = user?.last_name ?? localUser.last_name;
 
@@ -202,7 +202,7 @@ export function useRatings() {
             if (!firstName || !lastName) return
 
             setLocalUser({ first_name: firstName, last_name: lastName })
-            handleRating(imageName, value, ratingId, project, { firstName, lastName })
+            handleRating(mediaName, value, ratingId, project, { firstName, lastName })
 
             return
           }
@@ -211,7 +211,7 @@ export function useRatings() {
       return
     }
 
-    handleRating(imageName, value, ratingId, project)
+    handleRating(mediaName, value, ratingId, project)
   }
 
 

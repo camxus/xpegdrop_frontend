@@ -9,7 +9,7 @@ import { cn, getInitials } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { useAuth } from "@/hooks/api/useAuth";
 
-interface ImagesFilterProps {
+interface MediaFilterProps {
   ratings: Rating[];
   onFilterChange: (filters: {
     userIds: string[];
@@ -17,7 +17,7 @@ interface ImagesFilterProps {
   }) => void;
 }
 
-export function ImagesFilter({ ratings, onFilterChange }: ImagesFilterProps) {
+export function MediaFilter({ ratings, onFilterChange }: MediaFilterProps) {
   const { user } = useAuth();
   const userQueries = useUsers(ratings.map((rating) => rating.user_id));
 

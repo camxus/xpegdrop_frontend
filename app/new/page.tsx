@@ -5,14 +5,14 @@ import { useState, useCallback, useEffect, Suspense } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { FileUploader } from "@/components/ui/file-uploader";
-import { ImagesMasonry } from "@/components/images-masonry";
+import { MediaMasonry } from "@/components/media-masonry";
 import { FolderNavigation } from "@/components/folder-navigation";
 import { EditableTitle } from "@/components/editable-title";
 import { useToast } from "@/hooks/use-toast";
-import { createImageFile, processFolderUpload } from "@/lib/utils/file-utils";
+import { createMediaFile, processFolderUpload } from "@/lib/utils/file-utils";
 import { Upload, FolderOpen, Share2, UploadIcon } from "lucide-react";
 import type { EXIFData, Folder, StorageProvider } from "@/types";
-import { ImageCarousel } from "@/components/image-carousel";
+import { MediaCarousel } from "@/components/media-carousel";
 import { ShareDialog } from "@/components/share-dialog";
 import { cn } from "@/lib/utils";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
@@ -107,7 +107,7 @@ export function UploadView() {
   const springX = useSpring(x, { damping: 40, stiffness: 100 });
   const springY = useSpring(y, { damping: 40, stiffness: 100 });
 
-  const [isAnyImageHovered, setIsAnyImageHovered] = useState(false);
+  const [isAnyMediaHovered, setIsAnyMediaHovered] = useState(false);
   const gradientSize = useMotionValue(250);
   const gradientOpacity = useMotionValue(0.05);
   const springSize = useSpring(gradientSize, { stiffness: 150, damping: 30 });
@@ -141,8 +141,8 @@ export function UploadView() {
       const newFolders = await processFolderUpload(files);
       if (newFolders.length === 0) {
         toast({
-          title: "No Images Found",
-          description: "Please upload folders containing image files.",
+          title: "No Media Found",
+          description: "Please upload folders containing media files.",
           variant: "destructive",
         });
         return;
@@ -189,7 +189,7 @@ export function UploadView() {
     async (files: File[]) => {
       if (files.length === 0) {
         toast({
-          title: "No Images Found",
+          title: "No Medias Found",
           description: "Please upload folders containing image files.",
           variant: "destructive",
         });
@@ -205,8 +205,8 @@ export function UploadView() {
           async ([folderName, folderFiles]) => ({
             id: `folder-${folderName}-${Date.now()}`,
             name: folderName,
-            images: await Promise.all(
-              folderFiles.map((file) => createImageFile(file, folderName))
+            media: await Promise.all(
+              folderFiles.map((file) => createMediaFile(file, folderName))
             ),
             createdAt: new Date(),
           })
@@ -302,7 +302,7 @@ export function UploadView() {
     const uploadFolder = folder || currentFolder;
     if (!uploadFolder) return;
     try {
-      const fileMetadata: Record<string, EXIFData> = uploadFolder.images.reduce(
+      const fileMetadata: Record<string, EXIFData> = uploadFolder.media.reduce(
         (acc, img) => {
           if (img.metadata) {
             acc[img.name] = img.metadata;
@@ -312,8 +312,8 @@ export function UploadView() {
         {} as Record<string, EXIFData>
       );
 
-      const imageFiles = uploadFolder.images.map((img) => img.file);
-      const tempFileLocations = await uploadFiles(imageFiles);
+      const mediaFiles = uploadFolder.media.map((img) => img.file);
+      const tempFileLocations = await uploadFiles(mediaFiles);
 
       const project = await createProject({
         name: uploadFolder.name,
@@ -333,7 +333,7 @@ export function UploadView() {
           createRating({
             project_id: project.project_id,
             value: rating.value,
-            image_name: rating.image_name,
+            media_name: rating.media_name,
           })
         )
       );
@@ -350,8 +350,8 @@ export function UploadView() {
     const uploadFolder = folder || currentFolder;
     if (!uploadFolder || !project || !storageStats) return;
     try {
-      const imageFiles = uploadFolder.images.map((img) => img.file);
-      const totalSize = imageFiles.reduce((sum, file) => sum + file.size, 0);
+      const mediaFiles = uploadFolder.media.map((img) => img.file);
+      const totalSize = mediaFiles.reduce((sum, file) => sum + file.size, 0);
 
       // Check if adding this would exceed allocated storage
       if (storageProvider === "b2" && storageStats.used + totalSize > storageStats.allocated) {
@@ -363,7 +363,7 @@ export function UploadView() {
         return
       }
 
-      const tempFileLocations = await uploadFiles(imageFiles);
+      const tempFileLocations = await uploadFiles(mediaFiles);
       await addProjectFiles({
         projectId: project?.project_id,
         file_locations: tempFileLocations,
@@ -373,7 +373,7 @@ export function UploadView() {
     } catch { }
   };
 
-  const handleImageClick = useCallback((imageIndex: number) => {
+  const handleMediaClick = useCallback((imageIndex: number) => {
     setCarouselStartIndex(imageIndex);
     setIsCarouselOpen(true);
   }, []);
@@ -396,15 +396,15 @@ export function UploadView() {
     [x, y]
   );
 
-  const handleImageHoverChange = useCallback(
-    (isHovering: boolean) => setIsAnyImageHovered(isHovering),
+  const handleMediaHoverChange = useCallback(
+    (isHovering: boolean) => setIsAnyMediaHovered(isHovering),
     []
   );
 
   useEffect(() => {
-    gradientSize.set(isAnyImageHovered ? 400 : 250);
-    gradientOpacity.set(isAnyImageHovered ? 0.2 : 0.05);
-  }, [isAnyImageHovered, gradientSize, gradientOpacity]);
+    gradientSize.set(isAnyMediaHovered ? 400 : 250);
+    gradientOpacity.set(isAnyMediaHovered ? 0.2 : 0.05);
+  }, [isAnyMediaHovered, gradientSize, gradientOpacity]);
 
   useEffect(() => {
     if (currentProject?.project_id) getRatings(currentProject.project_id);
@@ -503,8 +503,8 @@ export function UploadView() {
                     <div className="mb-20">
                       <div className="mb-6 flex items-center justify-between">
                         <p className="text-muted-foreground">
-                          {currentFolder.images.length} image
-                          {currentFolder.images.length !== 1 ? "s" : ""}
+                          {currentFolder.media.length} item
+                          {currentFolder.media.length !== 1 ? "s" : ""}
                         </p>
                         <Button
                           onClick={
@@ -534,26 +534,26 @@ export function UploadView() {
                         </Button>
                       </div>
 
-                      <ImagesMasonry
+                      <MediaMasonry
                         projectId={project?.project_id || ""}
-                        images={currentFolder.images}
+                        media={currentFolder.media}
                         ratings={[...queuedRatings, ...ratings]}
-                        onImageClick={handleImageClick}
-                        onRatingChange={(imageId, value, ratingId) => handleRatingChange(imageId, value, ratingId, currentProject)}
-                        onImageHoverChange={handleImageHoverChange}
+                        onMediaClick={handleMediaClick}
+                        onRatingChange={(mediaName, value, ratingId) => handleRatingChange(mediaName, value, ratingId, currentProject)}
+                        onMediaHoverChange={handleMediaHoverChange}
                         projectNotes={[]}
                         canEdit={user?.user_id === project?.user_id}
                       />
                     </div>
 
-                    <ImageCarousel
+                    <MediaCarousel
                       project={currentProject}
-                      images={currentFolder.images}
+                      media={currentFolder.media}
                       ratings={[...queuedRatings, ...ratings]}
                       initialIndex={carouselStartIndex}
                       isOpen={isCarouselOpen}
                       onClose={handleCloseCarousel}
-                      onRatingChange={(imageId, value, ratingId) => handleRatingChange(imageId, value, ratingId, currentProject)}
+                      onRatingChange={(mediaId, value, ratingId) => handleRatingChange(mediaId, value, ratingId, currentProject)}
                     />
                   </div>
                 </>
@@ -584,10 +584,10 @@ export function UploadView() {
                         <FolderOpen className="h-12 w-12 mx-auto text-muted-foreground" />
                         <div>
                           <h3 className="text-lg font-semibold">
-                            Upload Image Folders
+                            Upload Media Folders
                           </h3>
                           <p className="text-muted-foreground">
-                            Drag and drop folders containing images, or click to
+                            Drag and drop folders containing images or videos, or click to
                             browse
                           </p>
                         </div>

@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { X, ChevronLeft, ChevronRight, Info, MessageSquareText } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { EXIFData, ImageFile } from "@/types";
+import type { EXIFData, MediaFile } from "@/types";
 import { Rating } from "@/lib/api/ratingsApi";
 import StarRatingWithAvatars from "./star-rating-slider";
 import { useAuth } from "@/hooks/api/useAuth";
@@ -18,29 +18,30 @@ import { getLocalStorage } from "@/lib/localStorage";
 import { staggeredContainerVariants } from "@/lib/motion";
 import { NotesModal } from "./notes-modal";
 import { useModal } from "@/hooks/use-modal";
+import { isImageFile } from "@/lib/utils/file-utils";
 
 const MOBILE_HEIGHT = "80vh"
 
-interface ImageCarouselProps {
+interface MediaCarouselProps {
   project: Project
-  images: ImageFile[];
+  media: (MediaFile & { preview_url?: string })[];
   ratings: Rating[]
   initialIndex: number;
   isOpen: boolean;
   onClose: () => void;
-  onRatingChange?: (imageId: string, value: number, ratingId?: string) => void;
+  onRatingChange?: (mediaName: string, value: number, ratingId?: string) => void;
 
 }
 
-export function ImageCarousel({
+export function MediaCarousel({
   project,
-  images,
+  media,
   ratings,
   initialIndex,
   isOpen,
   onClose,
   onRatingChange
-}: ImageCarouselProps) {
+}: MediaCarouselProps) {
   const modal = useModal()
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [isLoading, setIsLoading] = useState(true);
@@ -75,11 +76,11 @@ export function ImageCarousel({
   }, [currentIndex]);
 
   const handleNext = useCallback(() => {
-    if (currentIndex < images.length - 1) {
+    if (currentIndex < media.length - 1) {
       setCurrentIndex((prev) => prev + 1);
       setIsLoading(true);
     }
-  }, [currentIndex, images.length]);
+  }, [currentIndex, media.length]);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -100,12 +101,12 @@ export function ImageCarousel({
   );
 
   const handleShowNotes = useCallback(() => {
-    if (!currentImage) return
+    if (!currentMedia) return
 
     modal.show({
       title: `Notes`,
       content: () => (
-        <NotesModal projectId={project.project_id} imageName={currentImage.name} />
+        <NotesModal projectId={project.project_id} mediaName={currentMedia.name} />
       ),
       height: "400px",
       width: "500px",
@@ -143,13 +144,13 @@ export function ImageCarousel({
     ? window.matchMedia("(max-width: 768px)").matches
     : false;
 
-  const currentImage = images[currentIndex];
+  const currentMedia = media[currentIndex];
 
-  const imageRatings = ratings.filter((rating) => rating.image_name === currentImage.name)
+  const imageRatings = ratings.filter((rating) => rating.media_name === currentMedia.name)
 
   const handleRatingChange = useCallback(
-    (imageName: string, value: number, ratingId?: string) => {
-      onRatingChange?.(imageName, value, ratingId);
+    (mediaName: string, value: number, ratingId?: string) => {
+      onRatingChange?.(mediaName, value, ratingId);
     },
     [onRatingChange]
   );
@@ -172,9 +173,9 @@ export function ImageCarousel({
             {/* Header */}
             <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between p-4 bg-gradient-to-b from-black/50 to-transparent">
               <div className="text-white">
-                <h3 className="font-semibold">{currentImage?.name}</h3>
+                <h3 className="font-semibold">{currentMedia?.name}</h3>
                 <p className="text-sm text-white/70">
-                  {currentIndex + 1} of {images.length}
+                  {currentIndex + 1} of {media.length}
                 </p>
               </div>
               <div className="flex gap-2">
@@ -224,36 +225,63 @@ export function ImageCarousel({
                 <ChevronLeft className="h-8 w-8" />
               </Button>
 
-              {/* Image container */}
-              <div className="relative max-w-full max-h-full flex items-center justify-center">
-                <div className="relative">
-                  {isLoading && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
-                    </div>
-                  )}
-                  <Image
-                    src={currentImage?.url || "/placeholder.svg"}
-                    alt={currentImage?.name || "Image"}
-                    width={1200}
-                    height={800}
-                    className={cn(
-                      "max-w-full w-auto h-auto object-contain transition-opacity duration-300",
-                      `max-h-${MOBILE_HEIGHT}`,
-                      isLoading ? "opacity-0" : "opacity-100"
+              {/* Media container */}
+              {isImageFile(currentMedia.file) ?
+                <div className="relative max-w-full max-h-full flex items-center justify-center">
+                  <div className="relative">
+                    {isLoading && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+                      </div>
                     )}
-                    onLoad={() => setIsLoading(false)}
-                    priority
-                  />
+                    <Image
+                      src={currentMedia?.preview_url || "/placeholder.svg"}
+                      alt={currentMedia?.name || "Image"}
+                      width={1200}
+                      height={800}
+                      className={cn(
+                        "max-w-full w-auto h-auto object-contain transition-opacity duration-300",
+                        `max-h-${MOBILE_HEIGHT}`,
+                        isLoading ? "opacity-0" : "opacity-100"
+                      )}
+                      onLoad={() => setIsLoading(false)}
+                      priority
+                    />
+                  </div>
                 </div>
-              </div>
+                :
+                (
+                  <div className="relative max-w-full max-h-full flex items-center justify-center">
+                    <div className="relative">
+                      {isLoading && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white" />
+                        </div>
+                      )}
+
+                      <video
+                        className={cn(
+                          "max-w-full w-auto h-auto object-contain transition-opacity duration-300",
+                          `max-h-${MOBILE_HEIGHT}`,
+                          isLoading ? "opacity-0" : "opacity-100"
+                        )}
+                        controls
+                        playsInline
+                        preload="metadata"
+                        poster={currentMedia.thumbnail_url}
+                        src={currentMedia.preview_url}
+                        onLoadedData={() => setIsLoading(false)}
+                      />
+                    </div>
+                  </div>
+                )}
 
               {/* Next button */}
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={handleNext}
-                disabled={currentIndex === images.length - 1}
+                disabled={currentIndex === media.length - 1}
                 className="absolute right-4 top-1/2 -translate-y-1/2 z-10 text-white hover:bg-white/20 h-12 w-12"
               >
                 <ChevronRight className="h-8 w-8" />
@@ -282,10 +310,10 @@ export function ImageCarousel({
                 >
                   <DetailsInfo
                     project={project}
-                    image={currentImage}
+                    media={currentMedia}
                     ratings={imageRatings}
                     onRatingChange={(value, ratingId) =>
-                      handleRatingChange(currentImage.name, value, ratingId)
+                      handleRatingChange(currentMedia.name, value, ratingId)
                     }
                   />
                 </motion.div>
@@ -293,7 +321,7 @@ export function ImageCarousel({
             </AnimatePresence>
             {/* Bottom navigation dots */}
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-background/50 rounded-full px-4 py-2">
-              {images.map((_, idx) => (
+              {media.map((_, idx) => (
                 <button
                   key={idx}
                   onClick={() => {
@@ -319,30 +347,30 @@ export function ImageCarousel({
 
 function DetailsInfo({
   project,
-  image,
+  media,
   ratings,
   onRatingChange
 }: {
   project: Project,
-  image: ImageFile,
+  media: MediaFile,
   ratings: Rating[],
   onRatingChange: (value: number, ratingId?: string) => void;
 }) {
   const { user } = useAuth()
   const { getImageMetadata } = useMetadata()
 
-  const { data: imageMetadata } = getImageMetadata(project.project_id, image.name)
+  const { data: imageMetadata } = getImageMetadata(project.project_id, media.file)
 
-  const metadata = image.metadata || imageMetadata?.exif_data
+  const metadata = media.metadata || imageMetadata?.exif_data
 
   const localRatings =
     project.project_id && (getLocalStorage(LOCAL_RATINGS_STORAGE_KEY) || {})[project.project_id];
 
-  const rating = (image: ImageFile) =>
+  const rating = (media: MediaFile) =>
     (ratings?.find(
-      (r) => r.image_name === image.name && user?.user_id === r.user_id
+      (r) => r.media_name === media.name && user?.user_id === r.user_id
     ) ??
-      localRatings?.find((r: Rating) => r.image_name === image.name)) as Rating ||
+      localRatings?.find((r: Rating) => r.media_name === media.name)) as Rating ||
     new Rating();
 
   const renderMetadata = () => {
@@ -357,8 +385,8 @@ function DetailsInfo({
       ShutterSpeedValue: "Shutter Speed",
       FNumber: "F Number",
       ApertureValue: "Aperture Value",
-      ExifImageHeight: "Image Height",
-      ExifImageWeight: "Image Width",
+      ExifMediaHeight: "Media Height",
+      ExifMediaWeight: "Media Width",
     };
 
     const itemVariants = {
@@ -419,12 +447,12 @@ function DetailsInfo({
           <div className="w-min">
             <StarRatingWithAvatars
               value={
-                rating(image).value || 0
+                rating(media).value || 0
               }
               onRatingChange={(value) =>
                 onRatingChange(
                   value,
-                  rating(image).rating_id
+                  rating(media).rating_id
                 )
               }
             />

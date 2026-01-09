@@ -33,10 +33,10 @@ export async function generateMetadata({
 
     const project = projectData.project;
 
-    const images =
-      projectData.images?.map((image: any) => image.thumbnail_url) ?? [];
+    const media =
+      projectData.media?.map((media: any) => media.thumbnail_url) ?? [];
 
-    const imagesSlice = images.slice(0, 3);
+    const mediaSlice = media.slice(0, 3);
 
     metadata = {
       title: `${project.name} by ${userData.first_name} | fframess`,
@@ -46,7 +46,7 @@ export async function generateMetadata({
         title: `${project.name} by ${userData.first_name} | fframess`,
         description:
           "Your art is yours. Your data is yours. A platform built by artists, for artists.",
-        images: imagesSlice,
+        images: mediaSlice,
         type: "website",
       },
       twitter: {
@@ -54,7 +54,7 @@ export async function generateMetadata({
         title: `${project.name} by ${userData.first_name} | fframess`,
         description:
           "Your art is yours. Your data is yours. A platform built by artists, for artists.",
-        images: imagesSlice,
+        images: mediaSlice,
       },
     };
   } catch (error) {

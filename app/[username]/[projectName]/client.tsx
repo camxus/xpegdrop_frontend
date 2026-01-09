@@ -2,26 +2,26 @@
 
 import { useParams } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
-import { ImagesMasonry } from "@/components/images-masonry";
-import { ImageCarousel } from "@/components/image-carousel";
+import { MediaMasonry } from "@/components/media-masonry";
+import { MediaCarousel } from "@/components/media-carousel";
 import { useProjects } from "@/hooks/api/useProjects";
 import { useRatings } from "@/hooks/api/useRatings";
 import { useToast } from "@/hooks/use-toast";
 import { useDialog } from "@/hooks/use-dialog";
-import type { Folder, ImageFile, StorageProvider } from "@/types";
+import type { Folder, MediaFile, StorageProvider } from "@/types";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Project } from "@/types/project";
 import { ApiError } from "@/lib/api/client";
-import { b64ToFile, createImageFile, urlToFile } from "@/lib/utils/file-utils";
+import { b64ToFile, createMediaFile, urlToFile } from "@/lib/utils/file-utils";
 import { useAuth } from "@/hooks/api/useAuth";
 import axios from "axios";
 import { EditableTitle } from "@/components/editable-title";
 import { ShareDialog } from "@/components/share-dialog";
 import { Download, Share2 } from "lucide-react";
 import { Rating } from "@/lib/api/ratingsApi";
-import { ImagesFilter } from "@/components/images-filter";
+import { MediaFilter } from "@/components/media-filter";
 import { BATCH_SIZE, useS3 } from "@/hooks/api/useS3";
 import { S3Location } from "@/types/user";
 import { useDownload } from "@/hooks/useDownload";
@@ -94,12 +94,12 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
   const { uploadFiles, isUploading: isUploadingToS3 } = useS3();
 
   const [project, setProject] = useState<Project | null>(null);
-  const [images, setImages] = useState<
-    (ImageFile & { preview_url?: string })[]
+  const [media, setMedia] = useState<
+    (MediaFile & { preview_url: string, full_file_url: string })[]
   >([]);
-  const [selectedImages, setSelectedImages] = useState<Set<ImageFile["id"]>>(new Set());
-  const [filteredImages, setFilteredImages] = useState<
-    (ImageFile & { preview_url?: string })[]
+  const [selectedMedia, setSelectedMedia] = useState<Set<MediaFile["id"]>>(new Set());
+  const [filteredMedia, setFilteredMedia] = useState<
+    (MediaFile & { preview_url: string, full_file_url: string })[]
   >([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isHovered, setIsHovered] = useState(false);
@@ -147,55 +147,61 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
       const data = tenantHandle ? await getTenantProjectByShareUrl(tenantHandle, username, projectName, email) : await getProjectByShareUrl(username, projectName, email);
       setProject(data.project || null);
 
-      function createEmptyImage(
+      function createEmptyMedia(
         name: string | undefined,
         folder: string,
-        url?: string
-      ): ImageFile & { preview_url: string } {
+        type?: string,
+        thumbnailUrl?: string,
+        previewUrl?: string,
+        fullFileUrl?: string
+      ): MediaFile & { preview_url: string, full_file_url: string } {
         return {
           id: `${folder}-${name || "empty"}-${Date.now()}`,
           name: name || "empty",
-          url: url || "", // no blob URL yet
+          type: type || "",
+          thumbnail_url: thumbnailUrl || "", // no blob URL yet
           file: new File([], name || "empty"), // empty File placeholder
           folder,
-          preview_url: "", // will be replaced later
+          preview_url: previewUrl || "", // will be replaced later
+          full_file_url: fullFileUrl || "", // will be replaced later
           metadata: null
         };
       }
 
-      async function processImagesInBatches(images: typeof data.images) {
+      async function processMediaInBatches(media: typeof data.media) {
         // 1. create placeholder array with same length
-        const placeholders = images.map(
-          (img: { name?: string | undefined; thumbnail_url?: string }) =>
-            createEmptyImage(img.name, projectName, img.thumbnail_url)
+        const placeholders = media.map(
+          (m: { name?: string | undefined; type?: string, thumbnail_url?: string, preview_url?: string, full_file_url?: string }) =>
+            createEmptyMedia(m.name, projectName, m.type, m.thumbnail_url, m.preview_url, m.full_file_url)
         );
 
-        setImages(placeholders);
-        setFilteredImages(placeholders);
+        setMedia(placeholders);
+        setFilteredMedia(placeholders);
 
         // 2. progressively fill them batch by batch
-        const result: (ImageFile & { preview_url?: string })[] = [
+        const result: (MediaFile & { preview_url: string, full_file_url: string })[] = [
           ...placeholders,
         ];
 
         let processedCount = 0;
 
-        for (let i = 0; i < images.length; i += BATCH_SIZE) {
-          const batch = images.slice(i, i + BATCH_SIZE);
+        for (let i = 0; i < media.length; i += BATCH_SIZE) {
+          const batch = media.slice(i, i + BATCH_SIZE);
 
           const processedBatch = await Promise.all(
-            batch.map(
-              async (img) => {
-                const thumbnailFile = await urlToFile(
-                  img.thumbnail_url || "",
-                  img.name
-                );
-                return {
-                  ...(await createImageFile(thumbnailFile, projectName)),
-                  preview_url: img.preview_url,
-                };
-              }
-            )
+            batch.map(async (m) => {
+              // Decide which URL to convert into a File
+              const fileUrl = m.type.includes("video") ? m.preview_url : m.thumbnail_url || "";
+
+              const mediaFile = await urlToFile(fileUrl, m.name);
+
+              return {
+                ...(await createMediaFile(mediaFile, projectName)),
+                thumbnail_url: m.thumbnail_url,
+                preview_url: m.preview_url,
+                full_file_url: m.full_file_url
+              };
+            })
           );
 
           // replace the placeholders at the correct indices
@@ -212,10 +218,10 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
       }
 
       // usage
-      const result = await processImagesInBatches(data.images);
+      const result = await processMediaInBatches(data.media);
 
-      setImages([...result]);
-      setFilteredImages([...result]);
+      setMedia([...result]);
+      setFilteredMedia([...result]);
       setIsLoading(false);
 
       if (data.project?.project_id) await getRatings(data.project.project_id);
@@ -239,7 +245,7 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
       } else {
         toast({
           title: "Error loading project",
-          description: "Could not fetch project or images",
+          description: "Could not fetch project or media",
           variant: "destructive",
         });
       }
@@ -254,18 +260,18 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
   };
 
   const handleDownload = async () => {
-    if (!project || selectedImages.size === 0) return;
+    if (!project || selectedMedia.size === 0) return;
 
-    const selected = images.filter((image) =>
-      selectedImages.has(image.id)
+    const selected = media.filter((m) =>
+      selectedMedia.has(m.id)
     );
 
     if (selected.length === 0) return;
 
     downloadFiles(
-      selected.map((image) => ({
-        name: image.name,
-        url: `${image.preview_url}?dl=1`,
+      selected.map((media) => ({
+        name: media.name,
+        url: `${media.preview_url}?dl=1`,
       })),
       project.name
     );
@@ -294,8 +300,8 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
     const uploadFolder = folder;
     if (!uploadFolder || !project || !storageStats) return;
     try {
-      const imageFiles = uploadFolder.images.map((img) => img.file);
-      const totalSize = imageFiles.reduce((sum, file) => sum + file.size, 0);
+      const mediaFiles = uploadFolder.media.map((img) => img.file);
+      const totalSize = mediaFiles.reduce((sum, file) => sum + file.size, 0);
 
       // Check if adding this would exceed allocated storage
       if (storageProvider === "b2" && storageStats.used + totalSize > storageStats.allocated) {
@@ -307,7 +313,7 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
         return
       }
 
-      const tempFileLocations = await uploadFiles(imageFiles);
+      const tempFileLocations = await uploadFiles(mediaFiles);
       await addProjectFiles({
         projectId: project?.project_id,
         file_locations: tempFileLocations,
@@ -321,8 +327,8 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
     async (files: File[]) => {
       if (files.length === 0) {
         toast({
-          title: "No Images Found",
-          description: "Please upload folders containing image files.",
+          title: "No Media Found",
+          description: "Please upload folders containing media files.",
           variant: "destructive",
         });
         return;
@@ -337,9 +343,9 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
           async ([folderName, folderFiles]) => ({
             id: `folder-${folderName}-${Date.now()}`,
             name: folderName,
-            images: await Promise.all(
+            media: await Promise.all(
               folderFiles.map(
-                async (file) => await createImageFile(file, folderName)
+                async (file) => await createMediaFile(file, folderName)
               )
             ),
             createdAt: new Date(),
@@ -400,7 +406,7 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
       const isFiltering = !!userIds.length || !!ratingValues.length;
 
       if (!isFiltering) {
-        setFilteredImages(images);
+        setFilteredMedia(media);
         return;
       }
 
@@ -415,27 +421,27 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
         }
       );
 
-      const filteredImages = images.filter((image) =>
-        filteredRatings.some((rating) => rating.image_name === image.name)
+      const filteredMedia = media.filter((media) =>
+        filteredRatings.some((rating) => rating.media_name === media.name)
       );
 
-      setFilteredImages(filteredImages);
+      setFilteredMedia(filteredMedia);
     },
-    [images, ratings] // deps
+    [media, ratings] // deps
   );
 
-  const handleDuplicateImage = async (image: ImageFile) => {
+  const handleDuplicateMedia = async (mediaFile: MediaFile) => {
     if (!isProjectUser || !project) return;
 
-    const existingImage = images.find((i) => i.name === image.name);
-    if (!existingImage?.preview_url) return;
+    const existingMedia = media.find((i) => i.name === mediaFile.name);
+    if (!existingMedia?.preview_url) return;
 
     try {
-      const response = await axios.get(existingImage.preview_url, {
+      const response = await axios.get(existingMedia.preview_url, {
         responseType: "blob",
       });
       const blob = response.data as Blob;
-      const file = new File([blob], image.name, { type: blob.type });
+      const file = new File([blob], mediaFile.name, { type: blob.type });
 
       const location = (await uploadFile(file)) as S3Location;
 
@@ -446,16 +452,16 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
       });
 
       toast({
-        title: "Image duplicated",
-        description: `${image.name} has been added again.`,
+        title: "Media duplicated",
+        description: `${mediaFile.name} has been added again.`,
       });
 
       loadProject();
     } catch (err: any) {
-      console.error("Failed to duplicate image:", err);
+      console.error("Failed to duplicate media:", err);
       toast({
         title: "Error",
-        description: "Could not duplicate image.",
+        description: "Could not duplicate media.",
         variant: "destructive",
       });
     }
@@ -533,7 +539,7 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
                   {(project.can_download || isProjectUser || isTenantMember) && (
                     <Button disabled={isDownloading} onClick={handleDownload}>
                       <Download className="h-4 w-4" />
-                      Download {!!selectedImages.size && selectedImages.size}
+                      Download {!!selectedMedia.size && selectedMedia.size}
                     </Button>
                   )}
                   {project.share_url && canEdit && (
@@ -547,7 +553,7 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
                 </div>
               </div>
 
-              <ImagesFilter
+              <MediaFilter
                 ratings={ratings}
                 onFilterChange={handleFilterChange}
               />
@@ -557,50 +563,50 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
                   id="select-all"
                   className="cursor-pointer"
                   checked={
-                    filteredImages.length > 0 &&
-                    selectedImages.size === filteredImages.length
+                    filteredMedia.length > 0 &&
+                    selectedMedia.size === filteredMedia.length
                   }
                   onClick={(e) => {
-                    setSelectedImages((selected) =>
-                      selected.size !== filteredImages.length
-                        ? new Set(filteredImages.map((img) => img.id))
+                    setSelectedMedia((selected) =>
+                      selected.size !== filteredMedia.length
+                        ? new Set(filteredMedia.map((img) => img.id))
                         : new Set()
                     );
                   }}
                 />
                 <Label
                   htmlFor="select-all"
-                  className={cn("cursor-pointer select-none transition-all", !!selectedImages.size ? "text-foreground" : "text-muted-foreground")}
+                  className={cn("cursor-pointer select-none transition-all", !!selectedMedia.size ? "text-foreground" : "text-muted-foreground")}
                 >
                   Select All
                 </Label>
               </div>
 
-              <ImagesMasonry
+              <MediaMasonry
                 projectId={project.project_id}
                 projectNotes={projectNotes}
                 ratingDisabled={!project}
-                images={filteredImages}
+                media={filteredMedia}
                 ratings={ratings}
-                selectedImages={selectedImages}
-                onImageClick={(i) => {
+                selectedMedia={selectedMedia}
+                onMediaClick={(i) => {
                   setCarouselStartIndex(i);
                   setIsCarouselOpen(true);
                 }}
-                onRatingChange={(imageId, value, ratingId) => handleRatingChange(imageId, value, ratingId, project)}
-                onImageHoverChange={(hover) => setIsHovered(hover)}
-                onDuplicateImage={handleDuplicateImage}
+                onRatingChange={(mediaName, value, ratingId) => handleRatingChange(mediaName, value, ratingId, project)}
+                onMediaHoverChange={(hover) => setIsHovered(hover)}
+                onDuplicateMedia={handleDuplicateMedia}
                 canEdit={canEdit}
-                onSelectChange={setSelectedImages}
+                onSelectChange={setSelectedMedia}
               />
-              <ImageCarousel
+              <MediaCarousel
                 project={project}
                 ratings={ratings}
-                images={filteredImages}
+                media={filteredMedia}
                 initialIndex={carouselStartIndex}
                 isOpen={isCarouselOpen}
                 onClose={() => setIsCarouselOpen(false)}
-                onRatingChange={(imageId, value, ratingId) => handleRatingChange(imageId, value, ratingId, project)}
+                onRatingChange={(mediaName, value, ratingId) => handleRatingChange(mediaName, value, ratingId, project)}
               />
             </>
           ) : (

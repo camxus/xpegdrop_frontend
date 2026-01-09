@@ -3,7 +3,7 @@ import { api } from "./client";
 export class Note {
   note_id?: string = undefined;
   project_id: string = "";
-  image_name: string = "";
+  media_name: string = "";
   user_id: string = "";
   content: string = "";
   created_at?: string = undefined;
@@ -23,8 +23,8 @@ export const notesApi = {
   },
 
   // Get all notes for a project
-  getImageNotes: async (projectId: string, imageName: string) => {
-    return await api.get<{ notes: Note[]; total: number }>(`/notes/${projectId}/${imageName}`);
+  getImageNotes: async (projectId: string, mediaName: string) => {
+    return await api.get<{ notes: Note[]; total: number }>(`/notes/${projectId}/${mediaName}`);
   },
 
   // Update a note by ID

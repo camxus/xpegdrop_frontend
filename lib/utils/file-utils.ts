@@ -1,30 +1,40 @@
-import type { ImageFile, Folder } from "@/types"
+import type { MediaFile, Folder } from "@/types"
 import * as UTIF from "utif";
 import * as exifr from "exifr";
 
 const unsupportedButValid = ['image/tiff', 'image/heic', 'image/heif'];
 
 
+export function isMediaFile(file: File): boolean {
+  return isImageFile(file) || isVideoFile(file)
+}
+
 export function isImageFile(file: File): boolean {
   return file.type.startsWith("image/")
 }
 
-export function getImageFiles(files: File[]): File[] {
-  return files.filter(isImageFile)
+export function isVideoFile(file: File): boolean {
+  return file.type.startsWith("video/")
 }
 
-export async function createImageFile(file: File, folder: string): Promise<ImageFile> {
+export function getMediaFiles(files: File[]): File[] {
+  return files.filter(isMediaFile)
+}
+
+export async function createMediaFile(file: File, folder: string): Promise<MediaFile> {
+  const videoThumbnailUrl = isVideoFile(file) ? await generateVideoThumbnailURL(file) : null
   return {
     id: `${folder}-${file.name}-${Date.now()}`,
     name: file.name,
-    url: unsupportedButValid.includes(file.type) ? await getTiffPreviewURL(file) : URL.createObjectURL(file),
+    type: file.type,
+    thumbnail_url: videoThumbnailUrl || unsupportedButValid.includes(file.type) ? await getTiffPreviewURL(file) : URL.createObjectURL(file),
     file,
     folder,
-    metadata: await getEXIFData(file)
+    metadata: isImageFile(file) ? await getEXIFData(file) : null
   }
 }
 
-function isImageCorrupted(file: File): Promise<boolean> {
+function isCorrupted(file: File): Promise<boolean> {
   return new Promise((resolve) => {
 
     // These formats aren't corrupted — they're just not displayable by browsers
@@ -43,9 +53,9 @@ function isImageCorrupted(file: File): Promise<boolean> {
 export async function processFolderUpload(files: File[]): Promise<Folder[]> {
   const folderMap = new Map<string, File[]>()
   for (const file of files) {
-    if (!isImageFile(file)) continue;
+    if (!isMediaFile(file)) continue;
 
-    if (await isImageCorrupted(file)) {
+    if (await isCorrupted(file)) {
       console.warn(`Corrupted image skipped: ${file.name}`);
       continue;
     }
@@ -70,8 +80,8 @@ export async function processFolderUpload(files: File[]): Promise<Folder[]> {
     Array.from(folderMap.entries()).map(async ([folderName, folderFiles]) => ({
       id: `folder-${folderName}-${Date.now()}`,
       name: folderName,
-      images: await Promise.all(
-        folderFiles.map((file) => createImageFile(file, folderName))
+      media: await Promise.all(
+        folderFiles.map((file) => createMediaFile(file, folderName))
       ),
       createdAt: new Date(),
     }))
@@ -160,4 +170,48 @@ export async function getEXIFData(file: File): Promise<Record<string, any> | nul
     console.warn(`Failed to extract EXIF data from ${file.name}`, err);
     return null;
   }
+}
+
+export async function generateVideoThumbnailURL(file: File): Promise<string> {
+  if (!isVideoFile(file)) {
+    throw new Error(`File must be of type "video/*"`)
+  }
+
+  return new Promise((resolve, reject) => {
+    const video = document.createElement("video");
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    if (!ctx) {
+      reject("Canvas not supported");
+      return;
+    }
+
+    video.preload = "metadata";
+    video.muted = true;
+    video.playsInline = true;
+    video.src = URL.createObjectURL(file);
+
+    video.onloadedmetadata = () => {
+      // Avoid black frame
+      video.currentTime = Math.min(0.1, video.duration || 0.1);
+    };
+
+    video.onseeked = () => {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      const thumbnailURL = canvas.toDataURL("image/jpeg", 0.85);
+
+      URL.revokeObjectURL(video.src);
+      resolve(thumbnailURL);
+    };
+
+    video.onerror = () => {
+      URL.revokeObjectURL(video.src);
+      reject("Failed to generate video thumbnail");
+    };
+  });
 }

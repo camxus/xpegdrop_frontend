@@ -46,16 +46,16 @@ export function FolderPreviewContent({
 
       {/* Images list */}
       <div className="flex flex-col divide-y divide-gray-800 max-h-[400px] overflow-y-auto">
-        {currentFolder.images.map((img) => (
-          <div key={img.id} className="flex h-16 items-center gap-4 py-2 px-1">
+        {currentFolder.media.map((m) => (
+          <div key={m.id} className="flex h-16 items-center gap-4 py-2 px-1">
             <Image
-              src={img.url || URL.createObjectURL(img.file)}
-              alt={img.file.name}
+              src={m.url || URL.createObjectURL(m.file)}
+              alt={m.file.name}
               width={24}
               height={24}
               className="rounded object-cover"
             />
-            <p className="text-sm truncate">{img.file.name}</p>
+            <p className="text-sm truncate">{m.file.name}</p>
           </div>
         ))}
       </div>

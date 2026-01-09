@@ -11,9 +11,9 @@ export const metadataApi = {
    */
   createImageMetadata: async (data: {
     project_id: string;
-    image_name: string;
+    media_name: string;
     exif_data: EXIFData;
-    image_hash?: string;
+    media_hash?: string;
   }) => {
     return await api.post("/metadata", data);
   },
@@ -31,8 +31,8 @@ export const metadataApi = {
   /**
    * Get metadata for a single image
    */
-  getImageMetadata: async (project_id: string, image_name: string) => {
-    return await api.get<Metadata>(`/metadata/${project_id}/${encodeURIComponent(image_name)}`);
+  getImageMetadata: async (project_id: string, media_name: string) => {
+    return await api.get<Metadata>(`/metadata/${project_id}/${encodeURIComponent(media_name)}`);
   },
 
   /**
@@ -45,7 +45,7 @@ export const metadataApi = {
   /**
    * Delete metadata for a single image
    */
-  deleteImageMetadata: async (project_id: string, image_name: string) => {
-    return await api.delete(`/metadata/${project_id}/${encodeURIComponent(image_name)}`);
+  deleteImageMetadata: async (project_id: string, media_name: string) => {
+    return await api.delete(`/metadata/${project_id}/${encodeURIComponent(media_name)}`);
   },
 };

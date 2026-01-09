@@ -98,10 +98,11 @@ export interface EXIFData {
   XMP?: Record<string, any>;
 }
 
-export interface ImageFile {
+export interface MediaFile {
   id: string
   name: string
-  url: string
+  type: string
+  thumbnail_url: string
   file: File
   folder: string
   metadata?: EXIFData | null
@@ -110,7 +111,7 @@ export interface ImageFile {
 export interface Folder {
   id: string
   name: string
-  images: ImageFile[]
+  media: MediaFile[]
   createdAt: Date
 }
 

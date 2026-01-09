@@ -14,7 +14,6 @@ import { useUsers } from "@/hooks/api/useUser";
 import { Rating } from "@/lib/api/ratingsApi";
 import { useAuth } from "@/hooks/api/useAuth";
 import { AnimatePresence, motion } from "framer-motion";
-import { useNotes } from "@/hooks/api/useNotes";
 
 interface RatingSliderProps {
   value: number;

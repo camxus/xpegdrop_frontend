@@ -64,11 +64,13 @@ export const projectsApi = {
   ) => {
     return await api.get<{
       project: Project,
-      images: {
-        name?: string,
-        preview_url?: string,
-        thumbnail_url?: string,
-        thumbnai?: string
+      media: {
+        name: string,
+        type: string,
+        full_file_url: string,
+        preview_url: string,
+        thumbnail_url: string,
+        thumbnai: string
       }[]
     }>(
       `/projects/share/${username}/${encodeURIComponent(projectName)}`,
@@ -85,11 +87,13 @@ export const projectsApi = {
   ) => {
     return await api.get<{
       project: Project,
-      images: {
-        name?: string,
-        preview_url?: string,
-        thumbnail_url?: string,
-        thumbnai?: string
+      media: {
+        name: string,
+        type: string,
+        preview_url: string,
+        full_file_url: string,
+        thumbnail_url: string,
+        thumbnai: string
       }[]
     }>(
       `/projects/share/tenant/${tenantHandle}/${username}/${encodeURIComponent(projectName)}`,

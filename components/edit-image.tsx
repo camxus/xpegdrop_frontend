@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useEffect, useState } from "react";
-import type { ImageFile } from "@/types";
+import type { MediaFile } from "@/types";
 import { X } from "lucide-react";
 import { Slider } from "@/components/ui/slider"; // adjust import path if needed
 import { Input } from "./ui/input";
@@ -13,7 +13,7 @@ import _ from "lodash";
 import RetouchingTools from "./retouching-tools";
 
 interface EditImageViewProps {
-  image: ImageFile;
+  image: MediaFile;
   isOpen: boolean;
   onClose: () => void;
 }
