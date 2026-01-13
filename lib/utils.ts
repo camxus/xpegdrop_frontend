@@ -7,3 +7,23 @@ export function cn(...inputs: ClassValue[]) {
 
 export const getInitials = (firstName: string, lastName: string) =>
   `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+
+export function isSameArray(a?: string[], b?: string[]) {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  if (a.length !== b.length) return false;
+  return a.every((v, i) => v === b[i]);
+}
+
+export function isSameSet<T>(
+  a: T[],
+  b: T[],
+  getKey: (v: T) => string | number
+): boolean {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  if (a.length !== b.length) return false;
+
+  const setA = new Set(a.map(getKey));
+  return b.every(v => setA.has(getKey(v)));
+}

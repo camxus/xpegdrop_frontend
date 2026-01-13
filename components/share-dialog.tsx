@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Copy, Check, Share2, Plus, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { cn, getInitials } from "@/lib/utils";
+import { cn, getInitials, isSameSet } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { useProjects } from "@/hooks/api/useProjects";
 import { Project } from "@/types/project";
@@ -115,7 +115,18 @@ export function ShareDialog({ project, onClose }: ShareDialogProps) {
         toast({ title: "Error", description: "Failed to update project", variant: "destructive" });
       }
     };
-    update();
+
+    const hasChanged =
+      project.is_public !== isPublic ||
+      project.can_download !== canDownload ||
+      !isSameSet(project.approved_emails, emails, e => e) ||
+      !isSameSet(project.approved_users, approvedUsers, u => u.user_id) ||
+      !isSameSet(project.approved_tenant_users, tenantUsers, u => u.user_id);
+
+
+    if (hasChanged) {
+      update();
+    }
   }, [isPublic, emails, canDownload, approvedUsers, tenantUsers]);
 
   return (
@@ -208,7 +219,7 @@ export function ShareDialog({ project, onClose }: ShareDialogProps) {
                 </ul>
               )}
             </div>
-            
+
             {/* Approved users */}
             <div className="flex flex-col gap-2">
               <Label>Project Users</Label>
