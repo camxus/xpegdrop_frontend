@@ -40,15 +40,11 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-yarn-
 
-      - name: Install PNPM
-        run: yarn dlx pnpm --version
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+      - name: Install Pulumi
+        run: |
+          curl -fsSL https://get.pulumi.com | sh
+          export PATH=$HOME/.pulumi/bin:$PATH
+          pulumi version
 
       - name: Unlock SST
         run: npx sst unlock --stage production || true
@@ -56,11 +52,12 @@ jobs:
       - name: Deploy to AWS via SST
         env:
           NEXT_STRIPE_SECRET_KEY: ${{ secrets.NEXT_STRIPE_SECRET_KEY }}
-
           NEXT_PUBLIC_URL: ${{ vars.NEXT_PUBLIC_URL }}
           NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL }}
           NEXT_GID: ${{ vars.NEXT_GID }}
           NEXT_SHEETID: ${{ vars.NEXT_SHEETID }}
           NEXT_GOOGLE_SCRIPT_WEBAPP_URL: ${{ vars.NEXT_GOOGLE_SCRIPT_WEBAPP_URL }}
           NEXT_PUBLIC_TEMP_BUCKET: ${{ vars.NEXT_PUBLIC_TEMP_BUCKET }}
-        run: npx sst deploy --stage production
+        run: |
+          export PATH=$HOME/.pulumi/bin:$PATH
+          npx sst deploy --stage production
