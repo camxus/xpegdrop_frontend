@@ -260,19 +260,23 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
   };
 
   const handleDownload = async () => {
-    if (!project || selectedMedia.size === 0) return;
+    if (!project) return;
 
-    const selected = media.filter((m) =>
-      selectedMedia.has(m.id)
-    );
+    const selected = selectedMedia.size > 0
+      ? media.filter((m) => selectedMedia.has(m.id))
+      : media;
 
     if (selected.length === 0) return;
 
     downloadFiles(
-      selected.map((media) => ({
-        name: media.name,
-        url: `${media.preview_url}?dl=1`,
-      })),
+      selected.map((media) => {
+        const url = new URL(media.full_file_url);
+        url.searchParams.set('dl', '1'); // safely append dl=1
+        return {
+          name: media.name,
+          url: url.toString(),
+        };
+      }),
       project.name
     );
   };
