@@ -50,11 +50,10 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Install Pulumi
+      - name: Install specific Pulumi version
         run: |
-          curl -fsSL https://get.pulumi.com | sh
-          export PATH=$HOME/.pulumi/bin:$PATH
-          pulumi version
+          curl -fsSL https://get.pulumi.com | sh -s -- --version 3.212.0
+          echo "$HOME/.pulumi/bin" >> $GITHUB_PATH
 
       - name: Unlock SST
         run: npx sst unlock --stage production || true
