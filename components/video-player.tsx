@@ -127,6 +127,7 @@ export function VideoPlayer({
               {/* Slider for video seek */}
               <Slider
                 min={0}
+                step={0.01}
                 max={duration || 0}
                 value={currentTime}
                 onValueChange={handleSeek}

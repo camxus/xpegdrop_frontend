@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 
 interface SliderProps {
   className?: string;
+  step?: number,
   min: number;
   max: number;
   value: number;
@@ -14,6 +15,7 @@ interface SliderProps {
 
 export const Slider: React.FC<SliderProps> = ({
   className,
+  step = 1,
   min,
   max,
   value,
@@ -27,6 +29,7 @@ export const Slider: React.FC<SliderProps> = ({
       )}
       min={min}
       max={max}
+      step={step}
       value={[value]}
       onValueChange={(val) => onValueChange(val[0])}
     >
