@@ -19,6 +19,7 @@ import { staggeredContainerVariants } from "@/lib/motion";
 import { NotesModal } from "./notes-modal";
 import { useModal } from "@/hooks/use-modal";
 import { isImageFile } from "@/lib/utils/file-utils";
+import { VideoPlayer } from "./video-player";
 
 const MOBILE_HEIGHT = "80vh"
 
@@ -259,12 +260,7 @@ export function MediaCarousel({
                         </div>
                       )}
 
-                      <video
-                        className={cn(
-                          "max-w-full w-auto h-auto object-contain transition-opacity duration-300",
-                          `max-h-${MOBILE_HEIGHT}`,
-                          isLoading ? "opacity-0" : "opacity-100"
-                        )}
+                      <VideoPlayer
                         controls
                         playsInline
                         preload="metadata"

@@ -22,19 +22,18 @@ export function getMediaFiles(files: File[]): File[] {
 }
 
 export async function createMediaFile(file: File, folder: string): Promise<MediaFile> {
-  const videoThumbnailUrl = isVideoFile(file) ? await generateVideoThumbnailURL(file) : null
   return {
     id: `${folder}-${file.name}-${Date.now()}`,
     name: file.name,
     type: file.type,
-    thumbnail_url: videoThumbnailUrl || unsupportedButValid.includes(file.type) ? await getTiffPreviewURL(file) : URL.createObjectURL(file),
+    thumbnail_url: isVideoFile(file) ? await generateVideoThumbnailURL(file) : (unsupportedButValid.includes(file.type) ? await getTiffPreviewURL(file) : URL.createObjectURL(file)),
     file,
     folder,
     metadata: isImageFile(file) ? await getEXIFData(file) : null
   }
 }
 
-function isCorrupted(file: File): Promise<boolean> {
+function isCorruptedImage(file: File): Promise<boolean> {
   return new Promise((resolve) => {
 
     // These formats aren't corrupted — they're just not displayable by browsers
@@ -50,12 +49,48 @@ function isCorrupted(file: File): Promise<boolean> {
   });
 }
 
+function isCorruptedVideo(file: File): Promise<boolean> {
+  return new Promise((resolve) => {
+    const video = document.createElement("video");
+    const url = URL.createObjectURL(file);
+    
+    const cleanup = () => {
+      URL.revokeObjectURL(url);
+      video.remove();
+    };
+    
+    video.preload = "metadata";
+    
+    video.onloadedmetadata = () => {
+      // 🚨 critical guard
+      if (video.videoWidth === 0 || video.videoHeight === 0) {
+        cleanup();
+        resolve(true);
+        return;
+      }
+      
+      cleanup();
+      resolve(false);
+    };
+    
+    video.onerror = () => {
+      cleanup();
+      resolve(true);
+    };
+    
+    video.src = url;
+  });
+}
+
 export async function processFolderUpload(files: File[]): Promise<Folder[]> {
   const folderMap = new Map<string, File[]>()
   for (const file of files) {
     if (!isMediaFile(file)) continue;
 
-    if (await isCorrupted(file)) {
+    if (
+      (isImageFile(file) && (await isCorruptedImage(file))) ||
+      (isVideoFile(file) && (await isCorruptedVideo(file)))
+    ) {
       console.warn(`Corrupted image skipped: ${file.name}`);
       continue;
     }
@@ -74,6 +109,7 @@ export async function processFolderUpload(files: File[]): Promise<Folder[]> {
     }
     folderMap.get(folderName)!.push(file);
   }
+
 
 
   return await Promise.all(

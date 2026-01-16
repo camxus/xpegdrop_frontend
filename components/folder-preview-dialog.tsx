@@ -49,7 +49,7 @@ export function FolderPreviewContent({
         {currentFolder.media.map((m) => (
           <div key={m.id} className="flex h-16 items-center gap-4 py-2 px-1">
             <Image
-              src={m.url || URL.createObjectURL(m.file)}
+              src={m.thumbnail_url || URL.createObjectURL(m.file)}
               alt={m.file.name}
               width={24}
               height={24}
