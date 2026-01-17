@@ -195,7 +195,7 @@ export function VideoSeek({
     <div className={cn("relative w-full", className)}>
       {/* Buffered progress (animated) */}
       <div className="absolute inset-0 flex items-center pointer-events-none">
-        <div className="w-full h-1 bg-gray-700 rounded-full overflow-hidden">
+        <div className="w-full h-1 rounded-full overflow-hidden">
           <motion.div
             className="h-full bg-gray-500"
             animate={{ width: `${bufferedPercent}%` }}
