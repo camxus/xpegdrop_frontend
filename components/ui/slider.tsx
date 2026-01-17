@@ -35,7 +35,7 @@ export const Slider: React.FC<SliderProps> = ({
     >
       <RSlider.Track
         className={cn(
-          "relative bg-gray-700 h-1 flex-1 rounded-full",
+          "relative cursor-pointer bg-black/70 h-1 flex-1 rounded-full",
           className
         )}
       >

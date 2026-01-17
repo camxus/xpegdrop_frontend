@@ -42,6 +42,14 @@ export function VideoPlayer({
   }, []);
 
   /* ---------------- video actions ---------------- */
+  function getBufferedEnd(): number {
+    if (!videoRef.current) return 0
+
+    const ranges = videoRef.current.buffered;
+    if (!ranges || ranges.length === 0) return 0;
+    return ranges.end(ranges.length - 1);
+  }
+
   const togglePlay = () => {
     if (!videoRef.current) return;
     isPlaying ? videoRef.current.pause() : videoRef.current.play();
@@ -125,12 +133,11 @@ export function VideoPlayer({
               className="absolute bottom-0 left-0 right-0 backdrop-blur p-3 space-y-2"
             >
               {/* Slider for video seek */}
-              <Slider
-                min={0}
-                step={0.01}
-                max={duration || 0}
-                value={currentTime}
-                onValueChange={handleSeek}
+              <VideoSeek
+                currentTime={currentTime}
+                duration={duration}
+                buffered={getBufferedEnd()}
+                onSeek={handleSeek}
               />
 
               <div className="flex items-center justify-between gap-3 text-white">
@@ -162,6 +169,53 @@ export function VideoPlayer({
           )}
         </AnimatePresence>
       </div>
+    </div>
+  );
+}
+
+interface VideoSeekProps {
+  currentTime: number;
+  duration: number;
+  buffered: number; // seconds
+  onSeek: (value: number) => void;
+  className?: string;
+}
+
+export function VideoSeek({
+  currentTime,
+  duration,
+  buffered,
+  onSeek,
+  className,
+}: VideoSeekProps) {
+  const bufferedPercent =
+    duration > 0 ? Math.min(buffered / duration, 1) * 100 : 0;
+
+  return (
+    <div className={cn("relative w-full", className)}>
+      {/* Buffered progress (animated) */}
+      <div className="absolute inset-0 flex items-center pointer-events-none">
+        <div className="w-full h-1 bg-gray-700 rounded-full overflow-hidden">
+          <motion.div
+            className="h-full bg-gray-500"
+            animate={{ width: `${bufferedPercent}%` }}
+            transition={{
+              duration: 0.3,
+              ease: "easeOut",
+            }}
+          />
+        </div>
+      </div>
+
+      {/* Seek slider (played progress + thumb) */}
+      <Slider
+        min={0}
+        max={duration || 0}
+        step={0.01}
+        value={currentTime}
+        onValueChange={onSeek}
+        className="relative"
+      />
     </div>
   );
 }
