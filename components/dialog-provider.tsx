@@ -12,12 +12,14 @@ import {
 import { cn } from "@/lib/utils";
 
 interface DialogOptions {
+  id: string;
+  open: boolean;
   title?: string;
   description?: string;
   content?: FC<any>;
   contentProps?: Record<string, unknown>;
   actions?: FC<any>;
-  containerProps?: React.HTMLAttributes<HTMLDivElement>
+  containerProps?: React.HTMLAttributes<HTMLDivElement>;
 }
 
 interface DialogContextType {
@@ -33,12 +35,23 @@ export const DialogContext = createContext<DialogContextType | undefined>(
 export function DialogProvider({ children }: { children: ReactNode }) {
   const [stack, setStack] = useState<DialogOptions[]>([]);
 
-  const show = (options: DialogOptions) => {
-    setStack((prev) => [...prev, options]);
+  const show = (options: Omit<DialogOptions, "id" | "open">) => {
+    setStack((prev) => [
+      ...prev,
+      { ...options, id: crypto.randomUUID(), open: true },
+    ]);
   };
 
   const hide = () => {
-    setStack((prev) => prev.slice(0, -1));
+    setStack((prev) => {
+      if (prev.length === 0) return prev;
+
+      const last = prev[prev.length - 1];
+      return [
+        ...prev.slice(0, -1),
+        { ...last, open: false },
+      ];
+    });
   };
 
   const updateProps = (newProps: Record<string, unknown>) => {
@@ -63,16 +76,19 @@ export function DialogProvider({ children }: { children: ReactNode }) {
       {children}
 
       {stack.map((dialogOptions, index) => {
-        const isTop = index === stack.length - 1;
         const Component = dialogOptions.content;
         const Actions = dialogOptions.actions;
 
         return (
           <Dialog
-            key={index}
-            open
+            key={dialogOptions.id}
+            open={dialogOptions.open}
             onOpenChange={(open) => {
-              if (!open && isTop) hide();
+              if (!open) {
+                setStack((prev) =>
+                  prev.filter((d) => d.id !== dialogOptions.id)
+                );
+              }
             }}
           >
             <DialogContent
