@@ -12,8 +12,8 @@ import {
 import { cn } from "@/lib/utils";
 
 interface DialogOptions {
-  id: string;
-  open: boolean;
+  id?: string;
+  open?: boolean;
   title?: string;
   description?: string;
   content?: FC<any>;

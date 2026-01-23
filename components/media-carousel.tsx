@@ -236,7 +236,7 @@ export function MediaCarousel({
                       </div>
                     )}
                     <Image
-                      src={currentMedia?.preview_url || "/placeholder.svg"}
+                      src={currentMedia?.thumbnail_url || "/placeholder.svg"}
                       alt={currentMedia?.name || "Image"}
                       width={1200}
                       height={800}
