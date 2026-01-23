@@ -124,11 +124,6 @@ export function HomePage() {
           </motion.div>
         </motion.div>
       </div>
-
-      {/* Footer */}
-      <div className="absolute bottom-4 text-xs text-muted-foreground">
-        Powered by Dropbox
-      </div>
     </motion.div>
   );
 }
