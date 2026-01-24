@@ -7,7 +7,7 @@ import { ArrowLeft } from 'lucide-react'
 import { useStripe } from '@/hooks/api/useStripe'
 import { addDays, format } from 'date-fns'
 import { PRODUCTS } from '@/lib/products'
-import { motion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useAuth } from '@/hooks/api/useAuth'
 
 const containerVariants = {
@@ -72,6 +72,7 @@ export default function BillingPage() {
           </Card>
         </motion.div>
 
+
         {/* Current Subscription */}
         <motion.div variants={itemVariants}>
           <Card>
@@ -82,7 +83,7 @@ export default function BillingPage() {
               {billingInfo?.subscription ? (
                 <div>
                   <p className="text-sm text-muted-foreground mb-2">
-                    Plan: {PRODUCTS.find((p) => p.id === billingInfo.subscription?.items.data[0].plan.id)?.name}
+                    Plan: {PRODUCTS.find((p) => p.id === billingInfo.subscription?.metadata.product_id)?.name}
                   </p>
                   <p className="text-sm text-muted-foreground mb-2">
                     Status: {billingInfo.subscription.status}
@@ -133,24 +134,32 @@ export default function BillingPage() {
         </motion.div>
 
         {/* Manage Billing */}
-        {billingInfo?.subscription?.status && (
-          <motion.div variants={itemVariants}>
-            <Card>
-              <CardHeader>
-                <CardTitle>Manage Billing</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  View and manage your subscription details, including renewal dates and payment history.
-                </p>
+        <AnimatePresence>
+          {!!billingInfo?.subscription?.status && (
+            <motion.div
+              key="billing-card"
+              variants={itemVariants}
+              initial="hidden"
+              animate="show"
+              exit="hidden"
+            >
+              <Card>
+                <CardHeader>
+                  <CardTitle>Manage Billing</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    View and manage your subscription details, including renewal dates and payment history.
+                  </p>
 
-                <Link href={billingPortal || ""} target="_blank" rel="noopener noreferrer">
-                  <Button variant="default">Go to Portal</Button>
-                </Link>
-              </CardContent>
-            </Card>
-          </motion.div>
-        )}
+                  <Link href={billingPortal || ""} target="_blank" rel="noopener noreferrer">
+                    <Button variant="default">Go to Portal</Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
     </div>
   )
