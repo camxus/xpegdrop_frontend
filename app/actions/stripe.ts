@@ -19,9 +19,6 @@ export async function startCheckoutSession(productId: string, userId: string, tr
           product_data: {
             name: product.name,
             description: product.description,
-            metadata: {
-              product_id: product.id, // <-- store your internal product ID here
-            },
           },
           unit_amount: product.priceInCents,
           recurring: {
@@ -35,9 +32,12 @@ export async function startCheckoutSession(productId: string, userId: string, tr
     ],
 
     // Only add trial_period_days if trial
-    subscription_data: trial
-      ? { trial_period_days: product.trialDays }
-      : undefined,
+    subscription_data: {
+      ...(trial && { trial_period_days: product.trialDays }),
+      metadata: {
+        product_id: product.id, // e.g. "pro_monthly"
+      },
+    },
 
     success_url: `${process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'}/success?session_id={CHECKOUT_SESSION_ID}&plan=${product.id}`,
     cancel_url: `${process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'}/preferences/billing`,
