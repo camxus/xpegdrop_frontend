@@ -126,9 +126,11 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
   });
   const gradient = useTransform(
     [springX, springY, springSize, springOpacity],
-    ([x, y, size, opacity]) =>
-      `radial-gradient(circle ${size}px at ${x}% ${y}%, rgba(255,255,255,${opacity}) 0%, rgba(255,255,255,${(opacity as number) * 0.25
-      }) 50%, transparent 100%)`
+    ([xVal, yVal, size, opacity]) =>
+      `radial-gradient(circle ${size}px at ${xVal}% ${yVal}%, 
+      rgba(var(--foreground-rgb), ${opacity}) 0%, 
+      rgba(var(--foreground-rgb), ${opacity as number * 0.25}) 50%, 
+      transparent 100%)`
   );
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -513,7 +515,7 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
                 <Progress
                   className="h-2"
                   value={projectLoadProgress}
-                  color="white"
+                  color="bg-foreground"
                 />
               </motion.div>
             </div>

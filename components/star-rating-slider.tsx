@@ -93,9 +93,9 @@ export default function StarRatingWithAvatars({
                 className="flex items-center"
               >
                 {isFilled ? (
-                  <Star className="w-3 h-3 fill-white text-white" />
+                  <Star className="w-3 h-3 fill-foreground text-foreground" style={{fill: "var(--foreground)"}}/>
                 ) : showBullets ? (
-                  <Dot className="w-3 h-3 rounded-full fill-white" />
+                  <Dot className="w-3 h-3 rounded-full fill-foreground" />
                 ) : (
                   <Star className="w-4 h-4 text-muted-foreground/30" />
                 )}

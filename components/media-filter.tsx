@@ -76,8 +76,9 @@ export function MediaFilter({ ratings, onFilterChange }: MediaFilterProps) {
                     key={i}
                     className={cn(
                       "w-3 h-3 transition-colors duration-150",
-                      "fill-white text-white"
+                      "fill-foreground text-foreground"
                     )}
+                    style={{fill: "var(--foreground)"}}
                   />
                 ))}
               </div>

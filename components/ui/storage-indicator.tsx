@@ -5,7 +5,7 @@ import { Progress } from './progress'
 export default function StorageIndicator({ percentage, isDropbox = false }: { percentage: number, isDropbox?: boolean }) {
   return (
     <>
-      <span className="text-xs text-muted-foreground">
+      <span className="text-xs text-white/80">
         {isDropbox ? "Dropbox" : "fframess"}{" "}Storage{" "}
         {percentage >= 90
           ? "Full"

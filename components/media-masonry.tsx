@@ -248,7 +248,7 @@ const MasonryMedia = memo(function MasonryMedia({
               className={cn(
                 "group relative overflow-hidden rounded-lg bg-muted cursor-pointer transition-all duration-300 hover:shadow-xl",
                 isHovered && "hover:scale-[1.02]",
-                isSelected && "scale-[0.96] ring-2 ring-foreground"
+                isSelected && "scale-[0.96] ring-2 ring-white"
               )}
               onMouseEnter={onHover}
               onMouseLeave={onLeave}
@@ -256,10 +256,12 @@ const MasonryMedia = memo(function MasonryMedia({
             >
               <div
                 className={cn(
-                  "absolute inset-0 border-2 border-transparent transition-all duration-300 rounded-lg z-20 pointer-events-none hover:border-white shadow-[0_0_20px_rgba(255,255,255,0.5)]",
-                  isHovered &&
-                  "border-white shadow-[0_0_20px_rgba(255,255,255,0.5)]"
+                  "absolute inset-0 border-2 border-transparent transition-all duration-300 rounded-lg z-20 pointer-events-none hover:border-foreground",
+                  isHovered && "border-white"
                 )}
+                style={{
+                  boxShadow: `0 0 20px rgba(var(--foreground-rgb), 0.5)`,
+                }}
               />
               <Image
                 key={mediaFile.name}

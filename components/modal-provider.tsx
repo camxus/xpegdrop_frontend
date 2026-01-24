@@ -142,7 +142,7 @@ export function ModalProvider({ children }: { children: ReactNode }) {
           )} style={style}>
             {/* Header */}
             {modalOptions.title && (
-              <div className="flex items-center justify-between p-4 border-b">
+              <div className="flex items-center justify-between p-4 border-b border-white/10">
                 <h2 className="text-lg font-bold">{modalOptions.title}</h2>
                 <Button size="icon" variant="ghost" onClick={hide}>
                   <X size={20} />

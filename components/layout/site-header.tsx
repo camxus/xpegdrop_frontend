@@ -138,7 +138,7 @@ export function SiteHeader({ children }: SiteHeaderProps) {
           opacity: 1,
           width: isSidebarCollapsed ? SIDEBAR_WIDTH_COLLAPSED : SIDEBAR_WIDTH,
         }}
-        className="bg-transparent border-r border-white/10 flex flex-col overflow-hidden w-full"
+        className="bg-transparent border-r border-foreground/10 flex flex-col overflow-hidden w-full"
       >
         <div className="p-4">
           <div className="flex items-center justify-between gap-2">
@@ -570,8 +570,8 @@ export function PersonalSidebarItems({
         key={item.href}
         href={item.href}
         className={`group relative flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all ${pathname === item.href
-          ? "bg-white/5 text-white"
-          : "text-white/80 hover:bg-white/10"
+          ? "bg-foreground/5 text-foreground"
+          : "text-foreground/80 hover:bg-foreground/10"
           }`}
       >
         {/* Icon */}
@@ -614,7 +614,7 @@ export function PersonalSidebarItems({
             handleDeleteProject(item.id);
           }}
           className={cn(
-            "cursor-pointer absolute right-3 opacity-0 group-hover:opacity-100 text-white/60 hover:text-destructive-foreground transition-[opacity,colors] duration-200",
+            "cursor-pointer absolute right-3 opacity-0 group-hover:opacity-100 text-foreground/60 hover:text-destructive-foreground transition-[opacity,colors] duration-200",
             isSidebarCollapsed ? "hidden" : "block"
           )}
         >
@@ -730,7 +730,7 @@ export function TenantSidebarItems({
             className="w-full"
           >
             <AccordionItem value={userId}>
-              <AccordionTrigger className={cn("flex items-center gap-2 p-0", pathname.includes(userInfo?.username) ? "bg-white/5" : "hover:bg-white/10")}>
+              <AccordionTrigger className={cn("flex items-center gap-2 p-0", pathname.includes(userInfo?.username) ? "bg-foreground/5" : "hover:bg-foreground/10")}>
                 {/* Avatar */}
                 <motion.div
                   initial={{ opacity: 1 }}
@@ -768,8 +768,8 @@ export function TenantSidebarItems({
                       className={cn(
                         "group relative flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all",
                         pathname === item.href
-                          ? "bg-white/5 text-white"
-                          : "text-white/80 hover:bg-white/10"
+                          ? "bg-foreground/5 text-foreground"
+                          : "text-foreground/80 hover:bg-foreground/10"
                       )}
                     >
                       <motion.div initial={false} animate={{ opacity: 1 }}>
@@ -806,7 +806,7 @@ export function TenantSidebarItems({
                             handleDeleteProject(item.id);
                           }}
                           className={cn(
-                            "cursor-pointer absolute right-3 opacity-0 group-hover:opacity-100 text-white/60 hover:text-destructive-foreground transition-[opacity,colors] duration-200"
+                            "cursor-pointer absolute right-3 opacity-0 group-hover:opacity-100 text-foreground/60 hover:text-destructive-foreground transition-[opacity,colors] duration-200"
                           )}
                         >
                           <X className="w-4 h-4" />
