@@ -43,7 +43,7 @@ export default function PreferencesPage() {
     stats: { data: dropboxStats },
   } = useDropbox();
 
-  const [userState, setUserState] = useState<User>(user!);
+  const [userState, setUserState] = useState<User | null | undefined>(user);
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
   const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null);
 
@@ -74,6 +74,7 @@ export default function PreferencesPage() {
 
   // Debounce username input
   useEffect(() => {
+    if (!userState) return
     const timeout = setTimeout(() => {
       if (userState.username.length > 0) {
         getUserByUsername(userState.username);
@@ -82,13 +83,13 @@ export default function PreferencesPage() {
       }
     }, 500);
     return () => clearTimeout(timeout);
-  }, [userState.username]);
+  }, [userState?.username]);
 
   useEffect(() => {
-    if (!userState.username.length) setUsernameAvailable(null);
+    if (!userState?.username.length) setUsernameAvailable(null);
     else if (foundUser) setUsernameAvailable(false);
     else if (!isCheckingUsername && !foundUser) setUsernameAvailable(true);
-  }, [foundUser, userState.username, isCheckingUsername]);
+  }, [foundUser, userState?.username, isCheckingUsername]);
 
 
   const handleAvatarClick = () => {
@@ -197,7 +198,7 @@ export default function PreferencesPage() {
           <Input
             id="first_name"
             value={userState.first_name}
-            onChange={(e) => setUserState((prev) => ({ ...prev, first_name: e.target.value }))}
+            onChange={(e) => setUserState((prev) => (prev && { ...prev, first_name: e.target.value }))}
           />
         </motion.div>
 
@@ -206,7 +207,7 @@ export default function PreferencesPage() {
           <Input
             id="last_name"
             value={userState.last_name}
-            onChange={(e) => setUserState((prev) => ({ ...prev, last_name: e.target.value }))}
+            onChange={(e) => setUserState((prev) => (prev && { ...prev, last_name: e.target.value }))}
           />
         </motion.div>
 
@@ -215,7 +216,7 @@ export default function PreferencesPage() {
           <Input
             id="last_name"
             value={userState.username}
-            onChange={(e) => setUserState((prev) => ({ ...prev, username: e.target.value }))}
+            onChange={(e) => setUserState((prev) => (prev && { ...prev, username: e.target.value }))}
           />
         </motion.div>
 
