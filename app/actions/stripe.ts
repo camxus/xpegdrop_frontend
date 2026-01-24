@@ -15,11 +15,11 @@ export async function startCheckoutSession(productId: string, userId: string, tr
     line_items: [
       {
         price_data: {
-          product: product.id,
           currency: "eur",
           product_data: {
             name: product.name,
             description: product.description,
+            metadata: { productId: product.id }
           },
           unit_amount: product.priceInCents,
           recurring: {
