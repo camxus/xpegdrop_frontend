@@ -616,8 +616,10 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
               />
             </>
           ) : (
-            <div className="text-center text-muted-foreground">
-              Project not found
+            <div className="flex items-center justify-center h-[80vh]">
+              <div className="text-center text-muted-foreground">
+                Project not found
+              </div>
             </div>
           )}
         </div>
