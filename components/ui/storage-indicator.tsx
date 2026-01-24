@@ -3,6 +3,7 @@ import { cn } from '@/lib/utils'
 import { Progress } from './progress'
 
 export default function StorageIndicator({ percentage, isDropbox = false }: { percentage: number, isDropbox?: boolean }) {
+  if (!percentage) return null
   return (
     <>
       <span className="text-xs text-white/80">
