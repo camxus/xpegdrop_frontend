@@ -9,10 +9,10 @@ export type BillingInfo = {
 
 export const stripeApi = {
   getBillingInfo: async () => {
-    return await api.post<BillingInfo>("/stripe/billing");
+    return await api.get<BillingInfo>("/stripe/billing");
   },
 
   getBillingPortalUrl: async () => {
-    return await api.post<string>("/stripe/billing/portal");
+    return await api.get<string>("/stripe/billing/portal");
   },
 };
