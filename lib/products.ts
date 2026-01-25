@@ -35,7 +35,7 @@ export const PRODUCTS: Product[] = [
     description: 'For serious creators and small studios that need flexibility and performance.',
     priceInCents: 900, // $9.00
     monthly: 9,
-    annual: 100,
+    annual: 108,
     features: [
       'Dropbox storage + 500 GB storage',
       'Unlimited projects',
