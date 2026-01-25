@@ -116,7 +116,10 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
 
   const isProjectUser = user?.user_id === projectUser?.user_id
   const isTenantMember = tenant?.members.some((m) => m.user_id === user?.user_id)
-  const canEdit = isProjectUser || tenant?.members.some((m) => m.user_id === user?.user_id && (m.role === "admin" || m.role === "editor"))
+  const canEdit = isProjectUser ||
+    project?.approved_users.some((u) => u.role == "editor") ||
+    project?.approved_tenant_users.some((u) => (u.role === "admin" || u.role === "editor")) ||
+    tenant?.members.some((m) => m.user_id === user?.user_id && (m.role === "admin" || m.role === "editor"))
 
   const x = useMotionValue(50);
   const y = useMotionValue(50);

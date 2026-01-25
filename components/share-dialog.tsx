@@ -80,8 +80,8 @@ export function ShareDialog({ project, onClose }: ShareDialogProps) {
     setEmails(emails.filter((e) => e !== email));
   };
 
-  const handleAddApprovedUser = (userId: string) => {
-    if (!approvedUsers.map(u => u.user_id).includes(userId)) setApprovedUsers([...approvedUsers, { user_id: userId }]);
+  const handleAddApprovedUser = (userId: string, role: string) => {
+    if (!approvedUsers.map(u => u.user_id).includes(userId)) setApprovedUsers([...approvedUsers, { user_id: userId, role }]);
   };
 
   const handleRemoveApprovedUser = (userId: string) => {
@@ -224,18 +224,41 @@ export function ShareDialog({ project, onClose }: ShareDialogProps) {
             <div className="flex flex-col gap-2">
               <Label>Project Users</Label>
               <div className="space-y-1 py-2">
-                {approvedUsers.map((projectUser) => {
-                  const user = projectUsers.find(u => u.user_id === projectUser.user_id);
+                {approvedUsers.map((approvedUser) => {
+                  const projectUser = projectUsers.find(u => u.user_id === approvedUser.user_id);
                   return (
-                    <div key={projectUser.user_id} className="flex items-center justify-between px-2 rounded">
+                    <div key={projectUser?.user_id} className="flex items-center justify-between px-2 rounded">
                       <div className="flex items-center gap-2">
                         <Avatar className="h-6 w-6">
-                          <AvatarImage src={user?.avatar as string || ""} />
-                          <AvatarFallback>{getInitials(user?.first_name || "", user?.last_name || "")}</AvatarFallback>
+                          <AvatarImage src={projectUser?.avatar as string || ""} />
+                          <AvatarFallback>{getInitials(projectUser?.first_name || "", projectUser?.last_name || "")}</AvatarFallback>
                         </Avatar>
-                        <span className="text-sm">{user?.username || projectUser.user_id}</span>
+                        <span className="text-sm">{projectUser?.username}</span>
                       </div>
-                      <Button size="icon" variant="ghost" onClick={() => handleRemoveApprovedUser(projectUser.user_id)}>
+
+                      <Select
+                        value={approvedUser.role}
+                        onValueChange={(value) =>
+                          setApprovedUsers((prev) =>
+                            prev.map((user) =>
+                              user.user_id === approvedUser.user_id
+                                ? { ...approvedUser, role: value }
+                                : user
+                            )
+                          )
+                        }
+                      >
+                        <SelectTrigger size="sm" className="w-[120px]">
+                          <SelectValue placeholder="Role" />
+                        </SelectTrigger>
+
+                        <SelectContent>
+                          <SelectItem value="editor">Editor</SelectItem>
+                          <SelectItem value="viewer">Viewer</SelectItem>
+                        </SelectContent>
+                      </Select>
+
+                      <Button size="icon" variant="ghost" onClick={() => handleRemoveApprovedUser(approvedUser.user_id)}>
                         <X className="w-4 h-4" />
                       </Button>
                     </div>
@@ -245,16 +268,16 @@ export function ShareDialog({ project, onClose }: ShareDialogProps) {
               <Button onClick={
                 () => show({
                   title: "Add Project User",
-                  content: () => <AddUserDialog />,
+                  content: () => <AddUserDialog withRole />,
                   actions: ({
-                    selectedUser, isLoading, setSelectedUser, setSearch
+                    role, selectedUser, isLoading, setSelectedUser, setSearch
                   }) => {
 
                     const handleAddUser = () => {
                       if (!selectedUser) return;
                       setSelectedUser(null);
                       setSearch("");
-                      handleAddApprovedUser(selectedUser.user_id)
+                      handleAddApprovedUser(selectedUser.user_id, role)
                     };
 
                     return (
