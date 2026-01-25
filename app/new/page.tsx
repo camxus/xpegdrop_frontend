@@ -300,7 +300,7 @@ export function UploadView() {
 
   const handleUpload = async (folder: Folder, folderIndex = 0, storageProvider: StorageProvider = "dropbox", selectedTenant?: string) => {
     const uploadFolder = folder || currentFolder;
-    if (!uploadFolder) return;
+    if (!uploadFolder || !storageStats) return;
     try {
       const fileMetadata: Record<string, EXIFData> = uploadFolder.media.reduce(
         (acc, img) => {
@@ -313,6 +313,18 @@ export function UploadView() {
       );
 
       const mediaFiles = uploadFolder.media.map((img) => img.file);
+      const totalSize = mediaFiles.reduce((sum, file) => sum + file.size, 0);
+
+      // Check if adding this would exceed allocated storage
+      if (storageProvider === "b2" && storageStats.used + totalSize > storageStats.allocated) {
+        show({
+          title: "Upgrade",
+          content: () => <UpgradePage />,
+          containerProps: { className: "max-w-[90%]" }
+        })
+        return
+      }
+
       const tempFileLocations = await uploadFiles(mediaFiles);
 
       const project = await createProject({
@@ -350,6 +362,16 @@ export function UploadView() {
     const uploadFolder = folder || currentFolder;
     if (!uploadFolder || !project || !storageStats) return;
     try {
+      const fileMetadata: Record<string, EXIFData> = uploadFolder.media.reduce(
+        (acc, img) => {
+          if (img.metadata) {
+            acc[img.name] = img.metadata;
+          }
+          return acc;
+        },
+        {} as Record<string, EXIFData>
+      );
+
       const mediaFiles = uploadFolder.media.map((img) => img.file);
       const totalSize = mediaFiles.reduce((sum, file) => sum + file.size, 0);
 
@@ -368,6 +390,13 @@ export function UploadView() {
         projectId: project?.project_id,
         file_locations: tempFileLocations,
       });
+
+      if (!!Object.keys(fileMetadata).length) {
+        await batchCreateImageMetadata({
+          project_id: project.project_id,
+          file_metadata: fileMetadata,
+        });
+      }
 
       await getProject(currentProject.project_id);
     } catch { }
@@ -537,6 +566,7 @@ export function UploadView() {
                       <MediaMasonry
                         projectId={project?.project_id || ""}
                         media={currentFolder.media}
+                        metadata={[]}
                         ratings={[...queuedRatings, ...ratings]}
                         onMediaClick={handleMediaClick}
                         onRatingChange={(mediaName, value, ratingId) => handleRatingChange(mediaName, value, ratingId, currentProject)}

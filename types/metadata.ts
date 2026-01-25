@@ -2,6 +2,7 @@ import { EXIFData } from ".";
 
 export interface Metadata {
   project_id: string;
+  user_id: string;
   media_name: string;
   exif_data: EXIFData;
   media_hash?: string;

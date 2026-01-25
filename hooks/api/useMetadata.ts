@@ -15,6 +15,7 @@ export function useMetadata() {
     useQuery({
       queryKey: ["metadata", projectId],
       queryFn: () => metadataApi.getProjectMetadata(projectId),
+      enabled: !!projectId
     });
 
   // Fetch metadata for a single image

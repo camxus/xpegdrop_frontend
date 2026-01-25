@@ -65,6 +65,7 @@ type AvatarGroupProps = {
   max?: number;
   size?: "xs" | "sm" | "md" | "lg";
   className?: string;
+  tooltipDelayDuration?: number;
   tooltipContent?: (user: User) => React.ReactNode;
 };
 
@@ -80,6 +81,7 @@ function AvatarGroup({
   max = 4,
   size = "md",
   className = "",
+  tooltipDelayDuration = 0,
   tooltipContent,
 }: AvatarGroupProps) {
   const visible = users.slice(0, max);
@@ -91,7 +93,7 @@ function AvatarGroup({
       <TooltipProvider>
         <div className="flex items-center -space-x-3">
           {visible.map((u) => (
-            <Tooltip key={u.id}>
+            <Tooltip key={u.id} delayDuration={tooltipDelayDuration}>
               <TooltipTrigger asChild>
                 <div
                   className={`inline-block rounded-full ring-2 ring-background bg-muted ${avatarSizeClass} flex items-center justify-center overflow-hidden`}

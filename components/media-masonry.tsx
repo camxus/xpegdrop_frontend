@@ -2,7 +2,7 @@
 
 import { useState, memo, useCallback, useEffect } from "react";
 import Image from "next/image";
-import { cn } from "@/lib/utils";
+import { cn, getInitials } from "@/lib/utils";
 import type { MediaFile } from "@/types";
 import StarRatingSlider from "./star-rating-slider";
 import { Rating, ratingsApi } from "@/lib/api/ratingsApi";
@@ -27,12 +27,16 @@ import { useDialog } from "@/hooks/use-dialog";
 import UnauthorizedRatingDialog, { UnauthorizedRatingDialogActions } from "./unauthorized-rating-dialog";
 import { useProjects } from "@/hooks/api/useProjects";
 import { MasonryGrid } from "./layout/masonry";
+import { Metadata } from "@/types/metadata";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 
 interface MediaMasonryProps {
   projectId: string;
   projectNotes: Note[];
   ratingDisabled?: boolean;
   media: MediaFile[];
+  metadata: Metadata[];
   ratings?: Rating[];
   className?: string;
   canEdit?: boolean;
@@ -49,6 +53,7 @@ export function MediaMasonry({
   projectNotes,
   ratingDisabled = false,
   media,
+  metadata,
   ratings,
   className,
   canEdit,
@@ -61,11 +66,11 @@ export function MediaMasonry({
 }: MediaMasonryProps) {
   const { user } = useAuth();
 
-  const [loadedMedias, setLoadedMedias] = useState<Set<string>>(new Set());
+  const [loadedMedias, setLoadedMedia] = useState<Set<string>>(new Set());
   const [hoveredMedia, setHoveredMedia] = useState<string | null>(null);
 
   const handleMediaLoad = useCallback((mediaName: string) => {
-    setLoadedMedias((prev) => {
+    setLoadedMedia((prev) => {
       if (prev.has(mediaName)) return prev;
       const newSet = new Set(prev);
       newSet.add(mediaName);
@@ -131,6 +136,11 @@ export function MediaMasonry({
   const mediaRatings = (mediaFile: MediaFile) =>
     ratings?.filter((rating) => rating.media_name === mediaFile.name) || [];
 
+  const mediaMetadata = (mediaFile: MediaFile) =>
+  (metadata?.find(
+    (m) => m.media_name === mediaFile.name
+  ));
+
   const rating = (mediaFile: MediaFile) =>
     (ratings?.find(
       (r) => r.media_name === mediaFile.name && user?.user_id === r.user_id
@@ -146,6 +156,7 @@ export function MediaMasonry({
       {media.map((mediaFile: MediaFile, index: number) => (
         <MasonryMedia
           projectId={projectId}
+          metadata={mediaMetadata(mediaFile)}
           mediaNotes={mediaNotes(mediaFile)}
           disabled={ratingDisabled}
           key={mediaFile.id}
@@ -175,6 +186,7 @@ export function MediaMasonry({
 const MasonryMedia = memo(function MasonryMedia({
   projectId,
   mediaNotes,
+  metadata,
   disabled,
   mediaFile,
   index,
@@ -194,6 +206,7 @@ const MasonryMedia = memo(function MasonryMedia({
 }: {
   projectId: string;
   mediaNotes: Note[];
+  metadata?: Metadata
   disabled: boolean;
   ratings: Rating[];
   rating: Rating;
@@ -211,8 +224,12 @@ const MasonryMedia = memo(function MasonryMedia({
   onDuplicateMedia: (mediaFile: MediaFile) => void;
   onToggleSelect: (mediaFile: MediaFile) => void;
 }) {
-  const { removeProjectFile: { mutateAsync: removeProjectFile } } = useProjects()
+  const { user } = useAuth()
+  const { getUserById } = useUser()
 
+  const { data: uploadUser } = getUserById(user !== metadata?.user_id ? metadata?.user_id : undefined)
+
+  const { removeProjectFile: { mutateAsync: removeProjectFile } } = useProjects()
 
   const modal = useModal();
 
@@ -254,6 +271,34 @@ const MasonryMedia = memo(function MasonryMedia({
               onMouseLeave={onLeave}
               onClick={onClick}
             >
+              {uploadUser &&
+                <div className="absolute top-2 right-2 z-30">
+                  <TooltipProvider>
+                    <Tooltip delayDuration={0}>
+                      <TooltipTrigger asChild>
+                        <div className="absolute top-2 right-2 z-30">
+                          <Avatar className="h-6 w-6 cursor-default">
+                            <AvatarImage src={uploadUser?.avatar as string} />
+                            <AvatarFallback className="text-lg">
+                              {getInitials(uploadUser?.first_name || "", "")}
+                            </AvatarFallback>
+                          </Avatar>
+                        </div>
+                      </TooltipTrigger>
+
+                      <TooltipContent
+                        side="top"
+                        align="end"
+                        className="bg-background/90 backdrop-blur p-2 text-xs"
+                      >
+                        <span className="whitespace-nowrap">
+                          Uploaded by {uploadUser?.first_name} {uploadUser?.last_name}
+                        </span>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+              }
               <div
                 className={cn(
                   "absolute inset-0 border-2 border-transparent transition-all duration-300 rounded-lg z-20 pointer-events-none hover:border-foreground",

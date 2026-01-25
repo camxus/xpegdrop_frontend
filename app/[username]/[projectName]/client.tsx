@@ -8,7 +8,7 @@ import { useProjects } from "@/hooks/api/useProjects";
 import { useRatings } from "@/hooks/api/useRatings";
 import { useToast } from "@/hooks/use-toast";
 import { useDialog } from "@/hooks/use-dialog";
-import type { Folder, MediaFile, StorageProvider } from "@/types";
+import type { EXIFData, Folder, MediaFile, StorageProvider } from "@/types";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -40,6 +40,7 @@ import { useStorage } from "@/hooks/api/useStorage";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { useMetadata } from "@/hooks/api/useMetadata";
 
 interface IPublicProjectPage {
   tenantHandle: string | null
@@ -89,6 +90,8 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
     stats: { data: storageStats },
   } = useStorage();
 
+  const { getProjectMetadata, batchCreateImageMetadata: { mutateAsync: batchCreateImageMetadata } } = useMetadata()
+
   const { getTenant } = useTenants()
 
   const { uploadFiles, isUploading: isUploadingToS3 } = useS3();
@@ -108,6 +111,8 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
   const [projectLoadProgress, setProjectLoadProgress] = useState(0);
 
   const { data: tenant } = getTenant(project?.tenant_id || "")
+  const { data: projectMetadata = [] } = getProjectMetadata(project?.project_id || "")
+
 
   const isProjectUser = user?.user_id === projectUser?.user_id
   const isTenantMember = tenant?.members.some((m) => m.user_id === user?.user_id)
@@ -306,6 +311,16 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
     const uploadFolder = folder;
     if (!uploadFolder || !project || !storageStats) return;
     try {
+      const fileMetadata: Record<string, EXIFData> = uploadFolder.media.reduce(
+        (acc, img) => {
+          if (img.metadata) {
+            acc[img.name] = img.metadata;
+          }
+          return acc;
+        },
+        {} as Record<string, EXIFData>
+      );
+
       const mediaFiles = uploadFolder.media.map((img) => img.file);
       const totalSize = mediaFiles.reduce((sum, file) => sum + file.size, 0);
 
@@ -324,6 +339,13 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
         projectId: project?.project_id,
         file_locations: tempFileLocations,
       });
+
+      if (!!Object.keys(fileMetadata).length) {
+        await batchCreateImageMetadata({
+          project_id: project.project_id,
+          file_metadata: fileMetadata,
+        });
+      }
 
       await getProject(project.project_id);
     } catch { }
@@ -403,13 +425,15 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
 
   const handleFilterChange = useCallback(
     ({
-      userIds,
+      uploadedByUserIds,
+      ratedByUserIds,
       ratingValues,
     }: {
-      userIds: string[];
+      uploadedByUserIds: string[]
+      ratedByUserIds: string[];
       ratingValues: number[];
     }) => {
-      const isFiltering = !!userIds.length || !!ratingValues.length;
+      const isFiltering = !!uploadedByUserIds.length || !!ratedByUserIds.length || !!ratingValues.length;
 
       if (!isFiltering) {
         setFilteredMedia(media);
@@ -418,12 +442,11 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
 
       const filteredRatings = Object.values(ratings).filter(
         ({ user_id, value }) => {
-          const userMatch = userIds.length ? userIds.includes(user_id) : true;
-          const ratingMatch = ratingValues.length
-            ? ratingValues.includes(value)
-            : true;
+          const uploadedByUserMatch = uploadedByUserIds.length ? uploadedByUserIds.includes(user_id) : true;
+          const ratedByUserMatch = ratedByUserIds.length ? ratedByUserIds.includes(user_id) : true;
+          const ratingMatch = ratingValues.length ? ratingValues.includes(value) : true;
 
-          return userMatch && ratingMatch;
+          return uploadedByUserMatch && ratedByUserMatch && ratingMatch;
         }
       );
 
@@ -560,6 +583,7 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
               </div>
 
               <MediaFilter
+                metadata={projectMetadata}
                 ratings={ratings}
                 onFilterChange={handleFilterChange}
               />
@@ -593,6 +617,7 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
                 projectNotes={projectNotes}
                 ratingDisabled={!project}
                 media={filteredMedia}
+                metadata={projectMetadata}
                 ratings={ratings}
                 selectedMedia={selectedMedia}
                 onMediaClick={(i) => {
