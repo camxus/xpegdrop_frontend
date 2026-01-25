@@ -41,6 +41,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { useMetadata } from "@/hooks/api/useMetadata";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 interface IPublicProjectPage {
   tenantHandle: string | null
@@ -59,7 +60,7 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
   const { show, hide } = useDialog();
 
   const { uploadFile } = useS3();
-  const { downloadFiles, isDownloading } = useDownload();
+  const { downloadFiles, isDownloading, downloadFolderPDF } = useDownload();
 
   const {
     projectNotes,
@@ -269,7 +270,7 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
     await loadProject(email);
   };
 
-  const handleDownload = async () => {
+  const handleDownloadAsZip = async () => {
     if (!project) return;
 
     const selected = selectedMedia.size > 0
@@ -288,6 +289,27 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
         };
       }),
       project.name
+    );
+  };
+
+  const handleDownloadAsPDF = async () => {
+    if (!project) return;
+
+    const selected = selectedMedia.size > 0
+      ? media.filter((m) => selectedMedia.has(m.id))
+      : media;
+
+    if (selected.length === 0) return;
+
+    downloadFolderPDF(project,
+      selected.map((media) => {
+        const url = new URL(media.full_file_url);
+        url.searchParams.set('dl', '1'); // safely append dl=1
+        return {
+          ...media,
+          url: url.toString(),
+        };
+      }),
     );
   };
 
@@ -569,10 +591,22 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
                 </div>
                 <div className="flex gap-2 md:ml-0 ml-auto w-fit">
                   {(project.can_download || isProjectUser || isTenantMember) && (
-                    <Button disabled={isDownloading} onClick={handleDownload}>
-                      <Download className="h-4 w-4" />
-                      Download {!!selectedMedia.size && selectedMedia.size}
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button disabled={!selectedMedia}>
+                          <Download className="h-4 w-4 mr-2" />
+                          Download {!!selectedMedia?.size && "Selected"}
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={handleDownloadAsZip}>
+                          Download as ZIP
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={handleDownloadAsPDF}>
+                          Download as PDF
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   )}
                   {project.share_url && canEdit && (
                     <Button
