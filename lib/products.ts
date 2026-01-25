@@ -33,9 +33,9 @@ export const PRODUCTS: Product[] = [
     id: 'pro_monthly',
     name: 'Pro Monthly',
     description: 'For serious creators and small studios that need flexibility and performance.',
-    priceInCents: 600, // $6.00
-    monthly: 6,
-    annual: 60,
+    priceInCents: 900, // $6.00
+    monthly: 9,
+    annual: 90,
     features: [
       'Dropbox storage + 500 GB storage',
       'Unlimited projects',
@@ -49,9 +49,9 @@ export const PRODUCTS: Product[] = [
     id: 'pro_annual',
     name: 'Pro Annual',
     description: 'For serious creators and small studios that need flexibility and performance.',
-    priceInCents: 6000, // $60.00
-    monthly: 6,
-    annual: 60,
+    priceInCents: 9000, // $60.00
+    monthly: 9,
+    annual: 90,
     features: [
       'Dropbox storage + 500 GB storage',
       'Unlimited projects',
@@ -65,9 +65,9 @@ export const PRODUCTS: Product[] = [
     id: 'agency_monthly',
     name: 'Agency Monthly',
     description: 'Designed for agencies, collectives, and professional teams.',
-    priceInCents: 3900, // $39.00
-    monthly: 39,
-    annual: 390,
+    priceInCents: 4500, // $45.00
+    monthly: 45,
+    annual: 450,
     features: [
       '2 TB storage',
       'Team collaboration tools',
@@ -78,9 +78,9 @@ export const PRODUCTS: Product[] = [
     id: 'agency_annual',
     name: 'Agency Annual',
     description: 'Designed for agencies, collectives, and professional teams.',
-    priceInCents: 39000, // $390.00
-    monthly: 39,
-    annual: 390,
+    priceInCents: 45000, // $450.00
+    monthly: 45,
+    annual: 450,
     features: [
       '2 TB storage',
       'Team collaboration tools',

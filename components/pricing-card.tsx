@@ -112,8 +112,8 @@ export default function PricingCard({
                     <>
                       {annual > 0 ? (
                         <>
-                          €{annual}
-                          <span className="text-base font-normal">/year</span>
+                          €{(annual / 12).toFixed(2)}
+                          <span className="text-base font-normal">/month</span>
                         </>
                       ) : (
                         "Invite Only"
@@ -123,7 +123,7 @@ export default function PricingCard({
                     <>
                       {monthly > 0 ? (
                         <>
-                          €{monthly}
+                          €{monthly.toFixed(2)}
                           <span className="text-base font-normal">/month</span>
                         </>
                       ) : (
