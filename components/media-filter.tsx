@@ -26,9 +26,15 @@ export function MediaFilter({ metadata, ratings, onFilterChange }: MediaFilterPr
 
   const userQueries = useUsers(Array.from(new Set([...ratings.map((rating) => rating.user_id), ...metadata.map((m) => m.user_id)])));
 
-  const uniqueUsers = Array.from(
-    new Map(userQueries.map((user) => [user.data?.user_id, user.data])).values()
-  );
+  const uniqueUsers = new Map(userQueries.map((user) => [user.data?.user_id, user.data]))
+
+  const uploadUsers = metadata
+    .map((m) => uniqueUsers.get(m.user_id))
+    .filter(Boolean); // remove undefined
+
+  const ratingUsers = ratings
+    .map((r) => uniqueUsers.get(r.user_id))
+    .filter(Boolean); // remove undefined
 
   const [selectedUploadedByUserIds, setSelectedUploadedByUserIds] = React.useState<string[]>([]);
   const [selectedRatedByUserIds, setSelectedRatedByUserIds] = React.useState<string[]>([]);
@@ -50,8 +56,8 @@ export function MediaFilter({ metadata, ratings, onFilterChange }: MediaFilterPr
         {/* Uploaded by */}
         <MultiSelect
           className="opacity-[0.5]"
-          disabled={!uniqueUsers.length}
-          options={uniqueUsers.map((user) => ({
+          disabled={!uploadUsers.length}
+          options={uploadUsers.map((user) => ({
             label: (
               <div className="flex items-center gap-2">
                 <Avatar className="h-6 w-6">
@@ -74,8 +80,8 @@ export function MediaFilter({ metadata, ratings, onFilterChange }: MediaFilterPr
       <div className="flex-1 min-w-[200px]">
         <MultiSelect
           className="opacity-[0.5]"
-          disabled={!uniqueUsers.length}
-          options={uniqueUsers.map((user) => ({
+          disabled={!ratingUsers.length}
+          options={ratingUsers.map((user) => ({
             label: (
               <div className="flex items-center gap-2">
                 <Avatar className="h-6 w-6">
