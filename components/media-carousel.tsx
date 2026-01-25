@@ -42,22 +42,26 @@ export function MediaCarousel({
   isOpen,
   onClose,
   onRatingChange
-}: MediaCarouselProps) {
+}: MediaCarouselProps) {  
   const modal = useModal()
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [isLoading, setIsLoading] = useState(true);
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
   const [showInfo, setShowInfo] = useState(false);
-
+  
   const carouselRef = useRef<HTMLDivElement>(null);
-
+  
   const minSwipeDistance = 50;
 
+  const currentMedia = media[currentIndex];
+
+  const imageRatings = ratings.filter((rating) => rating.media_name === currentMedia.name)
+  
   useEffect(() => {
     setCurrentIndex(initialIndex);
   }, [initialIndex]);
-
+  
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden";
@@ -68,21 +72,21 @@ export function MediaCarousel({
       document.body.style.overflow = "unset";
     };
   }, [isOpen]);
-
+  
   const handlePrevious = useCallback(() => {
     if (currentIndex > 0) {
       setCurrentIndex((prev) => prev - 1);
       setIsLoading(true);
     }
   }, [currentIndex]);
-
+  
   const handleNext = useCallback(() => {
     if (currentIndex < media.length - 1) {
       setCurrentIndex((prev) => prev + 1);
       setIsLoading(true);
     }
   }, [currentIndex, media.length]);
-
+  
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (!isOpen) return;
@@ -90,12 +94,12 @@ export function MediaCarousel({
         case "Escape":
           onClose();
           break;
-        case "ArrowLeft":
-          handlePrevious();
-          break;
-        case "ArrowRight":
-          handleNext();
-          break;
+          case "ArrowLeft":
+            handlePrevious();
+            break;
+            case "ArrowRight":
+              handleNext();
+              break;
       }
     },
     [isOpen, onClose, handlePrevious, handleNext]
@@ -103,7 +107,7 @@ export function MediaCarousel({
 
   const handleShowNotes = useCallback(() => {
     if (!currentMedia) return
-
+    
     modal.show({
       title: `Notes`,
       content: () => (
@@ -112,8 +116,8 @@ export function MediaCarousel({
       height: "400px",
       width: "500px",
     });
-  }, []);
-
+  }, [currentMedia]);
+  
   const handleShowInfo = useCallback(() => {
     setShowInfo((prev) => !prev); // toggle info panel
   }, []);
@@ -144,10 +148,6 @@ export function MediaCarousel({
   const isMobile = typeof window !== "undefined"
     ? window.matchMedia("(max-width: 768px)").matches
     : false;
-
-  const currentMedia = media[currentIndex];
-
-  const imageRatings = ratings.filter((rating) => rating.media_name === currentMedia.name)
 
   const handleRatingChange = useCallback(
     (mediaName: string, value: number, ratingId?: string) => {

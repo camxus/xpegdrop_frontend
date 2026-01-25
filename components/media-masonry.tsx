@@ -154,30 +154,32 @@ export function MediaMasonry({
   return (
     <MasonryGrid>
       {media.map((mediaFile: MediaFile, index: number) => (
-        <MasonryMedia
-          projectId={projectId}
-          metadata={mediaMetadata(mediaFile)}
-          mediaNotes={mediaNotes(mediaFile)}
-          disabled={ratingDisabled}
-          key={mediaFile.id}
-          ratings={mediaRatings(mediaFile)}
-          rating={rating(mediaFile)}
-          mediaFile={mediaFile}
-          index={index}
-          isHovered={hoveredMedia === mediaFile.id}
-          isLoaded={loadedMedias.has(mediaFile.id)}
-          canEdit={canEdit}
-          isSelected={!!selectedMedia?.has(mediaFile.id)}
-          onHover={() => handleMouseEnter(mediaFile.id)}
-          onLeave={handleMouseLeave}
-          onClick={() => handleMediaClick(index)}
-          onLoad={() => handleMediaLoad(mediaFile.id)}
-          onRatingChange={(value, ratingId) =>
-            handleRatingChange(mediaFile.name, value, ratingId)
-          }
-          onDuplicateMedia={handleDuplicateMedia}
-          onToggleSelect={hanldeSelectMedia}
-        />
+        <>
+          <MasonryMedia
+            projectId={projectId}
+            metadata={mediaMetadata(mediaFile)}
+            mediaNotes={mediaNotes(mediaFile)}
+            disabled={ratingDisabled}
+            key={mediaFile.id}
+            ratings={mediaRatings(mediaFile)}
+            rating={rating(mediaFile)}
+            mediaFile={mediaFile}
+            index={index}
+            isHovered={hoveredMedia === mediaFile.id}
+            isLoaded={loadedMedias.has(mediaFile.id)}
+            canEdit={canEdit}
+            isSelected={!!selectedMedia?.has(mediaFile.id)}
+            onHover={() => handleMouseEnter(mediaFile.id)}
+            onLeave={handleMouseLeave}
+            onClick={() => handleMediaClick(index)}
+            onLoad={() => handleMediaLoad(mediaFile.id)}
+            onRatingChange={(value, ratingId) =>
+              handleRatingChange(mediaFile.name, value, ratingId)
+            }
+            onDuplicateMedia={handleDuplicateMedia}
+            onToggleSelect={hanldeSelectMedia}
+          />
+        </>
       ))}
     </MasonryGrid>
   )
@@ -248,7 +250,6 @@ const MasonryMedia = memo(function MasonryMedia({
 
   const handleDeleteMedia = async () => {
     await removeProjectFile({ projectId, fileName: mediaFile.name })
-
   }
 
   return (
