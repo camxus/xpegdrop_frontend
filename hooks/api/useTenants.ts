@@ -5,7 +5,6 @@ import { Tenant, S3Location, CreateTenantDto, tenantsApi } from "@/lib/api/tenan
 import { useToast } from "../use-toast";
 import { useAuth } from "./useAuth";
 import { User } from "@/types/user";
-import { mockTenantsApi } from "@/mocks/api/mockTenantsApi";
 
 
 export function useTenants() {
@@ -20,7 +19,7 @@ export function useTenants() {
     queryKey: ["tenants", user?.user_id],
     queryFn: async () => {
       if (!user?.user_id) return [];
-      return await mockTenantsApi.getTenants();
+      return await tenantsApi.getTenants();
     },
     enabled: !!user?.user_id,
     staleTime: 1000 * 60 * 5, // cache for 5 minutes
@@ -34,7 +33,7 @@ export function useTenants() {
       queryKey: ["tenant", tenantId],
       queryFn: async () => {
         if (!tenantId) throw new Error("Tenant ID is required");
-        return await mockTenantsApi.getTenant(tenantId);
+        return await tenantsApi.getTenant(tenantId);
       },
       enabled: !!tenantId,
       staleTime: 1000 * 60 * 5, // cache for 5 minutes
@@ -44,7 +43,7 @@ export function useTenants() {
    * Fetch a single tenant by ID
    */
   const getTenantByHandle = useMutation<Tenant, Error, string>({
-    mutationFn: (handle: string) => mockTenantsApi.getTenantByHandle(handle),
+    mutationFn: (handle: string) => tenantsApi.getTenantByHandle(handle),
   });
 
 
@@ -54,7 +53,7 @@ export function useTenants() {
   const createTenant = useMutation({
     mutationFn: async (payload: CreateTenantDto) => {
       if (!user?.user_id) throw new Error("User not logged in");
-      return await mockTenantsApi.createTenant(payload);
+      return await tenantsApi.createTenant(payload);
     },
     onSuccess: (data) => {
       queryClient.setQueryData<Tenant[]>(["tenants", user?.user_id], (old) =>
