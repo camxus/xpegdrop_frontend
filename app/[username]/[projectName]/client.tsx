@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { MediaMasonry } from "@/components/media-masonry";
 import { MediaCarousel } from "@/components/media-carousel";
 import { useProjects } from "@/hooks/api/useProjects";
@@ -19,7 +19,7 @@ import { useAuth } from "@/hooks/api/useAuth";
 import axios from "axios";
 import { EditableTitle } from "@/components/editable-title";
 import { ShareDialog } from "@/components/share-dialog";
-import { Download, Share2 } from "lucide-react";
+import { Download, MoreHorizontal, MoreVertical, Plus, Share2 } from "lucide-react";
 import { Rating } from "@/lib/api/ratingsApi";
 import { MediaFilter } from "@/components/media-filter";
 import { BATCH_SIZE, useS3 } from "@/hooks/api/useS3";
@@ -42,6 +42,7 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { useMetadata } from "@/hooks/api/useMetadata";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { FileUploaderRef } from "@/components/ui/file-uploader";
 
 interface IPublicProjectPage {
   tenantHandle: string | null
@@ -114,6 +115,7 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
   const { data: tenant } = getTenant(project?.tenant_id || "")
   const { data: projectMetadata = [] } = getProjectMetadata(project?.project_id || "")
 
+  const uploaderRef = useRef<FileUploaderRef>(null);
 
   const isProjectUser = user?.user_id === projectUser?.user_id
   const isTenantMember = tenant?.members.some((m) => m.user_id === user?.user_id)
@@ -534,6 +536,7 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
     <>
       {canEdit &&
         <GlobalFileUploader
+          ref={uploaderRef}
           onFilesSelected={handleAddNewFolders}
           directory={true}
         />
@@ -615,6 +618,23 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
                     >
                       <Share2 className="h-4 w-4" /> Share
                     </Button>
+                  )}
+                  {canEdit && (
+                    <div className="md:hidden">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreVertical className="h-5 w-5" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                          <DropdownMenuItem onClick={() => uploaderRef.current?.open()}>
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Files
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   )}
                 </div>
               </div>

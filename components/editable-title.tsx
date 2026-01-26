@@ -123,7 +123,7 @@ export function EditableTitle({
                 size="sm"
                 variant="ghost"
                 onClick={() => setIsEditing(true)}
-                className="opacity-0 group-hover:opacity-100 transition-opacity"
+                className="opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <Edit2 className="h-4 w-4" />
               </Button>

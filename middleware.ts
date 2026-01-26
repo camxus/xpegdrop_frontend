@@ -7,10 +7,21 @@ const publicRoutes = ["/", "/login", "/signup"];
 const authorizedRoutes = ["/new", "/upgrade", "/success", "/preferences"];
 
 function isPublicPath(pathname: string): boolean {
-  // Dynamic username route match — adjust if you have stricter rules
-  const isUsernameRoute = /^\/[a-zA-Z0-9_-]+(\/[a-zA-Z0-9._~!$&'()*+,;=:@%\-]+)?$/.test(pathname);
+  // If path starts with any authorized route → NOT public
+  if (authorizedRoutes.some(route => pathname === route || pathname.startsWith(`${route}/`))) {
+    return false;
+  }
 
-  return isUsernameRoute && !authorizedRoutes.includes(pathname) || publicRoutes.includes(pathname);
+  // Allow exact public routes
+  if (publicRoutes.includes(pathname)) {
+    return true;
+  }
+
+  // Username profile routes: /username or /username/slug
+  const isUsernameRoute =
+    /^\/[a-zA-Z0-9_-]+(\/[a-zA-Z0-9._~!$&'()*+,;=:@%\-]+)?$/.test(pathname);
+
+  return isUsernameRoute;
 }
 
 // Helper function to decode JWT token

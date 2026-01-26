@@ -1,17 +1,23 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
-import { FileUploader } from "@/components/ui/file-uploader";
+import { useState, useCallback, useEffect, forwardRef, useImperativeHandle, useRef } from "react";
+import { FileUploader, FileUploaderRef } from "@/components/ui/file-uploader";
 import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
 
-export function GlobalFileUploader({
-  directory,
-  onFilesSelected,
-}: {
-  directory: boolean;
-  onFilesSelected: (files: File[]) => void;
-}) {
+export const GlobalFileUploader = forwardRef<
+  FileUploaderRef,
+  {
+    directory: boolean;
+    onFilesSelected: (files: File[]) => void;
+  }
+>(({ directory, onFilesSelected }, ref) => {
+  const uploaderRef = useRef<FileUploaderRef>(null);
   const [showOverlay, setShowOverlay] = useState(false);
+
+  useImperativeHandle(ref, () => ({
+    open: () => uploaderRef.current?.open(),
+  }));
 
   const handleDragEnter = useCallback((e: DragEvent) => {
     if (e.dataTransfer?.types.includes("Files")) {
@@ -54,27 +60,31 @@ export function GlobalFileUploader({
 
   return (
     <AnimatePresence>
-      {showOverlay && (
-        <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.25 }}
+      <motion.div
+        className={cn(
+          "fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm",
+          !showOverlay && "pointer-events-none opacity-0"
+        )}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: showOverlay ? 1 : 0 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.25 }}
+      >
+        <FileUploader
+          ref={uploaderRef}
+          onFilesSelected={onFilesSelected}
+          accept={{ "image/*": [] }}
+          maxFiles={1000}
+          directory={directory}
+          className="h-dvh w-screen border-2 border-dashed border-primary flex items-center justify-center"
         >
-          <FileUploader
-            onFilesSelected={onFilesSelected}
-            accept={{ "image/*": [] }}
-            maxFiles={1000}
-            directory={directory}
-            className="h-dvh w-screen border-2 border-dashed border-primary flex items-center justify-center"
-          >
-            <p className="text-lg font-semibold text-center">
-              Drop files or folders here
-            </p>
-          </FileUploader>
-        </motion.div>
-      )}
+          <p className="text-lg font-semibold text-center">
+            Drop files or folders here
+          </p>
+        </FileUploader>
+      </motion.div>
     </AnimatePresence>
   );
-}
+})
+
+GlobalFileUploader.displayName = "GlobalFileUploader";
