@@ -538,7 +538,7 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
         <GlobalFileUploader
           ref={uploaderRef}
           onFilesSelected={handleAddNewFolders}
-          directory={true}
+          directory={false}
         />
       }
 

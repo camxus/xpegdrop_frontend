@@ -1,16 +1,16 @@
 "use client";
 
 import type React from "react";
-import { useState, useCallback, useEffect, Suspense } from "react";
+import { useState, useCallback, useEffect, Suspense, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { FileUploader } from "@/components/ui/file-uploader";
+import { FileUploader, FileUploaderRef } from "@/components/ui/file-uploader";
 import { MediaMasonry } from "@/components/media-masonry";
 import { FolderNavigation } from "@/components/folder-navigation";
 import { EditableTitle } from "@/components/editable-title";
 import { useToast } from "@/hooks/use-toast";
 import { createMediaFile, processFolderUpload } from "@/lib/utils/file-utils";
-import { Upload, FolderOpen, Share2, UploadIcon, Info } from "lucide-react";
+import { Upload, FolderOpen, Share2, UploadIcon, Info, MoreVertical, Plus } from "lucide-react";
 import type { EXIFData, Folder, StorageProvider } from "@/types";
 import { MediaCarousel } from "@/components/media-carousel";
 import { ShareDialog } from "@/components/share-dialog";
@@ -36,6 +36,7 @@ import { blurFadeInVariants } from "@/lib/motion";
 import UpgradePage from "../upgrade/page";
 import { useStorage } from "@/hooks/api/useStorage";
 import { useMetadata } from "@/hooks/api/useMetadata";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 export default function UploadViewWrapper() {
   return (
@@ -93,6 +94,8 @@ export function UploadView() {
   const {
     stats: { data: storageStats },
   } = useStorage();
+
+  const uploaderRef = useRef<FileUploaderRef>(null);
 
   const isUploading = isUploadingProject || isUploadingToS3;
 
@@ -504,8 +507,9 @@ export function UploadView() {
               return (
                 <>
                   <GlobalFileUploader
+                    ref={uploaderRef}
                     onFilesSelected={handleAddNewFolders}
-                    directory={true}
+                    directory={false}
                   />
 
                   <div className="container mx-auto px-4 py-8">
@@ -561,6 +565,21 @@ export function UploadView() {
                             </>
                           )}
                         </Button>
+                        <div className="md:hidden">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreVertical className="h-5 w-5" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                              <DropdownMenuItem onClick={() => uploaderRef.current?.open()}>
+                                <Plus className="h-4 w-4 mr-2" />
+                                Add Files
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       </div>
 
                       <MediaMasonry

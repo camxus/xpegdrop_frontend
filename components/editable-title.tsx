@@ -113,7 +113,7 @@ export function EditableTitle({
             className="flex items-center gap-2 group"
           >
             <h1
-              className="text-2xl font-light cursor-pointer"
+              className={cn("text-2xl font-light", editable && "cursor-pointer")}
               onClick={() => editable && setIsEditing(true)}
             >
               {title}
