@@ -10,7 +10,7 @@ import { FolderNavigation } from "@/components/folder-navigation";
 import { EditableTitle } from "@/components/editable-title";
 import { useToast } from "@/hooks/use-toast";
 import { createMediaFile, processFolderUpload } from "@/lib/utils/file-utils";
-import { Upload, FolderOpen, Share2, UploadIcon } from "lucide-react";
+import { Upload, FolderOpen, Share2, UploadIcon, Info } from "lucide-react";
 import type { EXIFData, Folder, StorageProvider } from "@/types";
 import { MediaCarousel } from "@/components/media-carousel";
 import { ShareDialog } from "@/components/share-dialog";
@@ -550,7 +550,7 @@ export function UploadView() {
                         >
                           {currentProject?.share_url ? (
                             <>
-                              <Share2 className="h-4 w-4" /> Share Folder
+                              <Share2 className="h-4 w-4" />Share Folder
                             </>
                           ) : (
                             <>
@@ -611,21 +611,66 @@ export function UploadView() {
                       className="h-dvh w-screen max-w-full max-h-full flex items-center justify-center"
                     >
                       <div className="text-center space-y-4">
-                        <FolderOpen className="h-12 w-12 mx-auto text-muted-foreground" />
-                        <div>
-                          <h3 className="text-lg font-semibold">
-                            Upload Media Folders
-                          </h3>
-                          <p className="text-muted-foreground">
-                            Drag and drop folders containing images or videos, or click to
-                            browse
-                          </p>
+                        <div
+                          className="
+                            relative inline-flex
+                            flex-col items-center justify-center gap-2
+                            px-4 py-3
+                            rounded-2xl
+                            border border-white/20
+                            bg-background/30
+                            backdrop-blur-xl
+                            overflow-hidden
+                            opacity-60
+                            hover:opacity-100
+                            transition-all
+                          "
+                        >
+                          <div className="absolute inset-0 opacity-30">
+                            {/* Light refraction */}
+                            <span
+                              className="
+                              absolute inset-0
+                              bg-[radial-gradient(120%_100%_at_0%_0%,rgba(255,255,255,0.25)_0%,rgba(255,255,255,0)_60%)]
+                              pointer-events-none
+                            "
+                            />
+
+                            {/* Gradient border */}
+                            <span
+                              className="
+                              absolute inset-0
+                              p-[1px]
+                              bg-gradient-to-r
+                              from-white/40 via-white/10 to-white/20
+                              opacity-40
+                              group-hover:opacity-50
+                              transition-opacity
+                              pointer-events-none
+                            "
+                            />
+                          </div>
+
+                          {/* Content */}
+                          <div className="relative z-10 flex flex-col items-start gap-2">
+                            <div className="inline-flex items-center">
+                              <FolderOpen className="h-8 w-8 text-muted-foreground mr-2" />
+                              <h3 className="text-lg font-normal">
+                                Upload Media Folders
+                              </h3>
+                            </div>
+
+                            <p className="inline-flex items-center text-muted-foreground text-sm font-light">
+                              <Info className="h-4 w-4 mr-1 shrink-0" />
+                              Drag and drop folders containing images or videos, or click to browse
+                            </p>
+                            <Button className="m-4 self-center">
+                              <UploadIcon />
+                              Upload
+                            </Button>
+                          </div>
                         </div>
                       </div>
-                      <Button className="m-4">
-                        <UploadIcon />
-                        Upload
-                      </Button>
                     </FileUploader>
                   </motion.div>
                 </>

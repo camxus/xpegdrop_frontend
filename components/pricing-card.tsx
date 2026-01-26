@@ -106,14 +106,14 @@ export default function PricingCard({
                     opacity: { duration: 0.3, delay: 0 },
                     y: { duration: 0.3, delay: 0 },
                   }}
-                  className={`text-3xl font-bold ${primary ? "text-background" : "text-foreground"}`}
+                  className={`text-3xl font-light ${primary ? "text-background" : "text-foreground"}`}
                 >
                   {showAnnualBilling ? (
                     <>
                       {annual > 0 ? (
                         <>
-                          €{(annual / 12).toFixed(2)}
-                          <span className="text-base font-normal">/month</span>
+                          €{(annual / 12).toFixed()}
+                          <span className="text-base font-light">/month</span>
                         </>
                       ) : (
                         "Invite Only"
@@ -123,8 +123,8 @@ export default function PricingCard({
                     <>
                       {monthly > 0 ? (
                         <>
-                          €{monthly.toFixed(2)}
-                          <span className="text-base font-normal">/month</span>
+                          €{monthly.toFixed()}
+                          <span className="text-base font-light">/month</span>
                         </>
                       ) : (
                         "Invite Only"

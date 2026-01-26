@@ -350,7 +350,7 @@ const MasonryMedia = memo(function MasonryMedia({
           </ContextMenuContent>
         </ContextMenu>
 
-        <p className="mt-2 truncate text-sm text-muted-foreground group-hover:text-foreground transition-colors">
+        <p className="mt-2 truncate text-xs font-light text-muted-foreground group-hover:text-foreground transition-colors">
           {mediaFile.name}
         </p>
         <div className="relative flex items-center gap-1 mt-1">

@@ -38,7 +38,7 @@ export default function BillingPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <h1 className="text-4xl font-bold mb-8">Billing & Subscription</h1>
+        <h1 className="text-4xl font-light mb-8">Billing & Subscription</h1>
       </motion.div>
 
       <motion.div
@@ -56,7 +56,7 @@ export default function BillingPage() {
             <CardContent>
               {user?.membership?.membership_id ? (
                 <div>
-                  <p className="text-3xl font-bold text-foreground mb-2">
+                  <p className="text-3xl font-light text-foreground mb-2">
                     {PRODUCTS.find((p) => p.id === user?.membership?.membership_id)?.name}
                   </p>
                   <p className="text-sm text-muted-foreground mb-2">

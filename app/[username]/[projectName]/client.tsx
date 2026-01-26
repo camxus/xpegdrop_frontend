@@ -576,18 +576,18 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
                     onSave={(value) => handleUpdateProject({ name: value })}
                     editable={canEdit}
                   />
-                  {project.description && (
-                    <p className="text-muted-foreground">
-                      {project.description}
-                    </p>
-                  )}
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm font-light text-muted-foreground">
                     Created
                     {projectUser && (
                       <> by {isProjectUser ? "You" : projectUser.first_name}</>
                     )}{" "}
                     on {new Date(project.created_at).toLocaleDateString()}
                   </p>
+                  {project.description && (
+                    <p className="text-muted-foreground">
+                      {project.description}
+                    </p>
+                  )}
                 </div>
                 <div className="flex gap-2 md:ml-0 ml-auto w-fit">
                   {(project.can_download || isProjectUser || isTenantMember) && (

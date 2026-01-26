@@ -170,7 +170,7 @@ export default function PreferencesPage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <h2 className="text-4xl font-bold">Hi, {userState.first_name}</h2>
+        <h2 className="text-4xl font-light">Hi, {userState.first_name}</h2>
         <div className="relative inline-block group" onClick={handleAvatarClick}>
           <Avatar className="h-20 w-20 cursor-pointer">
             <AvatarImage src={userState?.avatar as string} />

@@ -28,13 +28,23 @@ export function MediaFilter({ metadata, ratings, onFilterChange }: MediaFilterPr
 
   const uniqueUsers = new Map(userQueries.map((user) => [user.data?.user_id, user.data]))
 
-  const uploadUsers = metadata
-    .map((m) => uniqueUsers.get(m.user_id))
-    .filter(Boolean); // remove undefined
+  const uploadUsers = Array.from(
+    new Map(
+      metadata
+        .map((m) => uniqueUsers.get(m.user_id))
+        .filter(Boolean)
+        .map((user) => [user!.user_id, user!]) 
+    ).values()
+  );
 
-  const ratingUsers = ratings
-    .map((r) => uniqueUsers.get(r.user_id))
-    .filter(Boolean); // remove undefined
+  const ratingUsers = Array.from(
+    new Map(
+      ratings
+        .map((r) => uniqueUsers.get(r.user_id))
+        .filter(Boolean)
+        .map((user) => [user!.user_id, user!])
+    ).values()
+  );
 
   const [selectedUploadedByUserIds, setSelectedUploadedByUserIds] = React.useState<string[]>([]);
   const [selectedRatedByUserIds, setSelectedRatedByUserIds] = React.useState<string[]>([]);

@@ -176,6 +176,48 @@ export function useDownload() {
     setIsDownloading(true);
     setError(null);
 
+    setError(null);
+
+    async function retryFile(file: DownloadFile, index: number) {
+      progressState[index].status = "downloading";
+      progressState[index].percent = 0;
+      updateToastUI();
+
+      try {
+        await downloadFile(file);
+        progressState[index].status = "done";
+        progressState[index].percent = 100;
+      } catch {
+        progressState[index].status = "failed";
+        progressState[index].percent = 100;
+      }
+
+      updateToastUI();
+    }
+
+    const progressState: FileProgress[] = media.map((m) => ({
+      file: { name: m.file.name, url: m.full_file_url },
+      percent: 0,
+      status: "downloading",
+    }));
+
+    const toastId = crypto.randomUUID();
+
+    const { update, dismiss } = toast({
+      title: "Processing files...",
+      description: renderFiles(progressState, retryFile),
+      duration: Infinity,
+    });
+
+    const updateToastUI = () => {
+      update({
+        title: "Processing files...",
+        description: renderFiles(progressState, retryFile),
+        id: toastId,
+      });
+    };
+
+
     try {
       // 1️⃣ Contact Sheet (Landscape)
       let doc = new jsPDF({ unit: "px", format: "a4", orientation: "landscape" });
@@ -196,7 +238,8 @@ export function useDownload() {
         if (!m.thumbnail_url) continue;
 
         try {
-          doc.addImage(m.thumbnail_url, "JPEG", x, y, thumbSize, thumbSize);
+          const img = await loadImage(m.thumbnail_url);
+          doc.addImage(img, "JPEG", x, y, thumbSize, thumbSize);
         } catch { }
 
         x += thumbSize + spacing;
@@ -212,80 +255,94 @@ export function useDownload() {
       }
 
       // Media Pages (Portrait or Landscape depending on media)
-      for (const m of media) {
-        // Determine media orientation
-        let imgWidth = 0;
-        let imgHeight = 0;
-        let orientation: "portrait" | "landscape" = "portrait";
+      for (let index = 0; index < media.length; index++) {
+        const m = media[index];
 
-        if (isImageFile(m.file) && m.full_file_url) {
-          try {
+        try {
+          let imgWidth = 0;
+          let imgHeight = 0;
+          let orientation: "portrait" | "landscape" = "portrait";
+
+          const pagePadding = 20; // padding inside the page
+
+          if (isImageFile(m.file) && m.full_file_url) {
             const img = await loadImage(m.full_file_url);
             orientation = img.width >= img.height ? "landscape" : "portrait";
 
-            const docPageWidth = orientation === "landscape" ? 842 : 595; // px for A4
+            const docPageWidth = orientation === "landscape" ? 842 : 595;
             const docPageHeight = orientation === "landscape" ? 595 : 842;
             doc.addPage("a4", orientation);
 
-            const maxWidth = docPageWidth - margin * 2;
-            const maxHeight = docPageHeight - margin * 2;
+            const maxWidth = docPageWidth - pagePadding * 2;
+            const maxHeight = docPageHeight - pagePadding * 2;
 
-            if (img.width > img.height) {
-              // scale to fit width
-              imgWidth = Math.min(maxWidth, img.width);
-              imgHeight = (img.height * imgWidth) / img.width;
-            } else {
-              // scale to fit height
-              imgHeight = Math.min(maxHeight, img.height);
-              imgWidth = (img.width * imgHeight) / img.height;
-            }
+            const widthRatio = maxWidth / img.width;
+            const heightRatio = maxHeight / img.height;
+            const scale = Math.min(widthRatio, heightRatio);
 
-            let xPos = margin;
-            let yPos = margin;
+            imgWidth = img.width * scale;
+            imgHeight = img.height * scale;
 
-            // Center image
-            if (imgWidth < maxWidth) xPos += (maxWidth - imgWidth) / 2;
-            if (imgHeight < maxHeight) yPos += (maxHeight - imgHeight) / 2;
+            // center within padded area
+            const xPos = pagePadding + (maxWidth - imgWidth) / 2;
+            const yPos = pagePadding + (maxHeight - imgHeight) / 2;
 
             doc.addImage(m.full_file_url, "JPEG", xPos, yPos, imgWidth, imgHeight);
 
-          } catch (err) { }
-        } else if (isVideoFile(m.file)) {
-          // For videos, use thumbnail orientation
-          if (m.thumbnail_url) {
-            try {
-              const img = await loadImage(m.thumbnail_url);
-              orientation = img.width >= img.height ? "landscape" : "portrait";
-              doc.addPage("a4", orientation);
+          } else if (isVideoFile(m.file) && m.thumbnail_url) {
+            const img = await loadImage(m.thumbnail_url);
+            orientation = img.width >= img.height ? "landscape" : "portrait";
 
-              const docPageWidth = orientation === "landscape" ? 842 : 595;
-              const docPageHeight = orientation === "landscape" ? 595 : 842;
-              const maxWidth = docPageWidth - margin * 2;
-              const maxHeight = docPageHeight - margin * 2;
+            doc.addPage("a4", orientation);
 
-              imgWidth = Math.min(maxWidth, img.width);
-              imgHeight = (img.height * imgWidth) / img.width;
+            const docPageWidth = orientation === "landscape" ? 842 : 595;
+            const docPageHeight = orientation === "landscape" ? 595 : 842;
+            const maxWidth = docPageWidth - pagePadding * 2;
+            const maxHeight = docPageHeight - pagePadding * 2 - 50; // leave 50px for title/link
 
-              let xPos = margin + (maxWidth - imgWidth) / 2;
-              let yPos = margin + 50; // leave space for title
+            const widthRatio = maxWidth / img.width;
+            const heightRatio = maxHeight / img.height;
+            const scale = Math.min(widthRatio, heightRatio);
 
-              // Title
-              doc.setFontSize(16);
-              doc.text(m.name, docPageWidth / 2, 30, { align: "center" });
+            imgWidth = img.width * scale;
+            imgHeight = img.height * scale;
 
-              // Add thumbnail
-              doc.addImage(m.thumbnail_url, "JPEG", xPos, yPos, imgWidth, imgHeight);
+            // center within padded area
+            const xPos = pagePadding + (maxWidth - imgWidth) / 2;
+            const yPos = pagePadding + (maxHeight - imgHeight) / 2 + 25; // shift down for title
 
-              // Add link to project
-              doc.setTextColor(0, 0, 255);
-              doc.textWithLink("▶ Open Video in Project", docPageWidth / 2, yPos + imgHeight + 20, {
-                url: project.share_url,
-                align: "center",
-              });
-              doc.setTextColor(0, 0, 0);
-            } catch { }
+            // Title
+            doc.setFontSize(16);
+            doc.text(m.name, docPageWidth / 2, 30, { align: "center" });
+
+            // Add thumbnail
+            doc.addImage(m.thumbnail_url, "JPEG", xPos, yPos, imgWidth, imgHeight);
+
+            // Add link
+            doc.setTextColor(0, 0, 255);
+            doc.textWithLink(
+              "▶ Open Video in Project",
+              docPageWidth / 2,
+              yPos + imgHeight + 20,
+              { url: project.share_url, align: "center" }
+            );
+            doc.setTextColor(0, 0, 0);
           }
+
+          // mark progress done
+          progressState[index].status = "done";
+          progressState[index].percent = 100;
+        } catch {
+          progressState[index].status = "failed";
+          progressState[index].percent = 100;
         }
+
+        // update toast
+        update({
+          title: "Processing files...",
+          description: renderFiles(progressState, retryFile),
+          id: toastId,
+        });
       }
 
       doc.save(`${project.name}.pdf`);

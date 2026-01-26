@@ -133,12 +133,12 @@ export function ShareDialog({ project, onClose }: ShareDialogProps) {
     <div className="space-y-6 p-6">
       {/* Header */}
       <div className="flex items-center gap-3">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+        <div className="flex h-12 w-12 items-center justify-center">
           <Share2 className="h-6 w-6 text-primary" />
         </div>
         <div>
           <h3 className="text-lg font-semibold">Share Folder</h3>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             Share "{project.name}" with others
           </p>
         </div>

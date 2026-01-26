@@ -67,7 +67,7 @@ export function MultiSelect({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             className={cn(
-              "absolute top-0 bottom-0 flex gap-1 p-2 z-10 overflow-hidden",
+              "absolute top-0 bottom-0 flex items-center gap-1 p-2 z-10 overflow-hidden text-sm font-normal",
               !value.length && "w-full pointer-events-none",
               className
             )}
@@ -95,7 +95,7 @@ export function MultiSelect({
                         e.stopPropagation();
                         onChange(value.filter((v) => v !== val));
                       }}
-                      className="flex items-center justify-center rounded hover:bg-red-600 hover:text-white p-0.5 transition-colors"
+                      className="flex items-center justify-center rounded hover:bg-red-600 hover:text-foreground p-0.5 transition-colors"
                       aria-label={`Remove ${label}`}
                     >
                       <X className="h-3 w-3" />
@@ -124,7 +124,7 @@ export function MultiSelect({
             )}
           </motion.div>
         </AnimatePresence>
-        <SelectTrigger className="relative min-h-[40px]">
+        <SelectTrigger className="relative">
           {/* Absolutely positioned tags container */}
           {/* Invisible span to maintain height and trigger functionality */}
           <span className="invisible">&nbsp;</span>
@@ -138,7 +138,7 @@ export function MultiSelect({
           return (
             <div
               key={index}
-              className="flex w-full justify-between hover:bg-gray-200/10 transition-colors duration-150 cursor-pointer relative  select-none items-center rounded-sm p-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
+              className="flex w-full justify-between hover:bg-gray-200/10 transition-colors duration-150 cursor-pointer relative select-none items-center rounded-sm p-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
