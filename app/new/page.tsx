@@ -636,8 +636,7 @@ export function UploadView() {
                             flex-col items-center justify-center gap-2
                             px-4 py-3
                             rounded-2xl
-                            border border-white/20
-                            bg-background/30
+                            bg-background/50
                             backdrop-blur-xl
                             overflow-hidden
                             opacity-60
@@ -645,31 +644,6 @@ export function UploadView() {
                             transition-all
                           "
                         >
-                          <div className="absolute inset-0 opacity-30">
-                            {/* Light refraction */}
-                            <span
-                              className="
-                              absolute inset-0
-                              bg-[radial-gradient(120%_100%_at_0%_0%,rgba(255,255,255,0.25)_0%,rgba(255,255,255,0)_60%)]
-                              pointer-events-none
-                            "
-                            />
-
-                            {/* Gradient border */}
-                            <span
-                              className="
-                              absolute inset-0
-                              p-[1px]
-                              bg-gradient-to-r
-                              from-white/40 via-white/10 to-white/20
-                              opacity-40
-                              group-hover:opacity-50
-                              transition-opacity
-                              pointer-events-none
-                            "
-                            />
-                          </div>
-
                           {/* Content */}
                           <div className="relative z-10 flex flex-col items-start gap-2">
                             <div className="inline-flex items-center">
