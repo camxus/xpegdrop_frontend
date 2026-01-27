@@ -3,8 +3,10 @@
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useReferrals } from "@/hooks/api/useReferrals";
+import { useAuth } from "@/hooks/api/useAuth";
 
 export function MakeReferralComponent() {
+  const { user } = useAuth()
   const { toast } = useToast();
   const {
     referrals = [],
@@ -47,7 +49,7 @@ export function MakeReferralComponent() {
         <Button
           className="w-fit"
           onClick={() => createReferral()}
-          disabled={referrals.length >= 5 || creatingReferral}
+          disabled={(referrals.length >= 5 && user?.email !== "camillus.konkwo@gmail.com") || creatingReferral}
         >
           {creatingReferral ? "Creating..." : "Create Referral"}
         </Button>
