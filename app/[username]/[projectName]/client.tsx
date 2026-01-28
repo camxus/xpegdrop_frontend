@@ -19,7 +19,7 @@ import { useAuth } from "@/hooks/api/useAuth";
 import axios from "axios";
 import { EditableTitle } from "@/components/editable-title";
 import { ShareDialog } from "@/components/share-dialog";
-import { Download, MoreHorizontal, MoreVertical, Plus, Share2 } from "lucide-react";
+import { Download, History, MoreHorizontal, MoreVertical, Plus, Share2 } from "lucide-react";
 import { Rating } from "@/lib/api/ratingsApi";
 import { MediaFilter } from "@/components/media-filter";
 import { BATCH_SIZE, useS3 } from "@/hooks/api/useS3";
@@ -43,6 +43,8 @@ import { cn } from "@/lib/utils";
 import { useMetadata } from "@/hooks/api/useMetadata";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { FileUploaderRef } from "@/components/ui/file-uploader";
+import HistoryModal from "@/components/history-modal";
+import { useModal } from "@/hooks/use-modal";
 
 interface IPublicProjectPage {
   tenantHandle: string | null
@@ -58,6 +60,7 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
   const { user } = useAuth();
 
   const { toast } = useToast();
+  const modal = useModal();
   const { show, hide } = useDialog();
 
   const { uploadFile } = useS3();
@@ -442,6 +445,15 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
     [project]
   );
 
+  const handleShowHistory = () => {
+    if (!project) return;
+    if (!isProjectUser && !isTenantMember) return;
+    modal.show({
+      title: "Project History",
+      content: () => <HistoryModal projectId={project.project_id} />,
+    });
+  };
+
   const handleShare = () => {
     if (!project) return;
     if (!isProjectUser && !isTenantMember) return;
@@ -619,6 +631,9 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
                       <Share2 className="h-4 w-4" /> Share
                     </Button>
                   )}
+                  {/* <Button variant={"ghost"} onClick={handleShowHistory}>
+                    <History />
+                  </Button> */}
                   {canEdit && (
                     <div className="md:hidden">
                       <DropdownMenu>
