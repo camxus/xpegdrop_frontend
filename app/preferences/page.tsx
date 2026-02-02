@@ -19,6 +19,7 @@ import { blurFadeInVariants, staggeredContainerVariants } from "@/lib/motion";
 import { useDropbox } from "@/hooks/api/useDropbox";
 import { useStorage } from "@/hooks/api/useStorage";
 import StorageIndicator from "@/components/ui/storage-indicator";
+import { useGoogle } from "@/hooks/api/useGoogle";
 
 
 export default function PreferencesPage() {
@@ -39,7 +40,12 @@ export default function PreferencesPage() {
   } = useStorage();
 
   const {
-    authUrl,
+    authUrl: googleAuthUrl,
+    stats: { data: googleStats },
+  } = useGoogle();
+
+  const {
+    authUrl: dropboxAuthUrl,
     stats: { data: dropboxStats },
   } = useDropbox();
 
@@ -238,11 +244,25 @@ export default function PreferencesPage() {
         className="mt-8 flex flex-col gap-2 items-center"
       >
         {storageStats && <StorageIndicator percentage={storageStats.used_percent} />}
-        {dropboxStats && <StorageIndicator percentage={dropboxStats.used_percent} isDropbox />}
+        {googleStats && <StorageIndicator percentage={googleStats.used_percent} type="Google" />}
+        {dropboxStats && <StorageIndicator percentage={dropboxStats.used_percent} type="Dropbox" />}
       </motion.div>
 
       {
-        authUrl.data && !user?.dropbox?.access_token &&
+        googleAuthUrl.data && !user?.google?.access_token &&
+        <motion.div
+          variants={blurFadeInVariants}
+          initial="hidden"
+          animate="show"
+          className="mt-8"
+        >
+
+          <Button className="mt-1">Connect your Google Drive</Button>
+
+        </motion.div>
+      }
+      {
+        dropboxAuthUrl.data && !user?.dropbox?.access_token &&
         <motion.div
           variants={blurFadeInVariants}
           initial="hidden"

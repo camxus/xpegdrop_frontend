@@ -2,11 +2,11 @@ import React from 'react'
 import { cn } from '@/lib/utils'
 import { Progress } from './progress'
 
-export default function StorageIndicator({ percentage, isDropbox = false }: { percentage: number, isDropbox?: boolean }) {
+export default function StorageIndicator({ percentage, type = "fframess" }: { percentage: number, type?: string }) {
   return (
     <>
       <span className="text-xs text-white/80">
-        {isDropbox ? "Dropbox" : "fframess"}{" "}Storage{" "}
+        {type}{" "}Storage{" "}
         {percentage >= 90
           ? "Full"
           : percentage >= 70

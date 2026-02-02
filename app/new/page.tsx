@@ -26,9 +26,7 @@ import {
   FolderPreviewContent,
 } from "@/components/folder-preview-dialog";
 import { GlobalFileUploader } from "@/components/global-file-uploader";
-import { useDropbox } from "@/hooks/api/useDropbox";
 import { useAuth } from "@/hooks/api/useAuth";
-import GlowingButton from "@/components/glowing-button";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Rating } from "@/lib/api/ratingsApi";
@@ -57,13 +55,10 @@ export default function UploadViewWrapper() {
 }
 
 export function UploadView() {
-  const searchParams = useSearchParams();
-  const tokenFromUrl = searchParams.get("dropbox_token");
   const router = useRouter()
 
   const { user } = useAuth();
 
-  const { authUrl } = useDropbox(tokenFromUrl || "");
   const { uploadFiles, isUploading: isUploadingToS3 } = useS3();
   const { toast } = useToast();
   const { show, hide, updateProps } = useDialog();
@@ -442,7 +437,7 @@ export function UploadView() {
     if (currentProject?.project_id) getRatings(currentProject.project_id);
   }, [currentProject]);
 
-  if (!authUrl.data && !user?.dropbox?.access_token) {
+  if (!user?.dropbox?.access_token) {
     return (
       <div className="flex items-center justify-center h-[80vh]">
         <div className="absolute inset-0 flex items-center justify-center">
@@ -455,36 +450,6 @@ export function UploadView() {
   if (user && !user?.membership?.membership_id || !["active", "trialing"].includes(user?.membership?.status || "")) {
     router.push("/upgrade")
     return
-  }
-
-  if (false && authUrl.data && !user?.dropbox?.access_token) {
-    return (
-      <motion.div
-        className={cn("min-h-dvh bg-background relative overflow-hidden")}
-        onMouseMove={handleGlobalMouseMove}
-        style={{
-          backgroundColor: "var(--background)",
-          backgroundImage: gradient,
-          backgroundAttachment: "fixed",
-          backgroundPosition: `${springX.get()}% ${springY.get()}%`,
-          backgroundSize: "cover",
-          backgroundRepeat: "no-repeat",
-        }}
-      >
-        <div className="w-full min-h-dvh flex flex-col items-center justify-center text-center px-4 space-y-6">
-          <h1 className="text-3xl font-bold text-foreground">
-            Connect your Dropbox
-          </h1>
-          <p className="text-lg text-muted-foreground max-w-md">
-            To continue, please connect your Dropbox account. This allows us to
-            securely store and manage your files.
-          </p>
-          <Link href={authUrl.data?.url || ""}>
-            <GlowingButton>Connect</GlowingButton>
-          </Link>
-        </div>
-      </motion.div>
-    );
   }
 
   return (

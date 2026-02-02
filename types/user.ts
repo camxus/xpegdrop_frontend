@@ -11,6 +11,10 @@ export interface User {
   last_name: string;
   bio?: string;
   avatar?: S3Location | string;
+  google?: {
+    access_token?: string;
+    refresh_token?: string;
+  };
   dropbox?: {
     access_token?: string;
     refresh_token?: string;

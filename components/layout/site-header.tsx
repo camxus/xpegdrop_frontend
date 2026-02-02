@@ -43,6 +43,7 @@ import { Input } from "../ui/input";
 import { useUsers } from "@/hooks/api/useUser";
 import { Project } from "@/types/project";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../ui/accordion";
+import { useGoogle } from "@/hooks/api/useGoogle";
 
 
 const SIDEBAR_WIDTH = 256
@@ -74,7 +75,12 @@ export function SiteHeader({ children }: SiteHeaderProps) {
   } = useStorage();
 
   const {
-    authUrl,
+    authUrl: googleAuthUrl,
+    stats: { data: googleStats },
+  } = useGoogle();
+
+  const {
+    authUrl: dropboxAuthUrl,
     stats: { data: dropboxStats },
   } = useDropbox();
 
@@ -512,9 +518,14 @@ export function SiteHeader({ children }: SiteHeaderProps) {
 
               >
                 {storageStats && <StorageIndicator percentage={storageStats.used_percent} />}
-                {dropboxStats && <StorageIndicator percentage={dropboxStats.used_percent} isDropbox />}
+                {googleStats && <StorageIndicator percentage={googleStats.used_percent} type="Google" />}
+                {dropboxStats && <StorageIndicator percentage={dropboxStats.used_percent} type="Dropbox" />}
                 {
-                  authUrl.data && !user?.dropbox?.access_token && <>
+                  googleAuthUrl.data && !user?.google?.access_token && <>
+                    <Button className="mt-1">Connect your Google Drive</Button></>
+                }
+                {
+                  dropboxAuthUrl.data && !user?.dropbox?.access_token && <>
                     <Button className="mt-1">Connect your Dropbox</Button></>
                 }
               </motion.div>

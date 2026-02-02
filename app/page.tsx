@@ -10,7 +10,6 @@ import React, {
 import { Button } from "@/components/ui/button";
 import { DropletIcon as Dropbox } from "lucide-react";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
-import { useDropbox } from "@/hooks/api/useDropbox";
 import Link from "next/link";
 import GlowingButton from "@/components/glowing-button";
 import { useAuth } from "@/hooks/api/useAuth";
@@ -36,10 +35,6 @@ export default function HomePageWrapper() {
 }
 
 export function HomePage() {
-  const {
-    authUrl: { data: authUrl, refetch: fetchAuthUrl },
-  } = useDropbox();
-
   const x = useMotionValue(50);
   const y = useMotionValue(50);
 
@@ -71,10 +66,6 @@ export function HomePage() {
     },
     [x, y]
   );
-
-  useEffect(() => {
-    fetchAuthUrl();
-  }, []);
 
   return (
     <motion.div

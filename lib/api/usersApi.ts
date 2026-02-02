@@ -29,6 +29,7 @@ export const userApi = {
     bio?: string;
     avatar?: File | null;
     dropbox?: { access_token: string; refresh_token?: string };
+    google?: { access_token: string; refresh_token?: string };
   }) => {
     const data = new FormData();
 
