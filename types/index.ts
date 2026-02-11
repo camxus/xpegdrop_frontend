@@ -131,4 +131,4 @@ export interface UpdateFolderDto {
   name: string
 }
 
-export type StorageProvider = "b2" | "dropbox"
+export type StorageProvider = "b2" | "dropbox" | "google"

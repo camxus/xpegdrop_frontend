@@ -49,7 +49,7 @@ export const FileUploader = forwardRef<FileUploaderRef, FileUploaderProps>(
       maxFiles: directory ? undefined : maxFiles, // Allow unlimited files if directory upload
       maxSize,
       disabled,
-      noClick: true,
+      // noClick: true,
       onDragEnter: () => setIsDragActive(true),
       onDragLeave: () => setIsDragActive(false),
       onDropAccepted: () => setIsDragActive(false),

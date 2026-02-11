@@ -229,7 +229,7 @@ const MasonryMedia = memo(function MasonryMedia({
   const { user } = useAuth()
   const { getUserById } = useUser()
 
-  const { data: uploadUser } = getUserById(user !== metadata?.user_id ? metadata?.user_id : undefined)
+  const { data: uploadUser } = getUserById(user?.user_id !== metadata?.user_id ? metadata?.user_id : undefined)
 
   const { removeProjectFile: { mutateAsync: removeProjectFile } } = useProjects()
 

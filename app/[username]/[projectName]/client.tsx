@@ -424,9 +424,13 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
             storageProvider: StorageProvider
           ) => {
 
-            const provider = project?.b2_folder_path ? "b2" :
-              project?.dropbox_folder_path ? "dropbox" :
-                storageProvider;
+            const provider = project?.b2_folder_path
+              ? "b2"
+              : project?.dropbox_folder_path
+                ? "dropbox"
+                : project?.google_folder_id
+                  ? "google"
+                  : storageProvider;
 
             Promise.all(
               confirmedFolders.map(

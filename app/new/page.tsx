@@ -126,14 +126,14 @@ export function UploadView() {
 
   const handleNewFolders = useCallback(
     async (files: File[]) => {
-      if (user?.membership?.membership_id === "artist" && personalProjects.length >= 3) {
-        show({
-          title: "Upgrade",
-          content: () => <UpgradePage />,
-          containerProps: { className: "max-w-[90%]" }
-        })
-        return
-      }
+      // if (user?.membership?.membership_id === "artist" && personalProjects.length >= 3) {
+      //   show({
+      //     title: "Upgrade",
+      //     content: () => <UpgradePage />,
+      //     containerProps: { className: "max-w-[90%]" }
+      //   })
+      //   return
+      // }
 
       if (files.length === 0) return;
       const newFolders = await processFolderUpload(files);
@@ -165,9 +165,13 @@ export function UploadView() {
             setFolders((prev) => [...prev, ...confirmedFolders]);
             setCurrentFolderIndex(confirmedFolders.length ? 0 : 0);
 
-            const provider = project?.b2_folder_path ? "b2" :
-              project?.dropbox_folder_path ? "dropbox" :
-                storageProvider;
+            const provider = project?.b2_folder_path
+              ? "b2"
+              : project?.dropbox_folder_path
+                ? "dropbox"
+                : project?.google_folder_id
+                  ? "google"
+                  : storageProvider;
 
             Promise.all(
               confirmedFolders.map(
@@ -215,6 +219,7 @@ export function UploadView() {
         title: "Review Folders",
         content: FolderPreviewContent,
         contentProps: {
+          isNewUpload: !project,
           editable: !!project || !isUploading,
           folders: folderArray,
           onRename: (folderIndex: number, newName: string) => {
@@ -296,7 +301,7 @@ export function UploadView() {
   const handleNextFolder = () =>
     setCurrentFolderIndex((prev) => Math.min(folders.length - 1, prev + 1));
 
-  const handleUpload = async (folder: Folder, folderIndex = 0, storageProvider: StorageProvider = "dropbox", selectedTenant?: string) => {
+  const handleUpload = async (folder: Folder, folderIndex = 0, storageProvider: StorageProvider = "b2", selectedTenant?: string) => {
     const uploadFolder = folder || currentFolder;
     if (!uploadFolder || !storageStats) return;
     try {
@@ -526,7 +531,7 @@ export function UploadView() {
                               <Upload className="h-4 w-4" />
                               {isUploading
                                 ? "Uploading..."
-                                : "Upload to Dropbox"}
+                                : "Upload"}
                             </>
                           )}
                         </Button>

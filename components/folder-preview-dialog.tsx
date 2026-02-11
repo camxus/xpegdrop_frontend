@@ -106,6 +106,7 @@ export function FolderPreviewActions({
   const { tenants, currentTenant } = useTenants();
   const { user } = useAuth();
   const [storageProvider, setStorageProvider] = useState<StorageProvider>("b2");
+  const [storageProviderSelectValue, setStorageProviderSelectValue] = useState<StorageProvider>("dropbox");
   const [selectedTenant, setSelectedTenant] = useState<string | undefined>(
     currentTenant?.tenant_id
   );
@@ -166,12 +167,55 @@ export function FolderPreviewActions({
                 checked={storageProvider === "dropbox"}
                 disabled={!user?.dropbox?.access_token}
                 onCheckedChange={(value) =>
-                  setStorageProvider(value ? "dropbox" : "b2")
+                  setStorageProvider(value ? storageProviderSelectValue : "b2")
                 }
               />
-              <span className="text-sm text-muted-foreground">
-                Use Dropbox Storage
-              </span>
+
+              <div className="flex items-center text-sm text-muted-foreground space-x-1">
+                <span>Use</span>
+
+                {(() => {
+                  // Build an array of available storage providers
+                  const availableProviders: StorageProvider[] = [
+                    ...(user?.dropbox?.access_token ? ['dropbox'] as StorageProvider[] : []),
+                    ...(user?.google?.access_token || true ? ['google'] as StorageProvider[] : [])
+                  ];
+
+                  if (availableProviders.length > 1) {
+                    // More than one provider → show dropdown
+                    return (
+                      <Select
+                        defaultValue={availableProviders[0]}
+                        value={storageProviderSelectValue}
+                        onValueChange={(value: StorageProvider) => setStorageProviderSelectValue(value)}
+                      >
+                        <SelectTrigger className="w-[120px] text-start">
+                          <SelectValue placeholder="Select Storage" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableProviders.map((provider) => (
+                            <SelectItem key={provider} value={provider}>
+                              {provider === 'dropbox' ? 'Dropbox' : 'Google Drive'}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    );
+                  } else if (availableProviders.length === 1) {
+                    // Only one provider → show as text
+                    return (
+                      <span className="font-medium">
+                        {availableProviders[0] === 'dropbox' ? 'Dropbox' : 'Google Drive'}
+                      </span>
+                    );
+                  } else {
+                    // No provider → show nothing
+                    return null;
+                  }
+                })()}
+
+                <span>Storage</span>
+              </div>
             </>
           )}
         </div>

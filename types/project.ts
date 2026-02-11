@@ -5,6 +5,8 @@ export interface Project {
   name: string;
   description?: string;
   share_url: string;
+  google_folder_id?: string;
+  google_shared_link?: string;
   dropbox_folder_path?: string;
   dropbox_shared_link?: string;
   b2_folder_path?: string;
