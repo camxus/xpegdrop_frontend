@@ -377,6 +377,8 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
         });
       }
 
+      setMedia((media) => [...media, ...uploadFolder.media.map((m) => ({...m, preview_url: m.thumbnail_url, full_file_url: m.thumbnail_url}))])
+
       await getProject(project.project_id);
     } catch { }
   };
@@ -522,6 +524,13 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
         projectId: project.project_id,
         file_locations: [location],
       });
+
+      if (existingMedia.metadata && !!Object.keys(existingMedia.metadata).length) {
+        await batchCreateImageMetadata({
+          project_id: project.project_id,
+          file_metadata: {[existingMedia.name]: existingMedia.metadata},
+        });
+      }
 
       toast({
         title: "Media duplicated",
