@@ -379,8 +379,6 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
       }
 
       setMedia((media) => [...media, ...uploadFolder.media.map((m) => ({ ...m, preview_url: m.thumbnail_url, full_file_url: m.thumbnail_url }))])
-
-      await getProject(project.project_id);
     } catch { }
   };
 
@@ -426,8 +424,9 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
             currentFolderIndex: number,
             storageProvider: StorageProvider
           ) => {
+            if (!project) return
 
-            const provider = project?.b2_folder_path
+            const provider = project.b2_folder_path
               ? "b2"
               : project?.dropbox_folder_path
                 ? "dropbox"
@@ -435,13 +434,15 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
                   ? "google"
                   : storageProvider;
 
-            Promise.all(
+            await Promise.all(
               confirmedFolders.map(
                 async (folder) => {
                   await handleAddProjectFiles(folder, currentFolderIndex, provider)
                 }
               )
             );
+            
+            loadProject();
             hide();
           },
         },
