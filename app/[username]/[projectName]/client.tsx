@@ -439,7 +439,6 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
               confirmedFolders.map(
                 async (folder) => {
                   await handleAddProjectFiles(folder, currentFolderIndex, provider)
-                  loadProject()
                 }
               )
             );

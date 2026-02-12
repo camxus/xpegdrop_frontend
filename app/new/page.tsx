@@ -11,7 +11,7 @@ import { EditableTitle } from "@/components/editable-title";
 import { useToast } from "@/hooks/use-toast";
 import { createMediaFile, processFolderUpload } from "@/lib/utils/file-utils";
 import { Upload, FolderOpen, Share2, UploadIcon, Info, MoreVertical, Plus } from "lucide-react";
-import type { EXIFData, Folder, StorageProvider } from "@/types";
+import type { EXIFData, Folder, MediaFile, StorageProvider } from "@/types";
 import { MediaCarousel } from "@/components/media-carousel";
 import { ShareDialog } from "@/components/share-dialog";
 import { cn } from "@/lib/utils";
@@ -73,6 +73,7 @@ export function UploadView() {
     updateProject: { mutateAsync: updateProject },
     getProject: { mutateAsync: getProject },
     addProjectFiles: { mutateAsync: addProjectFiles },
+    removeProjectFile: { mutateAsync: removeProjectFile },
   } = useProjects();
 
   const { batchCreateImageMetadata: { mutateAsync: batchCreateImageMetadata } } = useMetadata()
@@ -433,6 +434,34 @@ export function UploadView() {
     []
   );
 
+  const handleDeleteMedia = useCallback(
+    async (mediaFile: MediaFile) => {
+      if (!project?.project_id) return;
+
+      await removeProjectFile({
+        projectId: project.project_id,
+        fileName: mediaFile.name,
+      });
+
+      setFolders((prevFolders) => {
+        const folder = prevFolders[currentFolderIndex];
+        if (!folder) return prevFolders;
+
+        const updatedFolder = {
+          ...folder,
+          media: folder.media.filter(
+            (m) => m.name !== mediaFile.name
+          ),
+        };
+
+        return prevFolders.map((f, index) =>
+          index === currentFolderIndex ? updatedFolder : f
+        );
+      });
+    },
+    [project?.project_id, currentFolderIndex]
+  );
+
   useEffect(() => {
     gradientSize.set(isAnyMediaHovered ? 400 : 250);
     gradientOpacity.set(isAnyMediaHovered ? 0.2 : 0.05);
@@ -560,6 +589,7 @@ export function UploadView() {
                         onMediaClick={handleMediaClick}
                         onRatingChange={(mediaName, value, ratingId) => handleRatingChange(mediaName, value, ratingId, currentProject)}
                         onMediaHoverChange={handleMediaHoverChange}
+                        onDeleteMedia={handleDeleteMedia}
                         projectNotes={[]}
                         canEdit={user?.user_id === project?.user_id}
                       />
