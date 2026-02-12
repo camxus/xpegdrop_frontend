@@ -511,7 +511,7 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
 
       setFilteredMedia(filteredMedia);
     },
-    [media, ratings] // deps
+    [media, projectMetadata, ratings] // deps
   );
 
   const handleDuplicateMedia = async (mediaFile: MediaFile) => {
