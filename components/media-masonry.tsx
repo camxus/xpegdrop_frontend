@@ -160,18 +160,9 @@ export function MediaMasonry({
   const mediaNotes = (mediaFile: MediaFile) =>
     projectNotes?.filter((note) => note.media_name === mediaFile.name);
 
-  const getCreatedAt = (mediaFile: MediaFile) => {
-    const meta = metadata?.find(m => m.media_name === mediaFile.name);
-    return meta?.created_at ? new Date(meta.created_at).getTime() : 0;
-  };
-
-  const sortedMedia = [...media].sort(
-    (a, b) => getCreatedAt(a) - getCreatedAt(b)
-  );
-
   return (
     <MasonryGrid>
-      {sortedMedia.map((mediaFile: MediaFile, index: number) => (
+      {media.map((mediaFile: MediaFile, index: number) => (
         <>
           <MasonryMedia
             projectId={projectId}

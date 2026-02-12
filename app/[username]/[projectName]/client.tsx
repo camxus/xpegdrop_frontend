@@ -208,9 +208,10 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
           const processedBatch = await Promise.all(
             batch.map(async (m) => {
               // Decide which URL to convert into a File
+              console.log(m.type)
               const fileUrl = m.type.includes("video") ? m.preview_url : m.thumbnail_url || "";
 
-              const mediaFile = await urlToFile(fileUrl, m.name);
+              const mediaFile = await urlToFile(fileUrl, m.name, m.type + "/*");
 
               return {
                 ...(await createMediaFile(mediaFile, projectName)),
@@ -480,8 +481,17 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
     }) => {
       const isFiltering = !!uploadedByUserIds.length || !!ratedByUserIds.length || !!ratingValues.length;
 
+      const getCreatedAt = (mediaFile: MediaFile) => {
+        const meta = projectMetadata?.find(m => m.media_name === mediaFile.name);
+        return meta?.created_at ? new Date(meta.created_at).getTime() : 0;
+      };
+
+      const sortedMedia = [...media].sort(
+        (a, b) => getCreatedAt(a) - getCreatedAt(b)
+      );
+
       if (!isFiltering) {
-        setFilteredMedia(media);
+        setFilteredMedia(sortedMedia);
         return;
       }
 
@@ -495,7 +505,7 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
         }
       );
 
-      const filteredMedia = media.filter((media) =>
+      const filteredMedia = sortedMedia.filter((media) =>
         filteredRatings.some((rating) => rating.media_name === media.name)
       );
 

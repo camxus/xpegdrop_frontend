@@ -53,14 +53,14 @@ function isCorruptedVideo(file: File): Promise<boolean> {
   return new Promise((resolve) => {
     const video = document.createElement("video");
     const url = URL.createObjectURL(file);
-    
+
     const cleanup = () => {
       URL.revokeObjectURL(url);
       video.remove();
     };
-    
+
     video.preload = "metadata";
-    
+
     video.onloadedmetadata = () => {
       // 🚨 critical guard
       if (video.videoWidth === 0 || video.videoHeight === 0) {
@@ -68,16 +68,16 @@ function isCorruptedVideo(file: File): Promise<boolean> {
         resolve(true);
         return;
       }
-      
+
       cleanup();
       resolve(false);
     };
-    
+
     video.onerror = () => {
       cleanup();
       resolve(true);
     };
-    
+
     video.src = url;
   });
 }
@@ -168,10 +168,10 @@ export function b64ToFile(base64: string): File {
   return new File([u8arr], filename, { type: mime });
 }
 
-export async function urlToFile(url: string, filename = "thumbnail.jpg") {
+export async function urlToFile(url: string, filename = "thumbnail.jpg", type?: string) {
   const res = await fetch(url);
   const blob = await res.blob();
-  return new File([blob], filename, { type: blob.type });
+  return new File([blob], filename, { type: type ?? blob.type });
 }
 
 export async function getTiffPreviewURL(file: File) {
