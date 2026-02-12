@@ -157,7 +157,7 @@ export function MediaMasonry({
   };
 
   const sortedMedia = [...media].sort(
-    (a, b) => getCreatedAt(b) - getCreatedAt(a)
+    (a, b) => getCreatedAt(a) - getCreatedAt(b)
   );
 
   return (
