@@ -52,7 +52,7 @@ export function useMetadata() {
 
   // Batch create metadata for multiple images
   const batchCreateImageMetadata = useMutation({
-    mutationFn: (data: { project_id: string; file_metadata: Record<string, EXIFData> }) =>
+    mutationFn: (data: { project_id: string; file_metadata: Record<string, EXIFData | null> }) =>
       metadataApi.batchCreateImageMetadata(data),
     onSuccess: (data, variables) => {
       toast({

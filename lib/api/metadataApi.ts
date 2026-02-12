@@ -23,7 +23,7 @@ export const metadataApi = {
    */
   batchCreateImageMetadata: async (data: {
     project_id: string;
-    file_metadata: Record<string, EXIFData>;
+    file_metadata: Record<string, EXIFData | null>;
   }) => {
     return await api.post("/metadata/batch", data);
   },

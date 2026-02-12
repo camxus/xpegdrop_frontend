@@ -342,14 +342,12 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
     const uploadFolder = folder;
     if (!uploadFolder || !project || !storageStats) return;
     try {
-      const fileMetadata: Record<string, EXIFData> = uploadFolder.media.reduce(
+      const fileMetadata: Record<string, EXIFData | null> = uploadFolder.media.reduce(
         (acc, img) => {
-          if (img.metadata) {
-            acc[img.name] = img.metadata;
-          }
+          acc[img.name] = img.metadata ?? null;
           return acc;
         },
-        {} as Record<string, EXIFData>
+        {} as Record<string, EXIFData | null>
       );
 
       const mediaFiles = uploadFolder.media.map((img) => img.file);
@@ -370,6 +368,7 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
         projectId: project?.project_id,
         file_locations: tempFileLocations,
       });
+
 
       if (!!Object.keys(fileMetadata).length) {
         await batchCreateImageMetadata({
@@ -441,7 +440,7 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
                 }
               )
             );
-            
+
             loadProject();
             hide();
           },
