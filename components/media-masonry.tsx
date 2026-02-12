@@ -41,10 +41,11 @@ interface MediaMasonryProps {
   className?: string;
   canEdit?: boolean;
   selectedMedia?: Set<string>
-  onMediaClick?: (imageIndex: number) => void;
+  onMediaClick?: (mediaIndex: number) => void;
   onMediaHoverChange?: (isHovering: boolean) => void;
   onRatingChange?: (mediaName: string, value: number, ratingId?: string) => void;
-  onDuplicateMedia?: (image: MediaFile) => void;
+  onDuplicateMedia?: (media: MediaFile) => void;
+  onDeleteMedia?: (media: MediaFile) => void;
   onSelectChange?: (value: Set<MediaFile["id"]>) => void;
 }
 
@@ -62,6 +63,7 @@ export function MediaMasonry({
   onMediaHoverChange,
   onRatingChange,
   onDuplicateMedia,
+  onDeleteMedia,
   onSelectChange,
 }: MediaMasonryProps) {
   const { user } = useAuth();
@@ -114,6 +116,13 @@ export function MediaMasonry({
       onDuplicateMedia?.(mediaFile);
     },
     [onDuplicateMedia]
+  );
+
+  const handleDeleteMedia = useCallback(
+    (mediaFile: MediaFile) => {
+      onDeleteMedia?.(mediaFile);
+    },
+    [onDeleteMedia]
   );
 
   const hanldeSelectMedia = useCallback(
@@ -186,6 +195,7 @@ export function MediaMasonry({
               handleRatingChange(mediaFile.name, value, ratingId)
             }
             onDuplicateMedia={handleDuplicateMedia}
+            onDeleteMedia={handleDeleteMedia}
             onToggleSelect={hanldeSelectMedia}
           />
         </>
@@ -213,6 +223,7 @@ const MasonryMedia = memo(function MasonryMedia({
   onLoad,
   onRatingChange,
   onDuplicateMedia,
+  onDeleteMedia,
   onToggleSelect,
 }: {
   projectId: string;
@@ -233,6 +244,7 @@ const MasonryMedia = memo(function MasonryMedia({
   onLoad: () => void;
   onRatingChange: (value: number, ratingId?: string) => void;
   onDuplicateMedia: (mediaFile: MediaFile) => void;
+  onDeleteMedia: (mediaFile: MediaFile) => void;
   onToggleSelect: (mediaFile: MediaFile) => void;
 }) {
   const { user } = useAuth()
@@ -258,7 +270,7 @@ const MasonryMedia = memo(function MasonryMedia({
   };
 
   const handleDeleteMedia = async () => {
-    await removeProjectFile({ projectId, fileName: mediaFile.name })
+    onDeleteMedia(mediaFile)
   }
 
   return (

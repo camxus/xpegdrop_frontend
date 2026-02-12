@@ -76,6 +76,7 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
     getTenantProjectByShareUrl,
     updateProject: { mutateAsync: updateProject },
     addProjectFiles: { mutateAsync: addProjectFiles },
+    removeProjectFile: { mutateAsync: removeProjectFile },
     getProject: { mutateAsync: getProject },
   } = useProjects();
 
@@ -377,7 +378,7 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
         });
       }
 
-      setMedia((media) => [...media, ...uploadFolder.media.map((m) => ({...m, preview_url: m.thumbnail_url, full_file_url: m.thumbnail_url}))])
+      setMedia((media) => [...media, ...uploadFolder.media.map((m) => ({ ...m, preview_url: m.thumbnail_url, full_file_url: m.thumbnail_url }))])
 
       await getProject(project.project_id);
     } catch { }
@@ -528,7 +529,7 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
       if (existingMedia.metadata && !!Object.keys(existingMedia.metadata).length) {
         await batchCreateImageMetadata({
           project_id: project.project_id,
-          file_metadata: {[existingMedia.name]: existingMedia.metadata},
+          file_metadata: { [existingMedia.name]: existingMedia.metadata },
         });
       }
 
@@ -547,6 +548,13 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
       });
     }
   };
+
+  const handleDeleteMedia = async (mediaFile: MediaFile) => {
+    if (!project?.project_id) return
+
+    await removeProjectFile({ projectId: project?.project_id, fileName: mediaFile.name })
+    loadProject()
+  }
 
   useEffect(() => {
     loadProject();
@@ -712,6 +720,7 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
                 onRatingChange={(mediaName, value, ratingId) => handleRatingChange(mediaName, value, ratingId, project)}
                 onMediaHoverChange={(hover) => setIsHovered(hover)}
                 onDuplicateMedia={handleDuplicateMedia}
+                onDeleteMedia={handleDeleteMedia}
                 canEdit={canEdit}
                 onSelectChange={setSelectedMedia}
               />
