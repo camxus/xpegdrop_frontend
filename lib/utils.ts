@@ -27,3 +27,16 @@ export function isSameSet<T>(
   const setA = new Set(a.map(getKey));
   return b.every(v => setA.has(getKey(v)));
 }
+
+export const formatSecondsToTime = (totalSeconds: number): string => {
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  const paddedMinutes = minutes.toString().padStart(2, "0");
+  const paddedSeconds = seconds.toString().padStart(2, "0");
+
+  return hours > 0
+    ? `${hours}:${paddedMinutes}:${paddedSeconds}`
+    : `${minutes}:${paddedSeconds}`;
+};

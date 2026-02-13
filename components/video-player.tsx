@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Play, Pause, Volume2, VolumeX, Maximize } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Slider } from "./ui/slider";
+import { useModal } from "@/hooks/use-modal";
 
 const MOBILE_HEIGHT = "80vh";
 
@@ -17,6 +18,8 @@ export function VideoPlayer({
   onLoadedData,
   ...videoProps
 }: Props) {
+  const { updateProps } = useModal()
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const inactivityTimer = useRef<NodeJS.Timeout | null>(null);
 
@@ -40,6 +43,10 @@ export function VideoPlayer({
       if (inactivityTimer.current) clearTimeout(inactivityTimer.current);
     };
   }, []);
+
+  useEffect(() => {
+    updateProps({ videoRef: videoRef })
+  }, [videoRef])
 
   /* ---------------- video actions ---------------- */
   function getBufferedEnd(): number {

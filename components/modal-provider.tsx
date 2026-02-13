@@ -33,6 +33,7 @@ interface ModalOptions {
 interface ModalContextType {
   show: (options: ModalOptions) => void;
   hide: () => void;
+  modalProps: Record<string, unknown> | undefined
   updateProps: (newProps: Record<string, unknown>) => void;
 }
 
@@ -120,7 +121,7 @@ export function ModalProvider({ children }: { children: ReactNode }) {
   }, [isVisible, isOpen]);
 
   return (
-    <ModalContext.Provider value={{ show, hide, updateProps }}>
+    <ModalContext.Provider value={{ show, hide, modalProps: modalOptions.contentProps, updateProps }}>
       {children}
 
       {isOpen && (

@@ -15,11 +15,12 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { getInitials } from "@/lib/utils";
+import { formatSecondsToTime, getInitials } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { useDialog } from "@/hooks/use-dialog";
 import UnauthorizedNoteDialog, { UnauthorizedNoteDialogActions } from "./unauthorized-note-dialog";
 import { Separator } from "./ui/seperator";
+import { useModal } from "@/hooks/use-modal";
 
 interface NotesViewProps {
   projectId: string;
@@ -27,6 +28,7 @@ interface NotesViewProps {
 }
 
 export function NotesModal({ projectId, mediaName }: NotesViewProps) {
+  const { modalProps } = useModal()
   const { show, hide } = useDialog()
   const { user } = useAuth();
   const { localUser, setLocalUser } = useUser()
@@ -47,6 +49,7 @@ export function NotesModal({ projectId, mediaName }: NotesViewProps) {
 
   const [noteContent, setNoteContent] = useState(""); // used for bottom textarea
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [timestamp, setTimestamp] = useState<number | null>(null);
 
   useEffect(() => {
     getImageNotes({ projectId, mediaName });
@@ -83,6 +86,7 @@ export function NotesModal({ projectId, mediaName }: NotesViewProps) {
       await updateNote({
         noteId: editingNoteId,
         content: noteContent,
+        timestamp: timestamp
       });
       setEditingNoteId(null);
     } else {
@@ -90,6 +94,7 @@ export function NotesModal({ projectId, mediaName }: NotesViewProps) {
         project_id: projectId,
         media_name: mediaName,
         content: noteContent,
+        timestamp: timestamp,
         author: { first_name: firstName, last_name: lastName }
       });
     }
@@ -296,6 +301,26 @@ export function NotesModal({ projectId, mediaName }: NotesViewProps) {
           }}
           className="flex gap-2 items-center"
         >
+          {!!timestamp && (
+            <div className="inline-flex items-center gap-2 bg-foreground/60 text-foreground text-xs font-medium px-2 py-1 rounded w-max">
+              {formatSecondsToTime(timestamp)}
+              <button
+                type="button"
+                onClick={() => {
+                  // optionally allow removing timestamp tag
+                  const videoEl = (modalProps?.videoRef as React.RefObject<HTMLVideoElement | null>)?.current;
+
+                  if (videoEl && timestamp !== null && !isNaN(timestamp)) {
+                    videoEl.currentTime = timestamp;
+                    videoEl.play(); // optional: start playing from that time
+                  }
+                }}
+                className="ml-1 text-foreground/80 hover:text-foreground"
+              >
+                ✕
+              </button>
+            </div>
+          )}
           <Textarea
             resizable={false}
             className="flex-1"
@@ -303,6 +328,9 @@ export function NotesModal({ projectId, mediaName }: NotesViewProps) {
             value={noteContent}
             onChange={(e) => setNoteContent(e.target.value)}
             maxLength={500}
+            onClick={() => {
+              setTimestamp((modalProps?.videoRef as React.RefObject<HTMLVideoElement | null>)?.current?.currentTime ?? null)
+            }}
             onKeyDown={(e) => {
               // Cmd+Enter (Mac) or Ctrl+Enter (Windows/Linux)
               if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {

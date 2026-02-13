@@ -111,7 +111,7 @@ export function useNotes() {
 
   // Mutation: Update note
   const updateNote = useMutation({
-    mutationFn: ({ noteId, content }: { noteId: string; content: string }) => {
+    mutationFn: ({ noteId, content }: { noteId: string; content: string, timestamp: number | null }) => {
       setNotes(prev =>
         prev.map(n => (n.note_id === noteId ? { ...n, content } : n))
       );
