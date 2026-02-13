@@ -48,9 +48,10 @@ import { useModal } from "@/hooks/use-modal";
 
 interface IPublicProjectPage {
   tenantHandle: string | null
+  presentationMode?: boolean
 }
 
-export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) {
+export default function PublicProjectPage({ tenantHandle, presentationMode = false }: IPublicProjectPage) {
   useServiceWorker();
   const { username, projectName } = useParams<{
     username: string;
@@ -123,7 +124,7 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
 
   const isProjectUser = user?.user_id === projectUser?.user_id
   const isTenantMember = tenant?.members.some((m) => m.user_id === user?.user_id)
-  const canEdit = isProjectUser ||
+  const canEdit = !presentationMode && isProjectUser ||
     project?.approved_users.some((u) => u.role == "editor") ||
     project?.approved_tenant_users.some((u) => (u.role === "admin" || u.role === "editor")) ||
     tenant?.members.some((m) => m.user_id === user?.user_id && (m.role === "admin" || m.role === "editor"))
@@ -208,7 +209,6 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
           const processedBatch = await Promise.all(
             batch.map(async (m) => {
               // Decide which URL to convert into a File
-              console.log(m.type)
               const fileUrl = m.type.includes("video") ? m.preview_url : m.thumbnail_url || "";
 
               const mediaFile = await urlToFile(fileUrl, m.name, m.type + "/*");
@@ -234,12 +234,10 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
 
         return result;
       }
-
       // usage
       const result = await processMediaInBatches(data.media);
-
+      
       setMedia([...result]);
-      setFilteredMedia([...result]);
       setIsLoading(false);
 
       if (data.project?.project_id) await getRatings(data.project.project_id);
@@ -635,7 +633,7 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
                   )}
                 </div>
                 <div className="flex gap-2 md:ml-0 ml-auto w-fit">
-                  {(project.can_download || isProjectUser || isTenantMember) && (
+                  {!presentationMode && (project.can_download || isProjectUser || isTenantMember) && (
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button disabled={!selectedMedia}>
@@ -684,11 +682,11 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
                 </div>
               </div>
 
-              <MediaFilter
+              {!presentationMode && <MediaFilter
                 metadata={projectMetadata}
                 ratings={ratings}
                 onFilterChange={handleFilterChange}
-              />
+              />}
 
               <div className="flex items-center justify-end p-4 gap-2">
                 <Checkbox
@@ -715,6 +713,7 @@ export default function PublicProjectPage({ tenantHandle }: IPublicProjectPage) 
               </div>
 
               <MediaMasonry
+                presentationMode={presentationMode}
                 projectId={project.project_id}
                 projectNotes={projectNotes}
                 ratingDisabled={!project}

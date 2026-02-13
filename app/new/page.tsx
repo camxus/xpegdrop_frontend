@@ -127,7 +127,7 @@ export function UploadView() {
 
   const handleNewFolders = useCallback(
     async (files: File[]) => {
-      if (user?.membership?.membership_id === "artist" && personalProjects.length >= 3) {
+      if (user?.membership?.membership_id === "artist" && personalProjects.length >= 3 && process.env.NODE_ENV !== "development") {
         show({
           title: "Upgrade",
           content: () => <UpgradePage />,

@@ -7,8 +7,6 @@ import { useEffect } from "react";
 import { useUsers } from "@/hooks/api/useUser";
 import { cn, getInitials } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { useAuth } from "@/hooks/api/useAuth";
-import { useMetadata } from "@/hooks/api/useMetadata";
 import { Metadata } from "@/types/metadata";
 
 interface MediaFilterProps {
@@ -22,8 +20,6 @@ interface MediaFilterProps {
 }
 
 export function MediaFilter({ metadata, ratings, onFilterChange }: MediaFilterProps) {
-  const { user } = useAuth();
-
   const userQueries = useUsers(Array.from(new Set([...ratings.map((rating) => rating.user_id), ...metadata.map((m) => m.user_id)])));
 
   const uniqueUsers = new Map(userQueries.map((user) => [user.data?.user_id, user.data]))

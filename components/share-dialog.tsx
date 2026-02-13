@@ -19,6 +19,8 @@ import { User } from "@/types/user";
 import { useDialog } from "@/hooks/use-dialog";
 import { useAuth } from "@/hooks/api/useAuth";
 import { useTenants } from "./tenants-provider";
+import { ToggleGroup, ToggleGroupItem } from "./ui/toggle";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 interface ShareDialogProps {
   project: Project;
@@ -40,13 +42,14 @@ export function ShareDialog({ project, onClose }: ShareDialogProps) {
   const [canDownload, setCanDownload] = useState(project.can_download);
   const [approvedUsers, setApprovedUsers] = useState(project.approved_users || []);
   const [tenantUsers, setTenantUsers] = useState(project.approved_tenant_users || []);
+  const [shareMode, setShareMode] = useState<"presentation" | "normal">("normal");
 
   const userQueries = useUsers([...approvedUsers.map(u => u.user_id), ...tenantUsers.map(u => u.user_id)]);
   const projectUsers = userQueries.map(u => u.data).filter(Boolean) as User[];
 
-  const handleCopyToClipboard = async () => {
+  const handleCopyToClipboard = async (text: string) => {
     try {
-      await navigator.clipboard.writeText(project.share_url);
+      await navigator.clipboard.writeText(text);
       setCopied(true);
       toast({ title: "Success", description: "Link copied to clipboard" });
       setTimeout(() => setCopied(false), 2000);
@@ -144,30 +147,95 @@ export function ShareDialog({ project, onClose }: ShareDialogProps) {
         </div>
       </div>
 
-      {/* Share link */}
-      <div className="space-y-2">
-        <Label htmlFor="share-url">Share Link</Label>
-        <div className="flex gap-2">
-          <Input
-            id="share-url"
-            value={project.share_url}
-            readOnly
-            className="font-mono text-sm"
-            onClick={(e) => e.currentTarget.select()}
-          />
-          <Button
-            size="icon"
-            variant="outline"
-            onClick={handleCopyToClipboard}
-            className={cn(
-              "shrink-0 transition-colors",
-              copied && "bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
-            )}
-          >
-            {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-          </Button>
-        </div>
+      <div className="flex justify-center mt-4">
+        <ToggleGroup type="single" value={shareMode} onValueChange={(val) => setShareMode(val as typeof shareMode)}>
+          <ToggleGroupItem value="normal">
+            Normal
+          </ToggleGroupItem>
+
+          {/* Presentation disabled with tooltip */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="inline-block">
+                <ToggleGroupItem value="presentation" disabled className="opacity-50">
+                  Presentation
+                </ToggleGroupItem>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              Coming Soon
+            </TooltipContent>
+          </Tooltip>
+        </ToggleGroup>
       </div>
+      
+      <AnimatePresence mode="wait">
+        {shareMode === "normal" && (
+          <motion.div
+            key="normal-link"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="space-y-2"
+          >
+            <Label htmlFor="share-url">Share Link</Label>
+            <div className="flex gap-2">
+              <Input
+                id="share-url"
+                value={project.share_url}
+                readOnly
+                className="font-mono text-sm"
+                onClick={(e) => e.currentTarget.select()}
+              />
+              <Button
+                size="icon"
+                variant="outline"
+                onClick={() => handleCopyToClipboard(project.share_url)}
+                className={cn(
+                  "shrink-0 transition-colors",
+                  copied && "bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
+                )}
+              >
+                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              </Button>
+            </div>
+          </motion.div>
+        )}
+
+        {shareMode === "presentation" && (
+          <motion.div
+            key="presentation-link"
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 8 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="space-y-2"
+          >
+            <Label htmlFor="presentation-share-url">Presentation Share Link</Label>
+            <div className="flex gap-2">
+              <Input
+                id="presentation-share-url"
+                // value={project.presentation_url}
+                readOnly
+                className="font-mono text-sm"
+                onClick={(e) => e.currentTarget.select()}
+              />
+              <Button
+                size="icon"
+                variant="outline"
+                // onClick={() => handleCopyToClipboard(project.presentation_url)}
+                className={cn(
+                  "shrink-0 transition-colors",
+                  copied && "bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
+                )}
+              >
+                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
 
       {/* Approved emails */}
@@ -388,22 +456,35 @@ export function ShareDialog({ project, onClose }: ShareDialogProps) {
         />
       </div>
 
-      <div className="flex items-center justify-between border rounded-lg p-3 mt-2">
-        <div>
-          <Label htmlFor="can-download" className="text-sm font-medium">
-            Allow Download
-          </Label>
-          <p className="text-xs text-muted-foreground">
-            Users with access can download folder with full resolution files
-          </p>
-        </div>
-        <Switch
-          id="can-download"
-          checked={canDownload}
-          onCheckedChange={setCanDownload}
-          className="flex-shrink-0"
-        />
-      </div>
+      <AnimatePresence initial={false}>
+        {shareMode === "normal" && (
+          <motion.div
+            key="can-download-toggle"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="overflow-hidden"
+          >
+            <div className="flex items-center justify-between border rounded-lg p-3">
+              <div>
+                <Label htmlFor="can-download" className="text-sm font-medium">
+                  Allow Download
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Users with access can download folder with full resolution files
+                </p>
+              </div>
+              <Switch
+                id="can-download"
+                checked={canDownload}
+                onCheckedChange={setCanDownload}
+                className="flex-shrink-0"
+              />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Actions */}
       <div className="flex gap-3 pt-4">

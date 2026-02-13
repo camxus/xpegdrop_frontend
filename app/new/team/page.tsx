@@ -78,7 +78,6 @@ export default function NewTeamWizard() {
     };
 
     const handleCreateTeam = async () => {
-        console.log("Creating team", tenantData);
         await createTenant(tenantData)
     };
 

@@ -10,11 +10,11 @@ export function isMediaFile(file: File): boolean {
 }
 
 export function isImageFile(file: File): boolean {
-  return file.type.startsWith("image/")
+  return file.type.startsWith("image")
 }
 
 export function isVideoFile(file: File): boolean {
-  return file.type.startsWith("video/")
+  return file.type.startsWith("video")
 }
 
 export function getMediaFiles(files: File[]): File[] {

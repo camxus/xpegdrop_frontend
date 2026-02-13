@@ -227,7 +227,7 @@ export function MediaCarousel({
               </Button>
 
               {/* Media container */}
-              {isImageFile(currentMedia.file) ?
+              {currentMedia.type.includes("image") ?
                 <div className="relative max-w-full max-h-full flex items-center justify-center">
                   <div className="relative">
                     {isLoading && (

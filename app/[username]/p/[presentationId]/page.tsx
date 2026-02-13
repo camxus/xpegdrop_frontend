@@ -1,0 +1,101 @@
+import { Metadata } from "next";
+import ProjectPage from "../../[projectName]/client";
+import { projectsApi } from "@/lib/api/projectsApi";
+import { ApiError } from "@/lib/api/client";
+import { userApi } from "@/lib/api/usersApi";
+import { headers as nextHeaders } from "next/headers";
+
+type PageParams = Promise<{ username: string; presentationId: string }>;
+
+// generateMetadata expects a destructured object with `params: PageParams`
+export async function generateMetadata({
+  params,
+}: {
+  params: PageParams;
+}): Promise<Metadata> {
+  const { username, presentationId } = await params;
+
+  const headers = await nextHeaders();
+  const tenant = headers?.get("x-tenant");
+
+  let metadata = {} as Metadata;
+  const userData = await userApi.getUserByUsername(username);
+
+  try {
+    const projectData = tenant ? await projectsApi.getTenantProjectByShareUrl(
+      tenant,
+      username,
+      presentationId
+    ) : await projectsApi.getProjectByShareUrl(
+      username,
+      presentationId
+    );
+
+    const project = projectData.project;
+
+    const media =
+      projectData.media?.map((media: any) => media.thumbnail_url) ?? [];
+
+    const mediaSlice = media.slice(0, 3);
+
+    metadata = {
+      title: `${project.name} by ${userData.first_name} | fframess Presentation`,
+      description:
+        "Your art is yours. Your data is yours. A platform built by artists, for artists.",
+      openGraph: {
+        title: `${project.name} by ${userData.first_name} | fframess Presentation`,
+        description:
+          "Your art is yours. Your data is yours. A platform built by artists, for artists.",
+        images: mediaSlice,
+        type: "website",
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: `${project.name} by ${userData.first_name} | fframess Presentation`,
+        description:
+          "Your art is yours. Your data is yours. A platform built by artists, for artists.",
+        images: mediaSlice,
+      },
+    };
+  } catch (error) {
+    const status = (error as ApiError)?.status;
+    const message = (error as ApiError)?.message;
+
+    if (status === 404) {
+      return {
+        title: "Project not found | fframess",
+        description: "",
+      };
+    }
+
+    if (status === 400 && message === "EMAIL_REQUIRED") {
+      return {
+        title: `Private presentation by ${userData.first_name} | fframess`,
+        description:
+          "Your art is yours. Your data is yours. A platform built by artists, for artists.",
+        openGraph: {
+          title: `Private presentation by ${userData.first_name} | fframess`,
+          description:
+            "Your art is yours. Your data is yours. A platform built by artists, for artists.",
+          type: "website",
+        },
+        twitter: {
+          card: "summary_large_image",
+          description:
+            "Your art is yours. Your data is yours. A platform built by artists, for artists.",
+          title: `Private presentation by ${userData.first_name} | fframess`,
+        },
+      };
+    }
+  }
+
+  return metadata;
+}
+
+// Page component
+export default async function Page() {
+  const headers = await nextHeaders();
+  const tenant = headers?.get("x-tenant");
+
+  return <ProjectPage tenantHandle={tenant} />;
+}

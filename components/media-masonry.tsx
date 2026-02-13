@@ -32,6 +32,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 
 interface MediaMasonryProps {
+  presentationMode?: boolean,
   projectId: string;
   projectNotes: Note[];
   ratingDisabled?: boolean;
@@ -50,6 +51,7 @@ interface MediaMasonryProps {
 }
 
 export function MediaMasonry({
+  presentationMode = false,
   projectId,
   projectNotes,
   ratingDisabled = false,
@@ -165,6 +167,7 @@ export function MediaMasonry({
       {media.map((mediaFile: MediaFile, index: number) => (
         <>
           <MasonryMedia
+            presentationMode={presentationMode}
             projectId={projectId}
             metadata={mediaMetadata(mediaFile)}
             mediaNotes={mediaNotes(mediaFile)}
@@ -196,6 +199,7 @@ export function MediaMasonry({
 }
 
 const MasonryMedia = memo(function MasonryMedia({
+  presentationMode,
   projectId,
   mediaNotes,
   metadata,
@@ -217,6 +221,7 @@ const MasonryMedia = memo(function MasonryMedia({
   onDeleteMedia,
   onToggleSelect,
 }: {
+  presentationMode: boolean,
   projectId: string;
   mediaNotes: Note[];
   metadata?: Metadata
@@ -242,8 +247,6 @@ const MasonryMedia = memo(function MasonryMedia({
   const { getUserById } = useUser()
 
   const { data: uploadUser } = getUserById(user?.user_id !== metadata?.user_id ? metadata?.user_id : undefined)
-
-  const { removeProjectFile: { mutateAsync: removeProjectFile } } = useProjects()
 
   const modal = useModal();
 
@@ -284,7 +287,7 @@ const MasonryMedia = memo(function MasonryMedia({
               onMouseLeave={onLeave}
               onClick={onClick}
             >
-              {uploadUser &&
+              {uploadUser && !presentationMode &&
                 <div className="absolute top-2 right-2 z-30">
                   <TooltipProvider>
                     <Tooltip delayDuration={0}>
@@ -348,9 +351,9 @@ const MasonryMedia = memo(function MasonryMedia({
             {/* <ContextMenuItem onClick={() => setEditOpen(true)}>
               Edit
             </ContextMenuItem> */}
-            <ContextMenuItem onClick={() => onDuplicateMedia(mediaFile)}>
+            {canEdit && <ContextMenuItem onClick={() => onDuplicateMedia(mediaFile)}>
               Duplicate (beta)
-            </ContextMenuItem>
+            </ContextMenuItem>}
             <ContextMenuSeparator />
             <ContextMenuItem onClick={() => handleShowMediaNotes()}>
               Show Notes
@@ -362,24 +365,28 @@ const MasonryMedia = memo(function MasonryMedia({
           </ContextMenuContent>
         </ContextMenu>
 
-        <p className="mt-2 truncate text-xs font-light text-muted-foreground group-hover:text-foreground transition-colors">
-          {mediaFile.name}
-        </p>
-        <div className="relative flex items-center gap-1 mt-1">
-          <StarRatingSlider
-            disabled={disabled}
-            value={rating.value || 0}
-            ratings={ratings}
-            onRatingChange={(value) => onRatingChange(value, rating.rating_id)}
-            className="w-full flex justify-center"
-          />
-          {!!mediaNotes.length && (
-            <MessageSquareText
-              className="cursor-pointer absolute w-4 h-4 right-0"
-              onClick={() => handleShowMediaNotes()}
-            />
-          )}
-        </div>
+        {!presentationMode &&
+          <>
+            <p className="mt-2 truncate text-xs font-light text-muted-foreground group-hover:text-foreground transition-colors">
+              {mediaFile.name}
+            </p>
+            <div className="relative flex items-center gap-1 mt-1">
+              <StarRatingSlider
+                disabled={disabled}
+                value={rating.value || 0}
+                ratings={ratings}
+                onRatingChange={(value) => onRatingChange(value, rating.rating_id)}
+                className="w-full flex justify-center"
+              />
+              {!!mediaNotes.length && (
+                <MessageSquareText
+                  className="cursor-pointer absolute w-4 h-4 right-0"
+                  onClick={() => handleShowMediaNotes()}
+                />
+              )}
+            </div>
+          </>
+        }
 
         <EditImageView
           image={mediaFile}

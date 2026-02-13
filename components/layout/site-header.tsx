@@ -44,6 +44,7 @@ import { useUsers } from "@/hooks/api/useUser";
 import { Project } from "@/types/project";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../ui/accordion";
 import { useGoogle } from "@/hooks/api/useGoogle";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 
 const SIDEBAR_WIDTH = 256
@@ -520,14 +521,28 @@ export function SiteHeader({ children }: SiteHeaderProps) {
                 {storageStats && <StorageIndicator percentage={storageStats.used_percent} />}
                 {googleStats && <StorageIndicator percentage={googleStats.used_percent} type="Google" />}
                 {dropboxStats && <StorageIndicator percentage={dropboxStats.used_percent} type="Dropbox" />}
-                {
-                  googleAuthUrl.data && !user?.google?.access_token && <>
-                    <Button className="mt-1">Connect your Google Drive</Button></>
-                }
-                {
-                  dropboxAuthUrl.data && !user?.dropbox?.access_token && <>
-                    <Button className="mt-1">Connect your Dropbox</Button></>
-                }
+                <div className="flex gap-2 mt-2">
+                  {googleAuthUrl.data && !user?.google?.access_token && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="inline-block">
+                          <Button disabled className="opacity-50 cursor-not-allowed">
+                            Connect Google Drive
+                          </Button>
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        Coming Soon
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+
+                  {dropboxAuthUrl.data && !user?.dropbox?.access_token && (
+                    <Button className="mt-1">
+                      Connect Dropbox
+                    </Button>
+                  )}
+                </div>
               </motion.div>
             </motion.div>
           )}

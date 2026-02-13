@@ -9,6 +9,7 @@ import { DialogProvider } from "@/components/dialog-provider";
 import { Toaster } from "./ui/toaster";
 import { ModalProvider } from "./modal-provider";
 import { TenantsProvider } from "./tenants-provider";
+import { TooltipProvider } from "./ui/tooltip";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
@@ -22,11 +23,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
         disableTransitionOnChange
       >
         <TenantsProvider>
-          <DialogProvider>
-            <ModalProvider>
-              {children}
-            </ModalProvider>
-          </DialogProvider>
+          <TooltipProvider delayDuration={0}>
+            <DialogProvider>
+              <ModalProvider>
+                {children}
+              </ModalProvider>
+            </DialogProvider>
+          </TooltipProvider>
         </TenantsProvider>
         <Toaster />
       </ThemeProvider>
