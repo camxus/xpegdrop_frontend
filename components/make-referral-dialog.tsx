@@ -26,7 +26,11 @@ export function MakeReferralComponent() {
     <div className="space-y-4">
       {/* List existing referrals */}
       <div className="space-y-2">
-        {referrals.map((ref) => (
+        {referrals.sort(
+          (a, b) =>
+            new Date(b.created_at!).getTime() -
+            new Date(a.created_at!).getTime()
+        ).map((ref) => (
           <div
             key={ref.code}
             className="flex justify-between items-center border p-2 rounded"
