@@ -523,7 +523,7 @@ export default function PublicProjectPage({ tenantHandle, presentationMode = fal
         responseType: "blob",
       });
       const blob = response.data as Blob;
-      const file = new File([blob], mediaFile.name, { type: blob.type });
+      const file = new File([blob], `${mediaFile.name} copy`, { type: blob.type });
 
       const location = (await uploadFile(file)) as S3Location;
 
