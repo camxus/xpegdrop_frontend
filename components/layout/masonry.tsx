@@ -56,7 +56,10 @@ export function MasonryGrid({
         <div
           key={colIndex}
           className="flex flex-col"
-          style={{ gap, flex: 1 }}
+          style={{
+            gap, flex: 1,
+            width: `calc((100% - ${(columns - 1) * gap}px) / ${columns})`
+          }}
         >
           {colItems.map((child, i) => (
             <div key={i}>{child}</div>

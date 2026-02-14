@@ -206,27 +206,27 @@ export default function PublicProjectPage({ tenantHandle, presentationMode = fal
         for (let i = 0; i < media.length; i += BATCH_SIZE) {
           const batch = media.slice(i, i + BATCH_SIZE);
 
-          const processedBatch = await Promise.all(
-            batch.map(async (m) => {
-              // Decide which URL to convert into a File
-              const fileUrl = m.type.includes("video") ? m.preview_url : m.thumbnail_url || "";
+          // const processedBatch = await Promise.all(
+          //   batch.map(async (m) => {
+          //     // Decide which URL to convert into a File
+          //     const fileUrl = m.type.includes("video") ? m.preview_url : m.thumbnail_url || "";
 
-              const mediaFile = await urlToFile(fileUrl, m.name, m.type + "/*");
+          //     const mediaFile = await urlToFile(fileUrl, m.name, m.type + "/*");
 
-              return {
-                ...(await createMediaFile(mediaFile, projectName)),
-                thumbnail_url: m.thumbnail_url,
-                preview_url: m.preview_url,
-                full_file_url: m.full_file_url
-              };
-            })
-          );
+          //     return {
+          //       ...(await createMediaFile(mediaFile, projectName)),
+          //       thumbnail_url: m.thumbnail_url,
+          //       preview_url: m.preview_url,
+          //       full_file_url: m.full_file_url
+          //     };
+          //   })
+          // );
 
-          // replace the placeholders at the correct indices
-          processedBatch.forEach((processed, index) => {
-            result[i + index] = processed;
-            processedCount++;
-          });
+          // // replace the placeholders at the correct indices
+          // processedBatch.forEach((processed, index) => {
+          //   result[i + index] = processed;
+          //   processedCount++;
+          // });
 
           // update progress based on processed items
           setProjectLoadProgress((processedCount / placeholders.length) * 100);
@@ -234,11 +234,11 @@ export default function PublicProjectPage({ tenantHandle, presentationMode = fal
 
         return result;
       }
+      setIsLoading(false);
       // usage
       const result = await processMediaInBatches(data.media);
       
       setMedia([...result]);
-      setIsLoading(false);
 
       if (data.project?.project_id) await getRatings(data.project.project_id);
       hide();
