@@ -234,11 +234,11 @@ export default function PublicProjectPage({ tenantHandle, presentationMode = fal
 
         return result;
       }
-      setIsLoading(false);
       // usage
       const result = await processMediaInBatches(data.media);
       
       setMedia([...result]);
+      setIsLoading(false);
 
       if (data.project?.project_id) await getRatings(data.project.project_id);
       hide();
@@ -659,9 +659,9 @@ export default function PublicProjectPage({ tenantHandle, presentationMode = fal
                       <Share2 className="h-4 w-4" /> Share
                     </Button>
                   )}
-                  {/* <Button variant={"ghost"} onClick={handleShowHistory}>
+                  <Button className="hidden md:block" variant={"ghost"} onClick={handleShowHistory}>
                     <History />
-                  </Button> */}
+                  </Button>
                   {canEdit && (
                     <div className="md:hidden">
                       <DropdownMenu>
@@ -671,6 +671,10 @@ export default function PublicProjectPage({ tenantHandle, presentationMode = fal
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
+                          <DropdownMenuItem onClick={handleShowHistory}>
+                            <History className="h-4 w-4 mr-2" />
+                            History
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => uploaderRef.current?.open()}>
                             <Plus className="h-4 w-4 mr-2" />
                             Add Files
