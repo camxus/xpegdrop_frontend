@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { MediaMasonry } from "@/components/media-masonry";
 import { MediaCarousel } from "@/components/media-carousel";
 import { useProjects } from "@/hooks/api/useProjects";
@@ -467,6 +467,24 @@ export default function PublicProjectPage({ tenantHandle, presentationMode = fal
     });
   };
 
+  const sortedMedia = useMemo(() => {
+    const source = filteredMedia?.length ? filteredMedia : media;
+
+    const getCreatedAt = (mediaFile: MediaFile) => {
+      const meta = projectMetadata?.find(
+        m => m.media_name === mediaFile.name
+      );
+
+      return meta?.created_at
+        ? new Date(meta.created_at).getTime()
+        : 0;
+    };
+
+    return [...source].sort(
+      (a, b) => getCreatedAt(a) - getCreatedAt(b)
+    );
+  }, [media, filteredMedia, projectMetadata]);
+
   const handleFilterChange = useCallback(
     ({
       uploadedByUserIds,
@@ -478,15 +496,6 @@ export default function PublicProjectPage({ tenantHandle, presentationMode = fal
       ratingValues: number[];
     }) => {
       const isFiltering = !!uploadedByUserIds.length || !!ratedByUserIds.length || !!ratingValues.length;
-
-      const getCreatedAt = (mediaFile: MediaFile) => {
-        const meta = projectMetadata?.find(m => m.media_name === mediaFile.name);
-        return meta?.created_at ? new Date(meta.created_at).getTime() : 0;
-      };
-
-      const sortedMedia = [...media].sort(
-        (a, b) => getCreatedAt(a) - getCreatedAt(b)
-      );
 
       if (!isFiltering) {
         setFilteredMedia(sortedMedia);
@@ -699,13 +708,13 @@ export default function PublicProjectPage({ tenantHandle, presentationMode = fal
                   id="select-all"
                   className="cursor-pointer"
                   checked={
-                    filteredMedia.length > 0 &&
-                    selectedMedia.size === filteredMedia.length
+                    sortedMedia.length > 0 &&
+                    selectedMedia.size === sortedMedia.length
                   }
                   onClick={(e) => {
                     setSelectedMedia((selected) =>
-                      selected.size !== filteredMedia.length
-                        ? new Set(filteredMedia.map((img) => img.id))
+                      selected.size !== sortedMedia.length
+                        ? new Set(sortedMedia.map((img) => img.id))
                         : new Set()
                     );
                   }}
@@ -723,7 +732,7 @@ export default function PublicProjectPage({ tenantHandle, presentationMode = fal
                 projectId={project.project_id}
                 projectNotes={projectNotes}
                 ratingDisabled={!project}
-                media={filteredMedia}
+                media={sortedMedia}
                 metadata={projectMetadata}
                 ratings={ratings}
                 selectedMedia={selectedMedia}
@@ -741,7 +750,7 @@ export default function PublicProjectPage({ tenantHandle, presentationMode = fal
               <MediaCarousel
                 project={project}
                 ratings={ratings}
-                media={filteredMedia}
+                media={sortedMedia}
                 initialIndex={carouselStartIndex}
                 isOpen={isCarouselOpen}
                 onClose={() => setIsCarouselOpen(false)}
