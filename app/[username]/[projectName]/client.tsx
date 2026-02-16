@@ -236,7 +236,7 @@ export default function PublicProjectPage({ tenantHandle, presentationMode = fal
       }
       // usage
       const result = await processMediaInBatches(data.media);
-      
+
       setMedia([...result]);
       setIsLoading(false);
 
@@ -652,16 +652,18 @@ export default function PublicProjectPage({ tenantHandle, presentationMode = fal
                     </DropdownMenu>
                   )}
                   {project.share_url && canEdit && (
-                    <Button
-                      onClick={handleShare}
-                      className="cursor-pointer flex items-center gap-2"
-                    >
-                      <Share2 className="h-4 w-4" /> Share
-                    </Button>
+                    <>
+                      <Button
+                        onClick={handleShare}
+                        className="cursor-pointer flex items-center gap-2"
+                      >
+                        <Share2 className="h-4 w-4" /> Share
+                      </Button>
+                      <Button className="hidden md:block" variant={"ghost"} onClick={handleShowHistory}>
+                        <History />
+                      </Button>
+                    </>
                   )}
-                  <Button className="hidden md:block" variant={"ghost"} onClick={handleShowHistory}>
-                    <History />
-                  </Button>
                   {canEdit && (
                     <div className="md:hidden">
                       <DropdownMenu>
