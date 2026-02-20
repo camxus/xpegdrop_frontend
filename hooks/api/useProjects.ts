@@ -9,6 +9,7 @@ import { toast } from "@/hooks/use-toast";
 import { useAuth } from "./useAuth";
 import { useTenants } from "@/components/tenants-provider";
 import { EXIFData, StorageProvider } from "@/types";
+import { ShareModeShort } from "@/types/share";
 
 export function useProjects() {
   const { user } = useAuth()
@@ -39,15 +40,17 @@ export function useProjects() {
   });
 
   // Get single project by share URL (public route)
-  const getProjectByShareUrl = async (
+  const getProjectByShareId = async (
     username: string,
     projectName: string,
+    mode: ShareModeShort,
     email?: string
   ) => {
     try {
-      const data = await projectsApi.getProjectByShareUrl(
+      const data = await projectsApi.getProjectByShareId(
         username,
         projectName,
+        mode,
         email
       );
 
@@ -58,18 +61,33 @@ export function useProjects() {
   };
 
   // Get single project by share URL (public route)
-  const getTenantProjectByShareUrl = async (
-    tenantHandle: string,
+  const getProjectByProjectUrl = async (
     username: string,
-    projectName: string,
-    email?: string
+    projectName: string
   ) => {
     try {
-      const data = await projectsApi.getTenantProjectByShareUrl(
+      const data = await projectsApi.getProjectByProjectUrl(
+        username,
+        projectName
+      );
+
+      return data;
+    } catch (error: any) {
+      throw { status: error.status, message: error.message, data: error.data };
+    }
+  };
+
+  // Get single project by share URL (public route)
+  const getTenantProjectByProjectUrl = async (
+    tenantHandle: string,
+    username: string,
+    projectName: string
+  ) => {
+    try {
+      const data = await projectsApi.getTenantProjectByProjectUrl(
         tenantHandle,
         username,
-        projectName,
-        email
+        projectName
       );
 
       return data;
@@ -198,8 +216,9 @@ export function useProjects() {
     projects,
     tenantProjects,
     getProject,
-    getProjectByShareUrl,
-    getTenantProjectByShareUrl,
+    getProjectByShareId,
+    getProjectByProjectUrl,
+    getTenantProjectByProjectUrl,
     createProject,
     updateProject,
     deleteProject,

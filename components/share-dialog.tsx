@@ -21,6 +21,9 @@ import { useAuth } from "@/hooks/api/useAuth";
 import { useTenants } from "./tenants-provider";
 import { ToggleGroup, ToggleGroupItem } from "./ui/toggle";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { useShares } from "@/hooks/api/useShares";
+import { CreateShareDto, Share, ShareMode } from "@/types/share";
+import { EditableTitle } from "./editable-title";
 
 interface ShareDialogProps {
   project: Project;
@@ -28,67 +31,29 @@ interface ShareDialogProps {
 }
 
 export function ShareDialog({ project, onClose }: ShareDialogProps) {
-  const { user } = useAuth()
-  const {
-    updateProject: { mutateAsync: updateProject },
-  } = useProjects();
-  const { show, updateProps } = useDialog()
+  const { show } = useDialog();
   const { toast } = useToast();
+  const { getShares: { data: shares, mutateAsync: getShares, isPending: isSharesLoading } } = useShares();
+  const { updateProject: { mutateAsync: updateProject } } = useProjects();
 
-  const [copied, setCopied] = useState(false);
-  const [emails, setEmails] = useState<string[]>(project.approved_emails || []);
-  const [newEmail, setNewEmail] = useState("");
-  const [isPublic, setIsPublic] = useState(project.is_public);
-  const [canDownload, setCanDownload] = useState(project.can_download);
-  const [approvedUsers, setApprovedUsers] = useState(project.approved_users || []);
   const [tenantUsers, setTenantUsers] = useState(project.approved_tenant_users || []);
-  const [shareMode, setShareMode] = useState<"presentation" | "collaborative">("collaborative");
 
-  const userQueries = useUsers([...approvedUsers.map(u => u.user_id), ...tenantUsers.map(u => u.user_id)]);
-  const projectUsers = userQueries.map(u => u.data).filter(Boolean) as User[];
+  const tenatUsersQueries = useUsers(project.approved_tenant_users?.map(u => u.user_id) || []);
+  const projectUsers = tenatUsersQueries?.map(u => u.data).filter(Boolean) || [];
 
-  const handleCopyToClipboard = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      toast({ title: "Success", description: "Link copied to clipboard" });
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      toast({ title: "Error", description: "Failed to copy link", variant: "destructive" });
-    }
-  };
+  // Fetch shares when dialog mounts
+  useEffect(() => {
+    getShares({ projectId: project.project_id });
+  }, [project.project_id]);
 
-  const handleAddEmail = () => {
-    if (!newEmail.trim()) return;
-    if (!/\S+@\S+\.\S+/.test(newEmail)) {
-      toast({
-        title: "Invalid email",
-        description: "Please enter a valid email",
-        variant: "destructive",
-      });
-      return;
-    }
-    if (emails.includes(newEmail)) {
-      toast({
-        title: "Already added",
-        description: "This email is already approved",
-      });
-      return;
-    }
-    setEmails([...emails, newEmail]);
-    setNewEmail("");
-  };
 
-  const handleRemoveEmail = (email: string) => {
-    setEmails(emails.filter((e) => e !== email));
-  };
-
-  const handleAddApprovedUser = (userId: string, role: string) => {
-    if (!approvedUsers.map(u => u.user_id).includes(userId)) setApprovedUsers([...approvedUsers, { user_id: userId, role }]);
-  };
-
-  const handleRemoveApprovedUser = (userId: string) => {
-    setApprovedUsers(approvedUsers.filter((u) => u.user_id !== userId));
+  const handleShowShareDetails = (shareId: string) => {
+    const share = shares?.find(s => s.share_id === shareId)
+    if (!share) return
+    show({
+      title: "Share Details",
+      content: () => <ShareDetailsDialog share={share} />,
+    })
   };
 
   const handleAddTenantUser = (userId: string, role: Project["approved_tenant_users"][number]["role"]) => {
@@ -106,10 +71,6 @@ export function ShareDialog({ project, onClose }: ShareDialogProps) {
         await updateProject({
           projectId: project.project_id,
           data: {
-            is_public: isPublic,
-            approved_emails: emails,
-            can_download: canDownload,
-            approved_users: approvedUsers,
             approved_tenant_users: tenantUsers,
           },
         });
@@ -120,17 +81,13 @@ export function ShareDialog({ project, onClose }: ShareDialogProps) {
     };
 
     const hasChanged =
-      project.is_public !== isPublic ||
-      project.can_download !== canDownload ||
-      !isSameSet(project.approved_emails, emails, e => e) ||
-      !isSameSet(project.approved_users, approvedUsers, u => u.user_id) ||
       !isSameSet(project.approved_tenant_users, tenantUsers, u => u.user_id);
 
 
     if (hasChanged) {
       update();
     }
-  }, [isPublic, emails, canDownload, approvedUsers, tenantUsers]);
+  }, [tenantUsers]);
 
   return (
     <div className="space-y-6 p-6">
@@ -147,32 +104,258 @@ export function ShareDialog({ project, onClose }: ShareDialogProps) {
         </div>
       </div>
 
-      <div className="flex justify-center mt-4">
-        <ToggleGroup type="single" value={shareMode} onValueChange={(val) => setShareMode(val as typeof shareMode)}>
-          <ToggleGroupItem value="collaborative">
-            Collaborative
-          </ToggleGroupItem>
-
-          {/* Presentation disabled with tooltip */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span className="inline-block">
-                <ToggleGroupItem value="presentation" disabled className="opacity-50">
-                  Presentation
-                </ToggleGroupItem>
-              </span>
-            </TooltipTrigger>
-            <TooltipContent>
-              Coming Soon
-            </TooltipContent>
-          </Tooltip>
-        </ToggleGroup>
+      {/* Shares list */}
+      <div className="space-y-2">
+        <Label className="text-sm font-medium">Shares</Label>
+        <div className="border rounded-lg max-h-64 overflow-y-auto">
+          {shares && !!shares.length ? (
+            shares.map((share) => (
+              <button
+                key={share.share_id}
+                className="w-full text-left p-2 hover:bg-primary/10 flex justify-between items-center"
+                onClick={() => handleShowShareDetails(share.share_id)}
+              >
+                <span className="truncate">{share.name}</span>
+              </button>
+            ))
+          ) : (
+            <div className="p-2 text-sm text-muted-foreground">
+              {isSharesLoading ? "Loading..." : "No shares yet"}
+            </div>
+          )}
+        </div>
+        <Button
+          onClick={() =>
+            show({
+              title: "Add Team User",
+              content: () => <NewShareDialog projectId={project.project_id} projectName={project.name} />,
+              actions: NewShareActions,
+            })
+          }
+          size="sm"
+          className="mt-1 self-end"
+        >
+          <Plus className="w-4 h-4 mr-2" /> New Share
+        </Button>
       </div>
-      
+
+      {/* Tenant users */}
+      {project.tenant_id && (
+        <>
+          <div className="border-t my-4" /> {/* Separator */}
+          <div className="flex flex-col gap-2">
+            <Label>Team Users with Access</Label>
+            <div className="space-y-1 py-2">
+              {tenantUsers.map((tenantUser) => {
+                const user = projectUsers.find(u => u?.user_id === tenantUser.user_id);
+                return (
+                  <div key={tenantUser.user_id} className="flex items-center justify-between px-2 rounded">
+                    <div className="flex items-center gap-2">
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={user?.avatar as string || ""} />
+                        <AvatarFallback>{getInitials(user?.first_name || "", user?.last_name || "")}</AvatarFallback>
+                      </Avatar>
+                      <span className="text-sm">{user?.username || tenantUser.user_id}</span>
+                    </div>
+
+                    <Select
+                      value={tenantUser.role}
+                      onValueChange={(value) =>
+                        setTenantUsers((prev) =>
+                          prev.map((user) =>
+                            user.user_id === tenantUser.user_id
+                              ? { ...tenantUser, role: value }
+                              : user
+                          )
+                        )
+                      }
+                    >
+                      <SelectTrigger size="sm" className="w-[120px]">
+                        <SelectValue placeholder="Role" />
+                      </SelectTrigger>
+
+                      <SelectContent>
+                        <SelectItem value="editor">Editor</SelectItem>
+                        <SelectItem value="viewer">Viewer</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    <Button size="icon" variant="ghost" onClick={() => handleRemoveTenantUser(tenantUser.user_id)}>
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+
+            <Button
+              onClick={() =>
+                show({
+                  title: "Add Team User",
+                  content: () => <AddUserDialog isTenantUser withRole />,
+                  actions: ({ role, selectedUser, isLoading, setSelectedUser, setSearch }) => {
+                    const handleAddUser = () => {
+                      if (!selectedUser) return;
+                      setSelectedUser(null);
+                      setSearch("");
+                      handleAddTenantUser(selectedUser, role);
+                    };
+                    return (
+                      <Button
+                        onClick={handleAddUser}
+                        disabled={!selectedUser || isLoading}
+                        className="w-full"
+                      >
+                        Add Team User
+                      </Button>
+                    );
+                  },
+                })
+              }
+              size="sm"
+              className="mt-1 self-end"
+            >
+              <Plus className="w-4 h-4 mr-2" /> Add Team User
+            </Button>
+          </div>
+        </>
+      )}
+
+      {/* Close button */}
+      <div className="flex gap-3 pt-4">
+        <Button variant="outline" onClick={onClose} className="flex-1 bg-transparent">
+          Close
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+interface ShareDetailsDialogProps {
+  share: Share;
+}
+
+export function ShareDetailsDialog({ share }: ShareDetailsDialogProps) {
+  const { user } = useAuth()
+
+  const { toast } = useToast();
+  const { show } = useDialog();
+
+  const { updateShare: { mutateAsync: updateShare } } = useShares()
+  const [copied, setCopied] = useState(false);
+  const [emails, setEmails] = useState(share.approved_emails?.map(e => ({ value: e.value, role: e.role })) || []);
+  const [name, setName] = useState("");
+  const [newEmail, setNewEmail] = useState("");
+  const [isPublic, setIsPublic] = useState(share.is_public);
+  const [canDownload, setCanDownload] = useState(share.can_download);
+  const [approvedUsers, setApprovedUsers] = useState(share.approved_users || []);
+
+  const userQueries = useUsers(approvedUsers.map(u => u.user_id));
+  const projectUsers = userQueries.map(u => u.data).filter(Boolean) as any[];
+
+  const handleCopyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      toast({ title: "Copied!", description: "Link copied to clipboard" });
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast({ title: "Error", description: "Failed to copy link", variant: "destructive" });
+    }
+  };
+
+  const handleAddEmail = (email: string, role: "editor" | "viewer") => {
+    if (!newEmail.trim()) return;
+    if (!/\S+@\S+\.\S+/.test(newEmail)) {
+      toast({ title: "Invalid email", description: "Enter a valid email", variant: "destructive" });
+      return;
+    }
+    if (emails.map(email => email.value).includes(email)) {
+      toast({ title: "Already added", description: "Email already approved" });
+      return;
+    }
+    setEmails((emails) => [...emails, { value: email, role }]);
+    setNewEmail("");
+  };
+
+  const handleUpdateEmail = (email: string, role: "editor" | "viewer") => {
+    setEmails(emails.map(e => e.value === email ? { ...e, role } : e));
+  }
+
+  const handleRemoveEmail = (email: string) => setEmails(emails.filter(e => e.value !== email));
+
+  const handleAddApprovedUser = (userId: string, role: "editor" | "viewer") => {
+    if (!approvedUsers.find(u => u.user_id === userId)) {
+      setApprovedUsers([...approvedUsers, { user_id: userId, role }]);
+    }
+  };
+
+  const handleUpdateApprovedUser = (userId: string, role: "editor" | "viewer") => {
+    setApprovedUsers(approvedUsers.map(u => u.user_id === userId ? { ...u, role } : u));
+  }
+
+  const handleRemoveApprovedUser = (userId: string) => {
+    setApprovedUsers(approvedUsers.filter(u => u.user_id !== userId));
+  };
+
+  function getShareUrl(id: string, mode: ShareMode) {
+    const base = window.location.origin;
+    if (mode === "collaborative") return `${base}/s/${id}`;
+    if (mode === "presentation") return `${base}/p/${id}`;
+    return ""; // fallback
+  }
+
+  // Auto-update share
+  useEffect(() => {
+    const update = async () => {
+      try {
+        await updateShare({
+          shareId: share.share_id,
+          data: {
+            name: name,
+            is_public: isPublic,
+            approved_emails: emails,
+            can_download: canDownload,
+            approved_users: approvedUsers,
+          },
+        });
+        toast({ title: "Share updated", description: "Settings saved" });
+      } catch {
+        toast({ title: "Error", description: "Failed to update share", variant: "destructive" });
+      }
+    };
+
+    const hasChanged =
+      share.name !== name
+    share.is_public !== isPublic ||
+      share.can_download !== canDownload ||
+      !isSameSet(share.approved_emails, emails, e => e.value) ||
+      !isSameSet(share.approved_users, approvedUsers, u => u.user_id)
+
+
+    if (hasChanged) {
+      update();
+    }
+  }, [isPublic, name, emails, canDownload, approvedUsers]);
+
+  return (
+    <div className="space-y-6 p-6">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <div className="flex h-12 w-12 items-center justify-center">
+          <Share2 className="h-6 w-6 text-primary" />
+        </div>
+        <div>
+          <EditableTitle title={share.name} onSave={setName} />
+          <p className="text-xs text-muted-foreground">Manage share settings</p>
+        </div>
+      </div>
+
+      {/* Share link */}
       <AnimatePresence mode="wait">
-        {shareMode === "collaborative" && (
+        {share && (
           <motion.div
-            key="collaborative-link"
+            key={share.share_id}
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 8 }}
@@ -183,7 +366,7 @@ export function ShareDialog({ project, onClose }: ShareDialogProps) {
             <div className="flex gap-2">
               <Input
                 id="share-url"
-                value={project.share_url}
+                value={getShareUrl(share.share_id, share.mode)}
                 readOnly
                 className="font-mono text-sm"
                 onClick={(e) => e.currentTarget.select()}
@@ -191,7 +374,7 @@ export function ShareDialog({ project, onClose }: ShareDialogProps) {
               <Button
                 size="icon"
                 variant="outline"
-                onClick={() => handleCopyToClipboard(project.share_url)}
+                onClick={() => handleCopyToClipboard(getShareUrl(share.share_id, share.mode))}
                 className={cn(
                   "shrink-0 transition-colors",
                   copied && "bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
@@ -202,297 +385,177 @@ export function ShareDialog({ project, onClose }: ShareDialogProps) {
             </div>
           </motion.div>
         )}
+      </AnimatePresence>
 
-        {shareMode === "presentation" && (
+      {/* Approved Emails */}
+      <AnimatePresence initial={false}>
+        {!isPublic && emails.length > 0 && (
           <motion.div
-            key="presentation-link"
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 8 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            className="space-y-2"
+            key="approved-emails"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ opacity: { duration: 0.15 }, height: { duration: 0.25 } }}
+            className="space-y-2 overflow-hidden"
           >
-            <Label htmlFor="presentation-share-url">Presentation Share Link</Label>
+            <Label>Approved Emails</Label>
             <div className="flex gap-2">
               <Input
-                id="presentation-share-url"
-                // value={project.presentation_url}
-                readOnly
-                className="font-mono text-sm"
-                onClick={(e) => e.currentTarget.select()}
+                placeholder="Add email..."
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleAddEmail(newEmail, "viewer")}
               />
-              <Button
-                size="icon"
-                variant="outline"
-                // onClick={() => handleCopyToClipboard(project.presentation_url)}
-                className={cn(
-                  "shrink-0 transition-colors",
-                  copied && "bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
-                )}
-              >
-                {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-              </Button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-
-      {/* Approved emails */}
-      <AnimatePresence initial={false}>
-        {!isPublic && (
-          <motion.div
-            key="approved"
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{
-              opacity: { duration: 0.1 },
-              height: { duration: 0.3 },
-            }}
-          >
-            <div
-              className="space-y-2 overflow-hidden"
-            >
-              <Label>Approved Emails</Label>
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Add email..."
-                  value={newEmail}
-                  onChange={(e) => setNewEmail(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleAddEmail()}
-                />
-                <Button type="button" size="icon" onClick={handleAddEmail}>
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-              {emails.length > 0 && (
-                <ul className="space-y-1">
-                  {emails.map((email) => (
-                    <li
-                      key={email}
-                      className="flex items-center justify-between rounded-md border p-2 text-sm"
-                    >
-                      {email}
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                        onClick={() => handleRemoveEmail(email)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-
-            {/* Approved users */}
-            <div className="flex flex-col gap-2">
-              <Label>Project Users</Label>
-              <div className="space-y-1 py-2">
-                {approvedUsers.map((approvedUser) => {
-                  const projectUser = projectUsers.find(u => u.user_id === approvedUser.user_id);
-                  return (
-                    <div key={projectUser?.user_id} className="flex items-center justify-between px-2 rounded">
-                      <div className="flex items-center gap-2">
-                        <Avatar className="h-6 w-6">
-                          <AvatarImage src={projectUser?.avatar as string || ""} />
-                          <AvatarFallback>{getInitials(projectUser?.first_name || "", projectUser?.last_name || "")}</AvatarFallback>
-                        </Avatar>
-                        <span className="text-sm">{projectUser?.username}</span>
-                      </div>
-
-                      <Select
-                        value={approvedUser.role}
-                        onValueChange={(value) =>
-                          setApprovedUsers((prev) =>
-                            prev.map((user) =>
-                              user.user_id === approvedUser.user_id
-                                ? { ...approvedUser, role: value }
-                                : user
-                            )
-                          )
-                        }
-                      >
-                        <SelectTrigger size="sm" className="w-[120px]">
-                          <SelectValue placeholder="Role" />
-                        </SelectTrigger>
-
-                        <SelectContent>
-                          <SelectItem value="editor">Editor</SelectItem>
-                          <SelectItem value="viewer">Viewer</SelectItem>
-                        </SelectContent>
-                      </Select>
-
-                      <Button size="icon" variant="ghost" onClick={() => handleRemoveApprovedUser(approvedUser.user_id)}>
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  );
-                })}
-              </div>
-              <Button onClick={
-                () => show({
-                  title: "Add Project User",
-                  content: () => <AddUserDialog withRole />,
-                  actions: ({
-                    role, selectedUser, isLoading, setSelectedUser, setSearch
-                  }) => {
-
-                    const handleAddUser = () => {
-                      if (!selectedUser) return;
-                      setSelectedUser(null);
-                      setSearch("");
-                      handleAddApprovedUser(selectedUser.user_id, role)
-                    };
-
-                    return (
-                      <Button onClick={handleAddUser} disabled={!selectedUser || isLoading || selectedUser.user_id === user?.user_id} className="w-full">
-                        Add User
-                      </Button>
-                    )
-                  },
-                })
-              } size="sm" className="mt-1 self-end">
-                <Plus className="w-4 h-4 mr-2" /> Add User
+              <Button type="button" size="icon" onClick={() => handleAddEmail(newEmail, "viewer")}>
+                <Plus className="h-4 w-4" />
               </Button>
             </div>
 
-            {/* Tenant users */}
-            {
-              project.tenant_id && (
-                <div className="flex flex-col gap-2">
-                  <Label>Team Users with Access</Label>
-                  <div className="space-y-1 py-2">
-                    {tenantUsers.map((tenantUser) => {
-                      const user = projectUsers.find(u => u.user_id === tenantUser?.user_id);
-                      return (
-                        <div key={tenantUser.user_id} className="flex items-center justify-between px-2 rounded">
-                          <div className="flex items-center gap-2">
-                            <Avatar className="h-6 w-6">
-                              <AvatarImage src={user?.avatar as string || ""} />
-                              <AvatarFallback>{getInitials(user?.first_name || "", user?.last_name || "")}</AvatarFallback>
-                            </Avatar>
-                            <span className="text-sm">{user?.username || tenantUser.user_id}</span>
-                          </div>
+            <ul className="space-y-1">
+              {emails.map(({ value, role }) => (
+                <motion.li
+                  key={value}
+                  layout
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 10 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex items-center justify-between rounded-md border p-2 text-sm"
+                >
+                  <span>{value}</span>
 
-                          <Select
-                            value={tenantUser.role}
-                            onValueChange={(value) =>
-                              setTenantUsers((prev) =>
-                                prev.map((user) =>
-                                  user.user_id === tenantUser.user_id
-                                    ? { ...tenantUser, role: value }
-                                    : user
-                                )
-                              )
-                            }
-                          >
-                            <SelectTrigger size="sm" className="w-[120px]">
-                              <SelectValue placeholder="Role" />
-                            </SelectTrigger>
+                  <Select
+                    value={role}
+                    onValueChange={(value: "editor" | "viewer") => handleUpdateEmail(value, value)}
+                  >
+                    <SelectTrigger size="sm" className="w-[100px]">
+                      <SelectValue placeholder="Role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="editor">Editor</SelectItem>
+                      <SelectItem value="viewer">Viewer</SelectItem>
+                    </SelectContent>
+                  </Select>
 
-                            <SelectContent>
-                              <SelectItem value="editor">Editor</SelectItem>
-                              <SelectItem value="viewer">Viewer</SelectItem>
-                            </SelectContent>
-                          </Select>
-
-                          <Button size="icon" variant="ghost" onClick={() => handleRemoveTenantUser(tenantUser.user_id)}>
-                            <X className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <Button onClick={() => show({
-                    title: "Add Team User",
-                    content: () => <AddUserDialog isTenantUser withRole />,
-                    actions: ({
-                      role, selectedUser, isLoading, setSelectedUser, setSearch
-                    }) => {
-
-                      const handleAddUser = () => {
-                        if (!selectedUser) return;
-                        setSelectedUser(null);
-                        setSearch("");
-                        handleAddTenantUser(selectedUser.user_id, role)
-                      };
-
-                      return (
-                        <Button onClick={handleAddUser} disabled={!selectedUser || isLoading || selectedUser.user_id === user?.user_id} className="w-full">
-                          Add Team User
-                        </Button>
-                      )
-                    },
-                  })} size="sm" className="mt-1 self-end">
-                    <Plus className="w-4 h-4 mr-2" /> Add Team User
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                    onClick={() => handleRemoveEmail(value)}
+                  >
+                    <X className="h-4 w-4" />
                   </Button>
-                </div>
-              )
-            }
+                </motion.li>
+              ))}
+            </ul>
           </motion.div>
         )}
       </AnimatePresence>
 
-
-      {/* Public toggle */}
-      <div className="flex items-center justify-between border rounded-lg p-3">
-        <div>
-          <Label htmlFor="is-public" className="text-sm font-medium">
-            Public Access
-          </Label>
-          <p className="text-xs text-muted-foreground">
-            Anyone with the link can view and download
-          </p>
-        </div>
-        <Switch
-          id="is-public"
-          checked={isPublic}
-          onCheckedChange={setIsPublic}
-          className="flex-shrink-0"
-        />
-      </div>
-
+      {/* Users with Access */}
       <AnimatePresence initial={false}>
-        {shareMode === "collaborative" && (
+        {approvedUsers.length > 0 && (
           <motion.div
-            key="can-download-toggle"
+            key="approved-users"
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            className="overflow-hidden"
+            transition={{ opacity: { duration: 0.15 }, height: { duration: 0.25 } }}
+            className="flex flex-col gap-2 overflow-hidden"
           >
-            <div className="flex items-center justify-between border rounded-lg p-3">
-              <div>
-                <Label htmlFor="can-download" className="text-sm font-medium">
-                  Allow Download
-                </Label>
-                <p className="text-xs text-muted-foreground">
-                  Users with access can download folder with full resolution files
-                </p>
-              </div>
-              <Switch
-                id="can-download"
-                checked={canDownload}
-                onCheckedChange={setCanDownload}
-                className="flex-shrink-0"
-              />
+            <Label>Users with Access</Label>
+            <div className="space-y-1 py-2">
+              {approvedUsers.map((user) => {
+                const u = projectUsers.find((pu) => pu.user_id === user.user_id);
+                return (
+                  <motion.div
+                    key={user.user_id}
+                    layout
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 10 }}
+                    transition={{ duration: 0.2 }}
+                    className="flex items-center justify-between px-2 rounded"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={u?.avatar || ""} />
+                        <AvatarFallback>{getInitials(u?.first_name || "", u?.last_name || "")}</AvatarFallback>
+                      </Avatar>
+                      <span className="text-sm">{u?.username || user.user_id}</span>
+                    </div>
+
+                    <Select
+                      value={user.role}
+                      onValueChange={(value: "editor" | "viewer") =>
+                        handleUpdateApprovedUser(user.user_id, value)
+                      }
+                    >
+                      <SelectTrigger size="sm" className="w-[120px]">
+                        <SelectValue placeholder="Role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="editor">Editor</SelectItem>
+                        <SelectItem value="viewer">Viewer</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    <Button size="icon" variant="ghost" onClick={() => handleRemoveApprovedUser(user.user_id)}>
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </motion.div>
+                );
+              })}
             </div>
+            <Button onClick={
+              () => show({
+                title: `Add User to ${name}`,
+                content: () => <AddUserDialog withRole />,
+                actions: ({
+                  role, selectedUser, isLoading, setSelectedUser, setSearch
+                }) => {
+                  const handleAddUser = () => {
+                    if (!selectedUser) return;
+                    setSelectedUser(null);
+                    setSearch("");
+                    handleAddApprovedUser(selectedUser.user_id, role)
+                  };
+
+                  return (
+                    <Button onClick={handleAddUser} disabled={!selectedUser || isLoading || selectedUser.user_id === user?.user_id} className="w-full">
+                      Add User
+                    </Button>
+                  )
+                },
+              })
+            } size="sm" className="mt-1 self-end">
+              <Plus className="w-4 h-4 mr-2" /> Add User
+            </Button>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Actions */}
-      <div className="flex gap-3 pt-4">
-        <Button variant="outline" onClick={onClose} className="flex-1 bg-transparent">
-          Close
-        </Button>
+      {/* Toggles */}
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center justify-between border rounded-lg p-3">
+          <div>
+            <Label className="text-sm font-medium">Public Access</Label>
+            <p className="text-xs text-muted-foreground">Anyone with the link can view</p>
+          </div>
+          <Switch checked={isPublic} onCheckedChange={setIsPublic} className="flex-shrink-0" />
+        </div>
+
+        {share.mode === "collaborative" && (
+          <div className="flex items-center justify-between border rounded-lg p-3">
+            <div>
+              <Label className="text-sm font-medium">Allow Download</Label>
+              <p className="text-xs text-muted-foreground">Users can download files</p>
+            </div>
+            <Switch checked={canDownload} onCheckedChange={setCanDownload} className="flex-shrink-0" />
+          </div>
+        )}
       </div>
-    </div >
+    </div>
   );
 }
 
@@ -625,3 +688,306 @@ export function AddUserDialog({ isTenantUser = false, withRole = false }) {
     </div>
   );
 }
+
+interface NewShareDialogProps {
+  projectId: string;
+  projectName: string
+}
+
+export function NewShareDialog({ projectId, projectName }: NewShareDialogProps) {
+  const { user } = useAuth()
+
+  const { toast } = useToast();
+  const { show, updateProps } = useDialog();
+
+  const [name, setName] = useState(projectName);
+  const [isPublic, setIsPublic] = useState(false);
+  const [canDownload, setCanDownload] = useState(false);
+  const [emails, setEmails] = useState<{ value: string; role: "editor" | "viewer" }[]>([]);
+  const [approvedUsers, setApprovedUsers] = useState<{ user_id: string; role: "editor" | "viewer" }[]>([]);
+  const [newEmail, setNewEmail] = useState("");
+  const [mode, setMode] = useState<ShareMode>("collaborative");
+
+  const userQueries = useUsers(approvedUsers.map(u => u.user_id));
+  const projectUsers = userQueries.map(u => u.data).filter(Boolean) as User[];
+
+  const handleAddEmail = (email: string, role: "editor" | "viewer") => {
+    if (!email.trim()) return;
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      toast({ title: "Invalid email", description: "Enter a valid email", variant: "destructive" });
+      return;
+    }
+    if (emails.find(e => e.value === email)) {
+      toast({ title: "Already added", description: "Email already approved" });
+      return;
+    }
+    setEmails(prev => [...prev, { value: email, role }]);
+    setNewEmail("");
+  };
+
+  const handleRemoveEmail = (email: string) => setEmails(prev => prev.filter(e => e.value !== email));
+
+  const handleAddApprovedUser = (userId: string, role: "editor" | "viewer") => {
+    if (!approvedUsers.find(u => u.user_id === userId)) {
+      setApprovedUsers(prev => [...prev, { user_id: userId, role }]);
+    }
+  };
+
+  const handleRemoveApprovedUser = (userId: string) => setApprovedUsers(prev => prev.filter(u => u.user_id !== userId));
+
+  useEffect(() => {
+    const newShare: Partial<Share> = {
+      project_id: projectId,
+      name,
+      is_public: isPublic,
+      can_download: canDownload,
+      approved_emails: emails,
+      approved_users: approvedUsers,
+      mode,
+    };
+
+    updateProps({ share: newShare });
+  }, [name, isPublic, canDownload, emails, approvedUsers, mode, projectId, updateProps]);
+
+  return (
+    <div className="space-y-6 p-6">
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <div className="flex h-12 w-12 items-center justify-center">
+          <Share2 className="h-6 w-6 text-primary" />
+        </div>
+        <div>
+          <h3 className="text-lg font-semibold">Create New Share</h3>
+          <p className="text-xs text-muted-foreground">Share this project with others</p>
+        </div>
+      </div>
+
+      {/* Name input */}
+      <div className="space-y-2">
+        <Label>Name</Label>
+        <Input value={name} onChange={e => setName(e.target.value)} placeholder="Enter share name" />
+      </div>
+
+      {/* Share mode */}
+      <div className="space-y-2">
+        <Label>Mode</Label>
+        <Select value={mode} onValueChange={(v: ShareMode) => setMode(v)}>
+          <SelectTrigger size="sm">
+            <SelectValue placeholder="Select mode" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="collaborative">Collaborative</SelectItem>
+            <SelectItem value="presentation">Presentation</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Emails */}
+      <AnimatePresence initial={false}>
+        {emails.length >= 0 && (
+          <motion.div
+            key="emails"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ opacity: { duration: 0.15 }, height: { duration: 0.25 } }}
+            className="space-y-2 overflow-hidden"
+          >
+            <Label>Approved Emails</Label>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Add email..."
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleAddEmail(newEmail, "viewer")}
+              />
+              <Button size="icon" onClick={() => handleAddEmail(newEmail, "viewer")}>
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <ul className="space-y-1">
+              {emails.map(({ value, role }) => (
+                <motion.li
+                  key={value}
+                  layout
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 10 }}
+                  transition={{ duration: 0.2 }}
+                  className="flex items-center justify-between rounded-md border p-2 text-sm"
+                >
+                  <span>{value}</span>
+                  <Select
+                    value={role}
+                    onValueChange={(v: "editor" | "viewer") =>
+                      setEmails(prev => prev.map(e => e.value === value ? { ...e, role: v } : e))
+                    }
+                  >
+                    <SelectTrigger size="sm" className="w-[100px]">
+                      <SelectValue placeholder="Role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="editor">Editor</SelectItem>
+                      <SelectItem value="viewer">Viewer</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button size="icon" variant="ghost" onClick={() => handleRemoveEmail(value)}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </motion.li>
+              ))}
+            </ul>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Users */}
+      <AnimatePresence initial={false}>
+        {approvedUsers.length >= 0 && (
+          <motion.div
+            key="users"
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ opacity: { duration: 0.15 }, height: { duration: 0.25 } }}
+            className="space-y-2 overflow-hidden"
+          >
+            <Label>Users with Access</Label>
+            <div className="space-y-1 py-2">
+              {approvedUsers.map(user => {
+                const u = projectUsers.find(pu => pu.user_id === user.user_id);
+                return (
+                  <motion.div
+                    key={user.user_id}
+                    layout
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 10 }}
+                    transition={{ duration: 0.2 }}
+                    className="flex items-center justify-between px-2 rounded"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={(u?.avatar) as string || ""} />
+                        <AvatarFallback>{getInitials(u?.first_name || "", u?.last_name || "")}</AvatarFallback>
+                      </Avatar>
+                      <span className="text-sm">{u?.username || user.user_id}</span>
+                    </div>
+                    <Select
+                      value={user.role}
+                      onValueChange={(v: "editor" | "viewer") =>
+                        setApprovedUsers(prev => prev.map(u2 => u2.user_id === user.user_id ? { ...u2, role: v } : u2))
+                      }
+                    >
+                      <SelectTrigger size="sm" className="w-[120px]">
+                        <SelectValue placeholder="Role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="editor">Editor</SelectItem>
+                        <SelectItem value="viewer">Viewer</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button size="icon" variant="ghost" onClick={() => handleRemoveApprovedUser(user.user_id)}>
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </motion.div>
+                );
+              })}
+              <Button onClick={
+                () => show({
+                  title: `Add User to ${name}`,
+                  content: () => <AddUserDialog withRole />,
+                  actions: ({
+                    role, selectedUser, isLoading, setSelectedUser, setSearch
+                  }) => {
+                    const handleAddUser = () => {
+                      if (!selectedUser) return;
+                      setSelectedUser(null);
+                      setSearch("");
+                      handleAddApprovedUser(selectedUser.user_id, role)
+                    };
+
+                    return (
+                      <Button onClick={handleAddUser} disabled={!selectedUser || isLoading || selectedUser.user_id === user?.user_id} className="w-full">
+                        Add User
+                      </Button>
+                    )
+                  },
+                })
+              } size="sm" className="mt-1 self-end">
+                <Plus className="w-4 h-4 mr-2" /> Add User
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Toggles */}
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center justify-between border rounded-lg p-3">
+          <div>
+            <Label className="text-sm font-medium">Public Access</Label>
+            <p className="text-xs text-muted-foreground">Anyone with the link can view</p>
+          </div>
+          <Switch checked={isPublic} onCheckedChange={setIsPublic} />
+        </div>
+
+        {mode === "collaborative" && (
+          <div className="flex items-center justify-between border rounded-lg p-3">
+            <div>
+              <Label className="text-sm font-medium">Allow Download</Label>
+              <p className="text-xs text-muted-foreground">Users can download files</p>
+            </div>
+            <Switch checked={canDownload} onCheckedChange={setCanDownload} />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
+interface NewShareActionsProps {
+  share: CreateShareDto;
+}
+
+export function NewShareActions({
+  share,
+}: NewShareActionsProps) {
+  const { toast } = useToast();
+  const { hide } = useDialog();
+
+  const { createShare: { mutateAsync: createShare, isPending: isLoading } } = useShares();
+
+
+  const handleCreateShare = async () => {
+    if (!share.name.trim()) {
+      toast({
+        title: "Missing name",
+        description: "Enter a name for the share",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await createShare(share);
+      toast({ title: "Share created", description: "New share successfully created" });
+      hide();
+    } catch {
+      toast({ title: "Error", description: "Failed to create share", variant: "destructive" });
+    }
+  };
+
+  return (
+    <Button
+      onClick={handleCreateShare}
+      disabled={!share.name.trim() || isLoading}
+      className="w-full"
+    >
+      Create Share
+    </Button>
+  );
+}
+

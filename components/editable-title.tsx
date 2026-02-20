@@ -20,7 +20,7 @@ export function EditableTitle({
   title,
   onSave,
   className,
-  editable,
+  editable = true,
   ...props
 }: EditableTitleProps) {
   const [isEditing, setIsEditing] = useState(false);

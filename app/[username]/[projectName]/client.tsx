@@ -45,13 +45,15 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { FileUploaderRef } from "@/components/ui/file-uploader";
 import HistoryModal from "@/components/history-modal";
 import { useModal } from "@/hooks/use-modal";
+import { Share } from "@/types/share";
 
 interface IPublicProjectPage {
   tenantHandle: string | null
   presentationMode?: boolean
+  shareId?: string
 }
 
-export default function PublicProjectPage({ tenantHandle, presentationMode = false }: IPublicProjectPage) {
+export default function PublicProjectPage({ tenantHandle, presentationMode = false, shareId }: IPublicProjectPage) {
   useServiceWorker();
   const { username, projectName } = useParams<{
     username: string;
@@ -73,8 +75,9 @@ export default function PublicProjectPage({ tenantHandle, presentationMode = fal
   } = useNotes();
 
   const {
-    getProjectByShareUrl,
-    getTenantProjectByShareUrl,
+    getProjectByShareId,
+    getProjectByProjectUrl,
+    getTenantProjectByProjectUrl,
     updateProject: { mutateAsync: updateProject },
     addProjectFiles: { mutateAsync: addProjectFiles },
     removeProjectFile: { mutateAsync: removeProjectFile },
@@ -103,6 +106,7 @@ export default function PublicProjectPage({ tenantHandle, presentationMode = fal
 
   const { uploadFiles, isUploading: isUploadingToS3 } = useS3();
 
+  const [share, setShare] = useState<Partial<Share> | null>(null);
   const [project, setProject] = useState<Project | null>(null);
   const [media, setMedia] = useState<
     (MediaFile & { preview_url: string, full_file_url: string })[]
@@ -122,10 +126,12 @@ export default function PublicProjectPage({ tenantHandle, presentationMode = fal
 
   const uploaderRef = useRef<FileUploaderRef>(null);
 
+  const displayName = share?.name || project?.name || ""
+
   const isProjectUser = user?.user_id === projectUser?.user_id
   const isTenantMember = tenant?.members.some((m) => m.user_id === user?.user_id)
   const canEdit = !presentationMode && isProjectUser ||
-    project?.approved_users.some((u) => u.role == "editor") ||
+    share?.approved_users?.some((u) => u.role == "editor") ||
     project?.approved_tenant_users.some((u) => (u.role === "admin" || u.role === "editor")) ||
     tenant?.members.some((m) => m.user_id === user?.user_id && (m.role === "admin" || m.role === "editor"))
 
@@ -162,8 +168,38 @@ export default function PublicProjectPage({ tenantHandle, presentationMode = fal
 
   const loadProject = async (email?: string) => {
     try {
-      const data = tenantHandle ? await getTenantProjectByShareUrl(tenantHandle, username, projectName, email) : await getProjectByShareUrl(username, projectName, email);
-      setProject(data.project || null);
+      let projectData: {
+        project: Project;
+        media: {
+          name: string;
+          type: string;
+          full_file_url: string;
+          preview_url: string;
+          thumbnail_url: string;
+          thumbnai: string;
+        }[];
+        share?: Partial<Share>;
+      };
+
+      if (shareId) {
+        // Determine mode: "p" for presentation, otherwise "s" for normal share
+        const mode = presentationMode ? "p" : "s";
+
+        projectData = await getProjectByShareId(
+          username,
+          shareId,
+          mode,
+          email
+        );
+      } else {
+        // Fetch project normally
+        projectData = tenantHandle
+          ? await getTenantProjectByProjectUrl(tenantHandle, username, projectName)
+          : await getProjectByProjectUrl(username, projectName);
+      }
+
+      setShare(projectData.share || null);
+      setProject(projectData.project || null);
 
       function createEmptyMedia(
         name: string | undefined,
@@ -186,7 +222,7 @@ export default function PublicProjectPage({ tenantHandle, presentationMode = fal
         };
       }
 
-      async function processMediaInBatches(media: typeof data.media) {
+      async function processMediaInBatches(media: typeof projectData.media) {
         // 1. create placeholder array with same length
         const placeholders = media.map(
           (m: { name?: string | undefined; type?: string, thumbnail_url?: string, preview_url?: string, full_file_url?: string }) =>
@@ -235,12 +271,12 @@ export default function PublicProjectPage({ tenantHandle, presentationMode = fal
         return result;
       }
       // usage
-      const result = await processMediaInBatches(data.media);
+      const result = await processMediaInBatches(projectData.media);
 
       setMedia([...result]);
       setIsLoading(false);
 
-      if (data.project?.project_id) await getRatings(data.project.project_id);
+      if (projectData.project?.project_id) await getRatings(projectData.project.project_id);
       hide();
     } catch (error: any) {
       const status = (error as ApiError)?.status;
@@ -293,7 +329,7 @@ export default function PublicProjectPage({ tenantHandle, presentationMode = fal
           url: url.toString(),
         };
       }),
-      project.name
+      displayName || "Untitled Project"
     );
   };
 
@@ -330,7 +366,7 @@ export default function PublicProjectPage({ tenantHandle, presentationMode = fal
       const updated = await getProject(project.project_id);
       setProject({ ...project, ...updated });
       if (typeof window !== "undefined") {
-        window.history.replaceState(null, "", new URL(updated.share_url).pathname);
+        window.history.replaceState(null, "", new URL(updated.project_url).pathname);
       }
     } catch (e) {
       console.error(e);
@@ -393,7 +429,7 @@ export default function PublicProjectPage({ tenantHandle, presentationMode = fal
 
       // Using a Map instead of an object
       const mockFolder = new Map<string, File[]>();
-      mockFolder.set(project?.name || "Untitled Project", files);
+      mockFolder.set(displayName || "Untitled Project", files);
 
       const folderArray = await Promise.all(
         Array.from(mockFolder.entries()).map(
@@ -578,7 +614,7 @@ export default function PublicProjectPage({ tenantHandle, presentationMode = fal
   }, []);
 
   useEffect(() => {
-    if (project) getProjectNotes(project.project_id);
+    if (project) getProjectNotes({ projectId: project.project_id });
   }, [project]);
 
   return (
@@ -624,9 +660,9 @@ export default function PublicProjectPage({ tenantHandle, presentationMode = fal
               <div className="mb-6 block md:flex items-center justify-between">
                 <div className="mb-6 space-y-2">
                   <EditableTitle
-                    title={project.name}
+                    title={displayName}
                     onSave={(value) => handleUpdateProject({ name: value })}
-                    editable={canEdit}
+                    editable={!share && canEdit}
                   />
                   <p className="text-sm font-light text-muted-foreground">
                     Created
@@ -642,25 +678,29 @@ export default function PublicProjectPage({ tenantHandle, presentationMode = fal
                   )}
                 </div>
                 <div className="flex gap-2 md:ml-0 ml-auto w-fit">
-                  {!presentationMode && (project.can_download || isProjectUser || isTenantMember) && (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button disabled={!selectedMedia}>
-                          <Download className="h-4 w-4 mr-2" />
-                          Download {!!selectedMedia?.size && "Selected"}
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={handleDownloadAsZip}>
-                          Download as ZIP
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={handleDownloadAsPDF}>
-                          Download as PDF
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  )}
-                  {project.share_url && canEdit && (
+                  {!presentationMode && (
+                    share?.can_download ||
+                    isProjectUser ||
+                    isTenantMember
+                  ) && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button disabled={!selectedMedia}>
+                            <Download className="h-4 w-4 mr-2" />
+                            Download {!!selectedMedia?.size && "Selected"}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={handleDownloadAsZip}>
+                            Download as ZIP
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={handleDownloadAsPDF}>
+                            Download as PDF
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
+                  {project.project_url && canEdit && (
                     <>
                       <Button
                         onClick={handleShare}

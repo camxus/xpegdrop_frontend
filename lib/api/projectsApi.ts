@@ -2,6 +2,7 @@ import { Project } from "@/types/project";
 import { api } from "./client";
 import { S3Location } from "@/types/user";
 import { EXIFData, StorageProvider } from "@/types";
+import { Share, ShareModeShort } from "@/types/share";
 
 export const projectsApi = {
   // Create new project with files (multipart/form-data)
@@ -56,10 +57,11 @@ export const projectsApi = {
     return await api.delete(`/projects/${projectId}`);
   },
 
-  // Get a shared project by public share URL (username + projectName)
-  getProjectByShareUrl: async (
+  // Get a shared project by public project URL (username + projectName)
+  getProjectByShareId: async (
     username: string,
     projectName: string,
+    mode: ShareModeShort,
     email?: string
   ) => {
     return await api.get<{
@@ -71,19 +73,39 @@ export const projectsApi = {
         preview_url: string,
         thumbnail_url: string,
         thumbnai: string
-      }[]
+      }[],
+      share: Partial<Share>,
     }>(
-      `/projects/share/${username}/${encodeURIComponent(projectName)}`,
+      `/projects/share/${username}/${mode}/${encodeURIComponent(projectName)}`,
       { params: { email: email } }
     );
   },
 
-  // Get a shared tenant project by public share URL (username + projectName)
-  getTenantProjectByShareUrl: async (
-    tenantHandle: string,
+  // Get a shared project by public project URL (username + projectName)
+  getProjectByProjectUrl: async (
     username: string,
     projectName: string,
-    email?: string
+  ) => {
+    return await api.get<{
+      project: Project,
+      media: {
+        name: string,
+        type: string,
+        full_file_url: string,
+        preview_url: string,
+        thumbnail_url: string,
+        thumbnai: string
+      }[]
+    }>(
+      `/projects/project/${username}/${encodeURIComponent(projectName)}`
+    );
+  },
+
+  // Get a shared tenant project by public project URL (username + projectName)
+  getTenantProjectByProjectUrl: async (
+    tenantHandle: string,
+    username: string,
+    projectName: string
   ) => {
     return await api.get<{
       project: Project,
@@ -96,8 +118,7 @@ export const projectsApi = {
         thumbnai: string
       }[]
     }>(
-      `/projects/share/tenant/${tenantHandle}/${username}/${encodeURIComponent(projectName)}`,
-      { params: { email: email } }
+      `/projects/project/tenant/${tenantHandle}/${username}/${encodeURIComponent(projectName)}`
     );
   },
 
