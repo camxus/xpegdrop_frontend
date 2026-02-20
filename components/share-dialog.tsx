@@ -42,7 +42,7 @@ export function ShareDialog({ project, onClose }: ShareDialogProps) {
   const [canDownload, setCanDownload] = useState(project.can_download);
   const [approvedUsers, setApprovedUsers] = useState(project.approved_users || []);
   const [tenantUsers, setTenantUsers] = useState(project.approved_tenant_users || []);
-  const [shareMode, setShareMode] = useState<"presentation" | "normal">("normal");
+  const [shareMode, setShareMode] = useState<"presentation" | "collaborative">("collaborative");
 
   const userQueries = useUsers([...approvedUsers.map(u => u.user_id), ...tenantUsers.map(u => u.user_id)]);
   const projectUsers = userQueries.map(u => u.data).filter(Boolean) as User[];
@@ -149,8 +149,8 @@ export function ShareDialog({ project, onClose }: ShareDialogProps) {
 
       <div className="flex justify-center mt-4">
         <ToggleGroup type="single" value={shareMode} onValueChange={(val) => setShareMode(val as typeof shareMode)}>
-          <ToggleGroupItem value="normal">
-            Normal
+          <ToggleGroupItem value="collaborative">
+            Collaborative
           </ToggleGroupItem>
 
           {/* Presentation disabled with tooltip */}
@@ -170,9 +170,9 @@ export function ShareDialog({ project, onClose }: ShareDialogProps) {
       </div>
       
       <AnimatePresence mode="wait">
-        {shareMode === "normal" && (
+        {shareMode === "collaborative" && (
           <motion.div
-            key="normal-link"
+            key="collaborative-link"
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 8 }}
@@ -457,7 +457,7 @@ export function ShareDialog({ project, onClose }: ShareDialogProps) {
       </div>
 
       <AnimatePresence initial={false}>
-        {shareMode === "normal" && (
+        {shareMode === "collaborative" && (
           <motion.div
             key="can-download-toggle"
             initial={{ opacity: 0, height: 0 }}
