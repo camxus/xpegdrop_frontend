@@ -38,11 +38,11 @@ export async function generateMetadata({
     const mediaSlice = media.slice(0, 3);
 
     metadata = {
-      title: `${share.name} by ${userData.first_name} | fframess Presentation`,
+      title: `${share.name} by ${userData.first_name} | fframess`,
       description:
         "Your art is yours. Your data is yours. A platform built by artists, for artists.",
       openGraph: {
-        title: `${share.name} by ${userData.first_name} | fframess Presentation`,
+        title: `${share.name} by ${userData.first_name} | fframess`,
         description:
           "Your art is yours. Your data is yours. A platform built by artists, for artists.",
         images: mediaSlice,
@@ -50,7 +50,7 @@ export async function generateMetadata({
       },
       twitter: {
         card: "summary_large_image",
-        title: `${share.name} by ${userData.first_name} | fframess Presentation`,
+        title: `${share.name} by ${userData.first_name} | fframess`,
         description:
           "Your art is yours. Your data is yours. A platform built by artists, for artists.",
         images: mediaSlice,
@@ -94,7 +94,6 @@ export async function generateMetadata({
 // Page component
 export default async function Page() {
   const { shareId } = useParams()
-
   const headers = await nextHeaders();
   const tenant = headers?.get("x-tenant");
 
