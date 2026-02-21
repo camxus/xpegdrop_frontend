@@ -1,7 +1,7 @@
 import { Project } from "@/types/project";
 import { api } from "./client";
 import { S3Location } from "@/types/user";
-import { EXIFData, StorageProvider } from "@/types";
+import { EXIFData, Permissions, StorageProvider } from "@/types";
 import { Share, ShareModeShort } from "@/types/share";
 
 export const projectsApi = {
@@ -75,6 +75,7 @@ export const projectsApi = {
         thumbnai: string
       }[],
       share: Partial<Share>,
+      permissions: Permissions
     }>(
       `/projects/share/${username}/${mode}/${encodeURIComponent(projectName)}`,
       { params: { email: email } }
@@ -95,7 +96,8 @@ export const projectsApi = {
         preview_url: string,
         thumbnail_url: string,
         thumbnai: string
-      }[]
+      }[],
+      permissions: Permissions
     }>(
       `/projects/project/${username}/${encodeURIComponent(projectName)}`
     );
@@ -116,7 +118,8 @@ export const projectsApi = {
         full_file_url: string,
         thumbnail_url: string,
         thumbnai: string
-      }[]
+      }[],
+      permissions: Permissions
     }>(
       `/projects/project/tenant/${tenantHandle}/${username}/${encodeURIComponent(projectName)}`
     );

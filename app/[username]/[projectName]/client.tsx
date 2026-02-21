@@ -8,7 +8,7 @@ import { useProjects } from "@/hooks/api/useProjects";
 import { useRatings } from "@/hooks/api/useRatings";
 import { useToast } from "@/hooks/use-toast";
 import { useDialog } from "@/hooks/use-dialog";
-import type { EXIFData, Folder, MediaFile, StorageProvider } from "@/types";
+import type { EXIFData, Folder, MediaFile, Permissions, StorageProvider } from "@/types";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -120,6 +120,7 @@ export default function PublicProjectPage({ tenantHandle, presentationMode = fal
   const [isCarouselOpen, setIsCarouselOpen] = useState(false);
   const [carouselStartIndex, setCarouselStartIndex] = useState(0);
   const [projectLoadProgress, setProjectLoadProgress] = useState(0);
+  const [permissions, setPermissions] = useState<Permissions>();
 
   const { data: tenant } = getTenant(project?.tenant_id || "")
   const { data: projectMetadata = [] } = getProjectMetadata(project?.project_id || "")
@@ -130,10 +131,7 @@ export default function PublicProjectPage({ tenantHandle, presentationMode = fal
 
   const isProjectUser = user?.user_id === projectUser?.user_id
   const isTenantMember = tenant?.members.some((m) => m.user_id === user?.user_id)
-  const canEdit = !presentationMode && isProjectUser ||
-    share?.approved_users?.some((u) => u.role == "editor") ||
-    project?.approved_tenant_users.some((u) => (u.role === "admin" || u.role === "editor")) ||
-    tenant?.members.some((m) => m.user_id === user?.user_id && (m.role === "admin" || m.role === "editor"))
+
 
   const x = useMotionValue(50);
   const y = useMotionValue(50);
@@ -179,6 +177,7 @@ export default function PublicProjectPage({ tenantHandle, presentationMode = fal
           thumbnai: string;
         }[];
         share?: Partial<Share>;
+        permissions: Permissions;
       };
 
       if (shareId) {
@@ -198,6 +197,7 @@ export default function PublicProjectPage({ tenantHandle, presentationMode = fal
           : await getProjectByProjectUrl(username, projectName);
       }
 
+      setPermissions(projectData.permissions || null);
       setShare(projectData.share || null);
       setProject(projectData.project || null);
 
@@ -619,7 +619,7 @@ export default function PublicProjectPage({ tenantHandle, presentationMode = fal
 
   return (
     <>
-      {canEdit &&
+      {permissions?.can_upload &&
         <GlobalFileUploader
           ref={uploaderRef}
           onFilesSelected={handleAddNewFolders}
@@ -662,7 +662,7 @@ export default function PublicProjectPage({ tenantHandle, presentationMode = fal
                   <EditableTitle
                     title={displayName}
                     onSave={(value) => handleUpdateProject({ name: value })}
-                    editable={!share && canEdit}
+                    editable={!share && permissions?.is_admin}
                   />
                   <p className="text-sm font-light text-muted-foreground">
                     Created
@@ -700,7 +700,7 @@ export default function PublicProjectPage({ tenantHandle, presentationMode = fal
                         </DropdownMenuContent>
                       </DropdownMenu>
                     )}
-                  {project.project_url && canEdit && (
+                  {project.project_url && permissions?.is_admin && (
                     <>
                       <Button
                         onClick={handleShare}
@@ -713,7 +713,7 @@ export default function PublicProjectPage({ tenantHandle, presentationMode = fal
                       </Button>
                     </>
                   )}
-                  {canEdit && (
+                  {permissions?.is_admin && (
                     <div className="md:hidden">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -784,7 +784,7 @@ export default function PublicProjectPage({ tenantHandle, presentationMode = fal
                 onMediaHoverChange={(hover) => setIsHovered(hover)}
                 onDuplicateMedia={handleDuplicateMedia}
                 onDeleteMedia={handleDeleteMedia}
-                canEdit={canEdit}
+                canEdit={permissions?.can_upload}
                 onSelectChange={setSelectedMedia}
               />
               <MediaCarousel

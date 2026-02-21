@@ -4,7 +4,6 @@ import { projectsApi } from "@/lib/api/projectsApi";
 import { ApiError } from "@/lib/api/client";
 import { userApi } from "@/lib/api/usersApi";
 import { headers as nextHeaders } from "next/headers";
-import { useParams } from "next/navigation";
 
 type PageParams = Promise<{ username: string; shareId: string }>;
 
@@ -91,11 +90,14 @@ export async function generateMetadata({
   return metadata;
 }
 
-// Page component
-export default async function Page() {
-  const { shareId } = useParams()
+interface PageProps {
+  params: { shareId: string };
+}
+
+export default async function Page({ params }: PageProps) {
+  const { shareId } = params; // get shareId from the route
   const headers = await nextHeaders();
   const tenant = headers?.get("x-tenant");
 
-  return <ProjectPage tenantHandle={tenant} presentationMode shareId={shareId as string} />;
+  return <ProjectPage tenantHandle={tenant} shareId={shareId} presentationMode />;
 }

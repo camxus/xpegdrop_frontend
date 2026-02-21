@@ -294,11 +294,8 @@ export function ShareDetailsDialog({ share, onUpdate }: ShareDetailsDialogProps)
     setApprovedUsers(approvedUsers.filter(u => u.user_id !== userId));
   };
 
-  function getShareUrl(id: string, mode: ShareMode) {
-    const base = window.location.origin;
-    if (mode === "collaborative") return `${base}/s/${id}`;
-    if (mode === "presentation") return `${base}/p/${id}`;
-    return ""; // fallback
+  function getShareUrl() {
+    return window.location.origin + share.share_url;
   }
 
   // Auto-update share
@@ -328,8 +325,6 @@ export function ShareDetailsDialog({ share, onUpdate }: ShareDetailsDialogProps)
       share.can_download !== canDownload ||
       !isSameSet(share.approved_emails, emails, e => e.value) ||
       !isSameSet(share.approved_users, approvedUsers, u => u.user_id)
-
-    console.log(share.name, name)
 
     if (hasChanged) {
       update();
@@ -364,7 +359,7 @@ export function ShareDetailsDialog({ share, onUpdate }: ShareDetailsDialogProps)
             <div className="flex gap-2">
               <Input
                 id="share-url"
-                value={getShareUrl(share.share_id, share.mode)}
+                value={getShareUrl()}
                 readOnly
                 className="font-mono text-sm"
                 onClick={(e) => e.currentTarget.select()}
@@ -372,7 +367,7 @@ export function ShareDetailsDialog({ share, onUpdate }: ShareDetailsDialogProps)
               <Button
                 size="icon"
                 variant="outline"
-                onClick={() => handleCopyToClipboard(getShareUrl(share.share_id, share.mode))}
+                onClick={() => handleCopyToClipboard(getShareUrl())}
                 className={cn(
                   "shrink-0 transition-colors",
                   copied && "bg-green-50 border-green-200 text-green-700 hover:bg-green-100"

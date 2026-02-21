@@ -585,7 +585,7 @@ export function PersonalSidebarItems({
       .map((project) => ({
         id: project.project_id,
         icon: Folder,
-        href: project.project_url
+        href: project.project_url,
         label: project.name,
       })) || [];
 

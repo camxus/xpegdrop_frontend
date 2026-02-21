@@ -5,11 +5,13 @@ export type ShareMode = "collaborative" | "presentation";
 export interface Share {
   share_id: string;
   project_id: string;
-  created_by: string;
+  user_id: string;
 
   name: string;
 
   mode: ShareMode; // "collaborative" | "presentation"
+
+  share_url: string; // "collaborative" | "presentation"
 
   // Access control
   is_public: boolean;

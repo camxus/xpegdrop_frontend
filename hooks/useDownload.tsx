@@ -324,7 +324,7 @@ export function useDownload() {
               "▶ Open Video in Project",
               docPageWidth / 2,
               yPos + imgHeight + 20,
-              { url: project.share_url, align: "center" }
+              { url: project.project_url, align: "center" }
             );
             doc.setTextColor(0, 0, 0);
           }
