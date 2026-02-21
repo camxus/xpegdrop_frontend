@@ -416,7 +416,7 @@ export function UploadView() {
   const handleShare = () => {
     if (!currentFolder || !currentProject) return;
     show({
-      content: () => <ShareDialog project={currentProject} onClose={hide} />,
+      content: () => <ShareDialog project={currentProject} />,
     });
   };
 

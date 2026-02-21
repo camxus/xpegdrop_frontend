@@ -499,7 +499,7 @@ export default function PublicProjectPage({ tenantHandle, presentationMode = fal
     if (!project) return;
     if (!isProjectUser && !isTenantMember) return;
     show({
-      content: () => <ShareDialog project={project} onClose={hide} />,
+      content: () => <ShareDialog project={project} />,
     });
   };
 

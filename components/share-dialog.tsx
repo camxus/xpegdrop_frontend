@@ -27,10 +27,9 @@ import { EditableTitle } from "./editable-title";
 
 interface ShareDialogProps {
   project: Project;
-  onClose: () => void;
 }
 
-export function ShareDialog({ project, onClose }: ShareDialogProps) {
+export function ShareDialog({ project }: ShareDialogProps) {
   const { show } = useDialog();
   const { toast } = useToast();
   const { getShares: { data: shares, mutateAsync: getShares, isPending: isSharesLoading } } = useShares();
@@ -52,7 +51,7 @@ export function ShareDialog({ project, onClose }: ShareDialogProps) {
     if (!share) return
     show({
       title: "Share Details",
-      content: () => <ShareDetailsDialog share={share} />,
+      content: () => <ShareDetailsDialog share={share} onUpdate={() => getShares({ projectId: project.project_id })} />,
     })
   };
 
@@ -108,15 +107,17 @@ export function ShareDialog({ project, onClose }: ShareDialogProps) {
       <div className="space-y-2">
         <Label className="text-sm font-medium">Shares</Label>
         <div className="border rounded-lg max-h-64 overflow-y-auto">
-          {shares && !!shares.length ? (
-            shares.map((share) => (
-              <button
+          {!!shares?.length ? (
+            shares.map((share) => (<>
+              <Button
+                variant="ghost"
                 key={share.share_id}
-                className="w-full text-left p-2 hover:bg-primary/10 flex justify-between items-center"
+                className="w-full text-left p-2 flex justify-between items-center"
                 onClick={() => handleShowShareDetails(share.share_id)}
               >
-                <span className="truncate">{share.name}</span>
-              </button>
+                <span className="text-xs truncate">{share.name}</span>
+              </Button>
+            </>
             ))
           ) : (
             <div className="p-2 text-sm text-muted-foreground">
@@ -124,19 +125,6 @@ export function ShareDialog({ project, onClose }: ShareDialogProps) {
             </div>
           )}
         </div>
-        <Button
-          onClick={() =>
-            show({
-              title: "Add Team User",
-              content: () => <NewShareDialog projectId={project.project_id} projectName={project.name} />,
-              actions: NewShareActions,
-            })
-          }
-          size="sm"
-          className="mt-1 self-end"
-        >
-          <Plus className="w-4 h-4 mr-2" /> New Share
-        </Button>
       </div>
 
       {/* Tenant users */}
@@ -223,8 +211,15 @@ export function ShareDialog({ project, onClose }: ShareDialogProps) {
 
       {/* Close button */}
       <div className="flex gap-3 pt-4">
-        <Button variant="outline" onClick={onClose} className="flex-1 bg-transparent">
-          Close
+        <Button onClick={() =>
+          show({
+            content: () => <NewShareDialog projectId={project.project_id} projectName={project.name} />,
+            actions: (props) => NewShareActions({ ...props, onClick: () => getShares({ projectId: project.project_id }) }),
+          })
+        }
+          className="flex-1"
+        >
+          <Plus className="w-4 h-4 mr-2" /> New Share
         </Button>
       </div>
     </div>
@@ -233,9 +228,10 @@ export function ShareDialog({ project, onClose }: ShareDialogProps) {
 
 interface ShareDetailsDialogProps {
   share: Share;
+  onUpdate: () => void
 }
 
-export function ShareDetailsDialog({ share }: ShareDetailsDialogProps) {
+export function ShareDetailsDialog({ share, onUpdate }: ShareDetailsDialogProps) {
   const { user } = useAuth()
 
   const { toast } = useToast();
@@ -244,7 +240,7 @@ export function ShareDetailsDialog({ share }: ShareDetailsDialogProps) {
   const { updateShare: { mutateAsync: updateShare } } = useShares()
   const [copied, setCopied] = useState(false);
   const [emails, setEmails] = useState(share.approved_emails?.map(e => ({ value: e.value, role: e.role })) || []);
-  const [name, setName] = useState("");
+  const [name, setName] = useState(share.name);
   const [newEmail, setNewEmail] = useState("");
   const [isPublic, setIsPublic] = useState(share.is_public);
   const [canDownload, setCanDownload] = useState(share.can_download);
@@ -319,6 +315,7 @@ export function ShareDetailsDialog({ share }: ShareDetailsDialogProps) {
             approved_users: approvedUsers,
           },
         });
+        onUpdate()
         toast({ title: "Share updated", description: "Settings saved" });
       } catch {
         toast({ title: "Error", description: "Failed to update share", variant: "destructive" });
@@ -326,12 +323,13 @@ export function ShareDetailsDialog({ share }: ShareDetailsDialogProps) {
     };
 
     const hasChanged =
-      share.name !== name
-    share.is_public !== isPublic ||
+      share.name !== name ||
+      share.is_public !== isPublic ||
       share.can_download !== canDownload ||
       !isSameSet(share.approved_emails, emails, e => e.value) ||
       !isSameSet(share.approved_users, approvedUsers, u => u.user_id)
 
+    console.log(share.name, name)
 
     if (hasChanged) {
       update();
@@ -345,8 +343,8 @@ export function ShareDetailsDialog({ share }: ShareDetailsDialogProps) {
         <div className="flex h-12 w-12 items-center justify-center">
           <Share2 className="h-6 w-6 text-primary" />
         </div>
-        <div>
-          <EditableTitle title={share.name} onSave={setName} />
+        <div className="overflow-hidden">
+          <EditableTitle className="w-full" title={name} onSave={setName} />
           <p className="text-xs text-muted-foreground">Manage share settings</p>
         </div>
       </div>
@@ -411,7 +409,7 @@ export function ShareDetailsDialog({ share }: ShareDetailsDialogProps) {
               </Button>
             </div>
 
-            <ul className="space-y-1">
+            <ul className="space-y-1 rounded-md border">
               {emails.map(({ value, role }) => (
                 <motion.li
                   key={value}
@@ -420,31 +418,28 @@ export function ShareDetailsDialog({ share }: ShareDetailsDialogProps) {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 10 }}
                   transition={{ duration: 0.2 }}
-                  className="flex items-center justify-between rounded-md border p-2 text-sm"
+                  className="flex items-center justify-between p-2 text-sm"
                 >
                   <span>{value}</span>
 
-                  <Select
-                    value={role}
-                    onValueChange={(value: "editor" | "viewer") => handleUpdateEmail(value, value)}
-                  >
-                    <SelectTrigger size="sm" className="w-[100px]">
-                      <SelectValue placeholder="Role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="editor">Editor</SelectItem>
-                      <SelectItem value="viewer">Viewer</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="flex items-center">
+                    <Select
+                      value={role}
+                      onValueChange={(value: "editor" | "viewer") => handleUpdateEmail(value, value)}
+                    >
+                      <SelectTrigger size="sm" className="w-[100px]">
+                        <SelectValue placeholder="Role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="editor">Editor</SelectItem>
+                        <SelectItem value="viewer">Viewer</SelectItem>
+                      </SelectContent>
+                    </Select>
 
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                    onClick={() => handleRemoveEmail(value)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
+                    <Button size="icon" variant="ghost" onClick={() => handleRemoveEmail(value)}>
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </motion.li>
               ))}
             </ul>
@@ -485,24 +480,27 @@ export function ShareDetailsDialog({ share }: ShareDetailsDialogProps) {
                       <span className="text-sm">{u?.username || user.user_id}</span>
                     </div>
 
-                    <Select
-                      value={user.role}
-                      onValueChange={(value: "editor" | "viewer") =>
-                        handleUpdateApprovedUser(user.user_id, value)
-                      }
-                    >
-                      <SelectTrigger size="sm" className="w-[120px]">
-                        <SelectValue placeholder="Role" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="editor">Editor</SelectItem>
-                        <SelectItem value="viewer">Viewer</SelectItem>
-                      </SelectContent>
-                    </Select>
 
-                    <Button size="icon" variant="ghost" onClick={() => handleRemoveApprovedUser(user.user_id)}>
-                      <X className="w-4 h-4" />
-                    </Button>
+                    <div className="flex items-center">
+                      <Select
+                        value={user.role}
+                        onValueChange={(value: "editor" | "viewer") =>
+                          handleUpdateApprovedUser(user.user_id, value)
+                        }
+                      >
+                        <SelectTrigger size="sm" className="w-[120px]">
+                          <SelectValue placeholder="Role" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="editor">Editor</SelectItem>
+                          <SelectItem value="viewer">Viewer</SelectItem>
+                        </SelectContent>
+                      </Select>
+
+                      <Button size="icon" variant="ghost" onClick={() => handleRemoveApprovedUser(user.user_id)}>
+                        <X className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </motion.div>
                 );
               })}
@@ -555,7 +553,7 @@ export function ShareDetailsDialog({ share }: ShareDetailsDialogProps) {
           </div>
         )}
       </div>
-    </div>
+    </div >
   );
 }
 
@@ -747,7 +745,7 @@ export function NewShareDialog({ projectId, projectName }: NewShareDialogProps) 
     };
 
     updateProps({ share: newShare });
-  }, [name, isPublic, canDownload, emails, approvedUsers, mode, projectId, updateProps]);
+  }, [name, isPublic, canDownload, emails, approvedUsers, mode, projectId]);
 
   return (
     <div className="space-y-6 p-6">
@@ -770,16 +768,18 @@ export function NewShareDialog({ projectId, projectName }: NewShareDialogProps) 
 
       {/* Share mode */}
       <div className="space-y-2">
-        <Label>Mode</Label>
-        <Select value={mode} onValueChange={(v: ShareMode) => setMode(v)}>
-          <SelectTrigger size="sm">
-            <SelectValue placeholder="Select mode" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="collaborative">Collaborative</SelectItem>
-            <SelectItem value="presentation">Presentation</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex justify-center mt-4">
+          <ToggleGroup type="single" value={mode} onValueChange={(val) => setMode(val as typeof mode)}>
+            <ToggleGroupItem value="collaborative">
+              Collaborative
+            </ToggleGroupItem>
+
+            {/* Presentation disabled with tooltip */}
+            <ToggleGroupItem value="presentation">
+              Presentation
+            </ToggleGroupItem>
+          </ToggleGroup>
+        </div>
       </div>
 
       {/* Emails */}
@@ -933,15 +933,29 @@ export function NewShareDialog({ projectId, projectName }: NewShareDialogProps) 
           <Switch checked={isPublic} onCheckedChange={setIsPublic} />
         </div>
 
-        {mode === "collaborative" && (
-          <div className="flex items-center justify-between border rounded-lg p-3">
-            <div>
-              <Label className="text-sm font-medium">Allow Download</Label>
-              <p className="text-xs text-muted-foreground">Users can download files</p>
-            </div>
-            <Switch checked={canDownload} onCheckedChange={setCanDownload} />
-          </div>
-        )}
+
+        <AnimatePresence initial={false}>
+          {mode === "collaborative" && (
+            <motion.div
+              key="download-switch"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.25, ease: "easeInOut" }}
+              className="overflow-hidden"
+            >
+              <div className="flex items-center justify-between border rounded-lg p-3">
+                <div>
+                  <Label className="text-sm font-medium">Allow Download</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Users can download files
+                  </p>
+                </div>
+                <Switch checked={canDownload} onCheckedChange={setCanDownload} />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
@@ -949,11 +963,13 @@ export function NewShareDialog({ projectId, projectName }: NewShareDialogProps) 
 
 
 interface NewShareActionsProps {
-  share: CreateShareDto;
+  share?: CreateShareDto;
+  onClick: () => void
 }
 
 export function NewShareActions({
   share,
+  onClick
 }: NewShareActionsProps) {
   const { toast } = useToast();
   const { hide } = useDialog();
@@ -962,7 +978,7 @@ export function NewShareActions({
 
 
   const handleCreateShare = async () => {
-    if (!share.name.trim()) {
+    if (!share?.name.trim()) {
       toast({
         title: "Missing name",
         description: "Enter a name for the share",
@@ -974,6 +990,7 @@ export function NewShareActions({
     try {
       await createShare(share);
       toast({ title: "Share created", description: "New share successfully created" });
+      onClick()
       hide();
     } catch {
       toast({ title: "Error", description: "Failed to create share", variant: "destructive" });
@@ -983,7 +1000,7 @@ export function NewShareActions({
   return (
     <Button
       onClick={handleCreateShare}
-      disabled={!share.name.trim() || isLoading}
+      disabled={!share?.name.trim() || isLoading}
       className="w-full"
     >
       Create Share
