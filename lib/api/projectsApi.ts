@@ -73,7 +73,7 @@ export const projectsApi = {
         thumbnai: string
       }[]
     }>(
-      `/projects/share/${username}/${encodeURIComponent(projectName)}`,
+      `/projects/share/${username}/${(projectName)}`,
       { params: { email: email } }
     );
   },
@@ -96,7 +96,7 @@ export const projectsApi = {
         thumbnai: string
       }[]
     }>(
-      `/projects/share/tenant/${tenantHandle}/${username}/${encodeURIComponent(projectName)}`,
+      `/projects/share/tenant/${tenantHandle}/${username}/${(projectName)}`,
       { params: { email: email } }
     );
   },
