@@ -29,10 +29,16 @@ interface ShareDialogProps {
   project: Project;
 }
 
+
+function getShareUrl(shareUrl: string) {
+  return window.location.origin + shareUrl;
+}
+
+
 export function ShareDialog({ project }: ShareDialogProps) {
   const { show } = useDialog();
   const { toast } = useToast();
-  const { getShares: { data: shares, mutateAsync: getShares, isPending: isSharesLoading } } = useShares();
+  const { getShares: { data: shares, mutateAsync: getShares, isPending: isSharesLoading }, deleteShare: { mutateAsync: deleteShare } } = useShares();
   const { updateProject: { mutateAsync: updateProject } } = useProjects();
 
   const [tenantUsers, setTenantUsers] = useState(project.approved_tenant_users || []);
@@ -61,6 +67,16 @@ export function ShareDialog({ project }: ShareDialogProps) {
 
   const handleRemoveTenantUser = (userId: string) => {
     setTenantUsers(tenantUsers.filter((u) => u.user_id !== userId));
+  };
+
+  const handleDeleteShare = async (
+    e: React.MouseEvent,
+    shareId: string
+  ) => {
+    e.stopPropagation();
+
+    await deleteShare(shareId);
+    await getShares({ projectId: project.project_id });
   };
 
   // Auto-update project
@@ -112,10 +128,31 @@ export function ShareDialog({ project }: ShareDialogProps) {
               <Button
                 variant="ghost"
                 key={share.share_id}
-                className="w-full text-left p-2 flex justify-between items-center"
+                className="group w-full text-left p-2 flex justify-between items-center"
                 onClick={() => handleShowShareDetails(share.share_id)}
               >
                 <span className="text-xs truncate">{share.name}</span>
+
+                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  {/* Copy Button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      navigator.clipboard.writeText(getShareUrl(share.share_url)); // adjust field if needed
+                    }}
+                    className="p-1 hover:bg-muted rounded-md"
+                  >
+                    <Copy size={14} />
+                  </button>
+
+                  {/* Delete Button */}
+                  <Button
+                    variant="ghost"
+                    onClick={(e) => handleDeleteShare(e, share.share_id)}
+                  >
+                    <X size={14} />
+                  </Button>
+                </div>
               </Button>
             </>
             ))
@@ -294,10 +331,6 @@ export function ShareDetailsDialog({ share, onUpdate }: ShareDetailsDialogProps)
     setApprovedUsers(approvedUsers.filter(u => u.user_id !== userId));
   };
 
-  function getShareUrl() {
-    return window.location.origin + share.share_url;
-  }
-
   // Auto-update share
   useEffect(() => {
     const update = async () => {
@@ -359,7 +392,7 @@ export function ShareDetailsDialog({ share, onUpdate }: ShareDetailsDialogProps)
             <div className="flex gap-2">
               <Input
                 id="share-url"
-                value={getShareUrl()}
+                value={getShareUrl(share.share_url)}
                 readOnly
                 className="font-mono text-sm"
                 onClick={(e) => e.currentTarget.select()}
@@ -367,7 +400,7 @@ export function ShareDetailsDialog({ share, onUpdate }: ShareDetailsDialogProps)
               <Button
                 size="icon"
                 variant="outline"
-                onClick={() => handleCopyToClipboard(getShareUrl())}
+                onClick={() => handleCopyToClipboard(getShareUrl(share.share_url))}
                 className={cn(
                   "shrink-0 transition-colors",
                   copied && "bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
