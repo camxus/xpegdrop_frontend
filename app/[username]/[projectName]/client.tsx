@@ -785,6 +785,7 @@ export default function PublicProjectPage({ tenantHandle, presentationMode = fal
                 onDuplicateMedia={handleDuplicateMedia}
                 onDeleteMedia={handleDeleteMedia}
                 canEdit={permissions?.can_upload}
+                canNote={permissions?.can_note}
                 onSelectChange={setSelectedMedia}
               />
               <MediaCarousel
@@ -793,6 +794,7 @@ export default function PublicProjectPage({ tenantHandle, presentationMode = fal
                 media={sortedMedia}
                 initialIndex={carouselStartIndex}
                 isOpen={isCarouselOpen}
+                canNote={permissions?.can_note}
                 onClose={() => setIsCarouselOpen(false)}
                 onRatingChange={(mediaName, value, ratingId) => handleRatingChange(mediaName, value, ratingId, project)}
               />

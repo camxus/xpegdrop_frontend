@@ -29,6 +29,7 @@ interface MediaCarouselProps {
   ratings: Rating[]
   initialIndex: number;
   isOpen: boolean;
+  canNote?: boolean;
   onClose: () => void;
   onRatingChange?: (mediaName: string, value: number, ratingId?: string) => void;
 
@@ -40,6 +41,7 @@ export function MediaCarousel({
   ratings,
   initialIndex,
   isOpen,
+  canNote = true,
   onClose,
   onRatingChange
 }: MediaCarouselProps) {  
@@ -111,7 +113,7 @@ export function MediaCarousel({
     modal.show({
       title: `Notes`,
       content: () => (
-        <NotesModal projectId={project.project_id} mediaName={currentMedia.name} />
+        <NotesModal projectId={project.project_id} mediaName={currentMedia.name} canNote={canNote}/>
       ),
       height: "400px",
       width: "500px",

@@ -32,8 +32,8 @@ export const notesApi = {
   },
 
   // Update a note by ID
-  updateNote: async (noteId: string, content: string) => {
-    return await api.put(`/notes/${noteId}`, { content });
+  updateNote: async (noteId: string, content: string, timestamp: number | null) => {
+    return await api.put(`/notes/${noteId}`, { content, timestamp });
   },
 
   // Delete a note by ID
