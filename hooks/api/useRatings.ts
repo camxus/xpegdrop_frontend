@@ -191,9 +191,6 @@ export function useRatings() {
     const firstName = user?.first_name ?? localUser?.first_name;
     const lastName = user?.last_name ?? localUser?.last_name;
 
-
-    console.log(!firstName || !lastName)
-
     if (!firstName || !lastName) {
       dialog.show({
         title: "You're currently not signed in",
