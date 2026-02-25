@@ -42,9 +42,21 @@ export function ShareDialog({ project }: ShareDialogProps) {
   const { updateProject: { mutateAsync: updateProject } } = useProjects();
 
   const [tenantUsers, setTenantUsers] = useState(project.approved_tenant_users || []);
+  const [copied, setCopied] = useState(false);
 
   const tenatUsersQueries = useUsers(project.approved_tenant_users?.map(u => u.user_id) || []);
   const projectUsers = tenatUsersQueries?.map(u => u.data).filter(Boolean) || [];
+
+  const handleCopyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      toast({ title: "Copied!", description: "Link copied to clipboard" });
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast({ title: "Error", description: "Failed to copy link", variant: "destructive" });
+    }
+  };
 
   // Fetch shares when dialog mounts
   useEffect(() => {
@@ -135,20 +147,28 @@ export function ShareDialog({ project }: ShareDialogProps) {
 
                 <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                   {/* Copy Button */}
-                  <button
+                  <Button
+                    size="icon"
+                    variant="ghost"
                     onClick={(e) => {
                       e.stopPropagation();
-                      navigator.clipboard.writeText(getShareUrl(share.share_url)); // adjust field if needed
+                      handleCopyToClipboard(getShareUrl(share.share_url))
                     }}
-                    className="p-1 hover:bg-muted rounded-md"
+                    className={
+                      cn("shrink-0 transition-colors", copied && "bg-green-50 bordergreen-200 text-green-700 hover:bg-green-100"
+                      )
+                    }
                   >
-                    <Copy size={14} />
-                  </button>
+                    {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  </Button>
 
                   {/* Delete Button */}
                   <Button
                     variant="ghost"
-                    onClick={(e) => handleDeleteShare(e, share.share_id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteShare(e, share.share_id)
+                    }}
                   >
                     <X size={14} />
                   </Button>
@@ -809,6 +829,9 @@ export function NewShareDialog({ projectId, projectName }: NewShareDialogProps) 
   const [name, setName] = useState(projectName);
   const [isPublic, setIsPublic] = useState(false);
   const [canDownload, setCanDownload] = useState(false);
+  const [canUpload, setCanUpload] = useState(false);
+  const [canRate, setCanRate] = useState(false);
+  const [canNote, setCanNote] = useState(false);
   const [emails, setEmails] = useState<{ value: string; role: "editor" | "viewer" }[]>([]);
   const [approvedUsers, setApprovedUsers] = useState<{ user_id: string; role: "editor" | "viewer" }[]>([]);
   const [newEmail, setNewEmail] = useState("");
@@ -847,13 +870,27 @@ export function NewShareDialog({ projectId, projectName }: NewShareDialogProps) 
       name,
       is_public: isPublic,
       can_download: canDownload,
+      can_upload: canUpload,
+      can_rate: canRate,
+      can_note: canNote,
       approved_emails: emails,
       approved_users: approvedUsers,
       mode,
     };
 
     updateProps({ share: newShare });
-  }, [name, isPublic, canDownload, emails, approvedUsers, mode, projectId]);
+  }, [
+    name,
+    isPublic,
+    canDownload,
+    canUpload,
+    canRate,
+    canNote,
+    emails,
+    approvedUsers,
+    mode,
+    projectId,
+  ]);
 
   return (
     <div className="space-y-6 p-6">
@@ -1050,7 +1087,7 @@ export function NewShareDialog({ projectId, projectName }: NewShareDialogProps) 
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.25, ease: "easeInOut" }}
-              className="overflow-hidden"
+              className="overflow-hidden space-y-2"
             >
               <div className="flex items-center justify-between border rounded-lg p-3">
                 <div>
@@ -1060,6 +1097,36 @@ export function NewShareDialog({ projectId, projectName }: NewShareDialogProps) 
                   </p>
                 </div>
                 <Switch checked={canDownload} onCheckedChange={setCanDownload} />
+              </div>
+
+              <div className="flex items-center justify-between border rounded-lg p-3">
+                <div>
+                  <Label className="text-sm font-medium">Allow Upload</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Editors can upload new files
+                  </p>
+                </div>
+                <Switch checked={canUpload} onCheckedChange={setCanUpload} />
+              </div>
+
+              <div className="flex items-center justify-between border rounded-lg p-3">
+                <div>
+                  <Label className="text-sm font-medium">Allow Rating</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Users can rate items in this share
+                  </p>
+                </div>
+                <Switch checked={canRate} onCheckedChange={setCanRate} />
+              </div>
+
+              <div className="flex items-center justify-between border rounded-lg p-3">
+                <div>
+                  <Label className="text-sm font-medium">Allow Notes</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Users can leave comments or notes
+                  </p>
+                </div>
+                <Switch checked={canNote} onCheckedChange={setCanNote} />
               </div>
             </motion.div>
           )}
