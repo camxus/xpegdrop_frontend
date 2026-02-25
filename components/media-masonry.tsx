@@ -41,6 +41,7 @@ interface MediaMasonryProps {
   ratings?: Rating[];
   className?: string;
   canEdit?: boolean;
+  canNote?: boolean;
   selectedMedia?: Set<string>
   onMediaClick?: (mediaIndex: number) => void;
   onMediaHoverChange?: (isHovering: boolean) => void;
@@ -60,6 +61,7 @@ export function MediaMasonry({
   ratings,
   className,
   canEdit,
+  canNote,
   selectedMedia,
   onMediaClick,
   onMediaHoverChange,
@@ -180,6 +182,7 @@ export function MediaMasonry({
             isHovered={hoveredMedia === mediaFile.id}
             isLoaded={loadedMedias.has(mediaFile.id)}
             canEdit={canEdit}
+            canNote={canNote}
             isSelected={!!selectedMedia?.has(mediaFile.id)}
             onHover={() => handleMouseEnter(mediaFile.id)}
             onLeave={handleMouseLeave}
@@ -211,6 +214,7 @@ const MasonryMedia = memo(function MasonryMedia({
   ratings,
   rating,
   canEdit,
+  canNote = true,
   isSelected,
   onHover,
   onLeave,
@@ -233,6 +237,7 @@ const MasonryMedia = memo(function MasonryMedia({
   isHovered: boolean;
   isLoaded: boolean;
   canEdit?: boolean;
+  canNote?: boolean;
   isSelected: boolean;
   onHover: () => void;
   onLeave: () => void;
@@ -256,7 +261,7 @@ const MasonryMedia = memo(function MasonryMedia({
     modal.show({
       title: `Notes`,
       content: () => (
-        <NotesModal projectId={projectId} mediaName={mediaFile.name} />
+        <NotesModal projectId={projectId} mediaName={mediaFile.name} canNote={canNote}/>
       ),
       height: "400px",
       width: "500px",

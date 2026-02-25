@@ -416,7 +416,7 @@ export function UploadView() {
   const handleShare = () => {
     if (!currentFolder || !currentProject) return;
     show({
-      content: () => <ShareDialog project={currentProject} onClose={hide} />,
+      content: () => <ShareDialog project={currentProject} />,
     });
   };
 
@@ -540,7 +540,7 @@ export function UploadView() {
                         </p>
                         <Button
                           onClick={
-                            currentProject?.share_url
+                            currentProject?.project_url
                               ? handleShare
                               : () =>
                                 handleUpload(
@@ -551,7 +551,7 @@ export function UploadView() {
                           disabled={isUploading}
                           className="cursor-pointer flex items-center gap-2"
                         >
-                          {currentProject?.share_url ? (
+                          {currentProject?.project_url ? (
                             <>
                               <Share2 className="h-4 w-4" />Share Folder
                             </>

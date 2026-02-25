@@ -132,3 +132,11 @@ export interface UpdateFolderDto {
 }
 
 export type StorageProvider = "b2" | "dropbox" | "google"
+
+export type Permissions = {
+  is_admin: boolean,
+  can_note: boolean,
+  can_rate: boolean,
+  can_upload: boolean,
+  can_download: boolean,
+}

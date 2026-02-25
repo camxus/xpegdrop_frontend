@@ -25,9 +25,10 @@ import { useModal } from "@/hooks/use-modal";
 interface NotesViewProps {
   projectId: string;
   mediaName: string;
+  canNote?: boolean
 }
 
-export function NotesModal({ projectId, mediaName }: NotesViewProps) {
+export function NotesModal({ projectId, mediaName, canNote }: NotesViewProps) {
   const { modalProps } = useModal()
   const { show, hide } = useDialog()
   const { user } = useAuth();
@@ -312,7 +313,7 @@ export function NotesModal({ projectId, mediaName }: NotesViewProps) {
 
                   if (videoEl && timestamp !== null && !isNaN(timestamp)) {
                     videoEl.currentTime = timestamp;
-                    videoEl.play(); // optional: start playing from that time
+                    // videoEl.play(); // optional: start playing from that time
                   }
                 }}
                 className="ml-1 text-foreground/80 hover:text-foreground"

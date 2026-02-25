@@ -20,7 +20,7 @@ export function EditableTitle({
   title,
   onSave,
   className,
-  editable,
+  editable = true,
   ...props
 }: EditableTitleProps) {
   const [isEditing, setIsEditing] = useState(false);
@@ -93,7 +93,7 @@ export function EditableTitle({
               value={editValue}
               onChange={(e) => setEditValue(e.target.value)}
               onKeyDown={handleKeyDown}
-              className="text-xl font-light w-fit max-w-full"
+              className="text-xl font-light w-fit"
               autoFocus
             />
             <Button size="sm" onClick={handleSave}>
@@ -110,10 +110,10 @@ export function EditableTitle({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            className="flex items-center gap-2 group"
+            className="flex items-center gap-2 group w-full"
           >
             <h1
-              className={cn("text-2xl font-light", editable && "cursor-pointer")}
+              className={cn("text-2xl font-light truncate max-w-full", editable && "cursor-pointer")}
               onClick={() => editable && setIsEditing(true)}
             >
               {title}

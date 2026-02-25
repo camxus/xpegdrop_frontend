@@ -19,71 +19,60 @@ export function useNotes() {
   const saveLocalNotes = (projectId: string, mediaName: string, notes: Note[]) => {
     const localData = getLocalStorage(LOCAL_NOTES_STORAGE_KEY) || {};
 
-    // Ensure project object exists
-    if (!localData[projectId]) {
-      localData[projectId] = {};
-    }
-
-    // Ensure image object exists (optional if just assigning notes directly)
+    if (!localData[projectId]) localData[projectId] = {};
     localData[projectId][mediaName] = notes;
 
     setLocalStorage(LOCAL_NOTES_STORAGE_KEY, localData);
   };
 
+  const userNotes: Note[] = user?.user_id ? notes.filter(n => n.user_id === user.user_id) : [];
+  const foreignNotes: Note[] = user?.user_id ? notes.filter(n => n.user_id !== user.user_id) : [];
 
-  // All notes from current user
-  const userNotes: Note[] = user?.user_id
-    ? notes.filter(n => n.user_id === user?.user_id)
-    : [];
-
-  // All notes from other users
-  const foreignNotes: Note[] = user?.user_id
-    ? notes.filter(n => n.user_id !== user?.user_id)
-    : [];
-
-  // Mutation: Get notes
+  // Fetch all notes for a project (optional share_id)
   const getProjectNotes = useMutation({
-    mutationFn: async (projectId: string) => {
+    mutationFn: async ({ projectId, share_id }: { projectId: string; share_id?: string }) => {
       if (!projectId) return [];
-      const res = await notesApi.getProjectNotes(projectId);
+      const res = await notesApi.getProjectNotes(projectId, share_id);
       return res;
     },
-    onSuccess: (data, projectId) => {
-      if (!data || !projectId) return;
-
+    onSuccess: (data, variables) => {
+      if (!data) return;
       const notesArray: Note[] = Array.isArray(data) ? data : data.notes;
-
-      setProjectNotes(notesArray)
-    }
+      setProjectNotes(notesArray);
+    },
   });
 
-  // Mutation: Get notes
+  // Fetch notes for a specific media (optional share_id)
   const getImageNotes = useMutation({
-    mutationFn: async ({ projectId, mediaName }: { projectId: string, mediaName: string }) => {
-      if (!projectId) return [];
-      const res = await notesApi.getImageNotes(projectId, mediaName);
+    mutationFn: async ({
+      projectId,
+      mediaName,
+      share_id,
+    }: {
+      projectId: string;
+      mediaName: string;
+      share_id?: string;
+    }) => {
+      if (!projectId || !mediaName) return [];
+      const res = await notesApi.getImageNotes(projectId, mediaName, share_id);
       return res;
     },
     onSuccess: (data, { projectId, mediaName }) => {
       if (!data || !projectId) return;
-
       const localData = getLocalStorage(LOCAL_NOTES_STORAGE_KEY) || {};
-
       const notesArray: Note[] = Array.isArray(data) ? data : data.notes;
 
       setNotes([
         ...notesArray,
-        ...(localData[projectId]?.[mediaName || ""] || [])
+        ...(localData[projectId]?.[mediaName || ""] || []),
       ].filter((note, index, self) =>
         index === self.findIndex((n) => n.note_id === note.note_id)
       ));
     },
   });
 
-  // Mutation: Create note
   const createNote = useMutation({
-    mutationFn: (note: Partial<Note>) =>
-      notesApi.createNote(note),
+    mutationFn: (note: Partial<Note>) => notesApi.createNote(note),
     onSuccess: (data) => {
       if (!data) return;
 
@@ -109,20 +98,22 @@ export function useNotes() {
     },
   });
 
-  // Mutation: Update note
   const updateNote = useMutation({
-    mutationFn: ({ noteId, content }: { noteId: string; content: string, timestamp: number | null }) => {
+    mutationFn: ({ noteId, content, timestamp }: { noteId: string; content: string, timestamp: number | null }) => {
       setNotes(prev =>
-        prev.map(n => (n.note_id === noteId ? { ...n, content } : n))
+        prev.map(n => (n.note_id === noteId ? { ...n, content, timestamp } : n))
       );
-      return notesApi.updateNote(noteId, content);
+      return notesApi.updateNote(noteId, content, timestamp);
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       const { noteId } = variables;
-      const updated = notes.map(n => (n.note_id === noteId ? { ...n, content: variables.content } : n));
+      const updated = notes.map(n =>
+        n.note_id === noteId ? { ...n, content: variables.content } : n
+      );
       setNotes(updated);
 
-      if (!user?.user_id && updated[0]?.project_id) saveLocalNotes(updated[0].project_id, updated[0].media_name, updated);
+      if (!user?.user_id && updated[0]?.project_id)
+        saveLocalNotes(updated[0].project_id, updated[0].media_name, updated);
 
       queryClient.invalidateQueries({ queryKey: ["notes", updated[0]?.project_id] });
       toast({
@@ -133,7 +124,6 @@ export function useNotes() {
     onError: (err: any, variables) => {
       const { noteId } = variables;
       const prevContent = notes.find(n => n.note_id === noteId)?.content || "";
-
       setNotes(prev =>
         prev.map(n => (n.note_id === noteId ? { ...n, content: prevContent } : n))
       );
@@ -147,15 +137,10 @@ export function useNotes() {
     },
   });
 
-  // Mutation: Delete note
   const deleteNote = useMutation({
     mutationFn: (noteId: string) => notesApi.deleteNote(noteId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["notes"] });
-    },
-    onError: (err: any) => {
-      console.error("Delete note error:", err);
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["notes"] }),
+    onError: (err: any) => console.error("Delete note error:", err),
   });
 
   return {

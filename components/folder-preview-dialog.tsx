@@ -106,7 +106,6 @@ export function FolderPreviewActions({
   const { tenants, currentTenant } = useTenants();
   const { user } = useAuth();
   const [storageProvider, setStorageProvider] = useState<StorageProvider>("b2");
-  const [storageProviderSelectValue, setStorageProviderSelectValue] = useState<StorageProvider>("dropbox");
   const [selectedTenant, setSelectedTenant] = useState<string | undefined>(
     currentTenant?.tenant_id
   );
@@ -162,56 +161,54 @@ export function FolderPreviewActions({
           {/* Storage Toggle */}
           {isNewUpload && (
             <>
-              <Switch
-                className="data-[state=checked]:bg-blue-200"
-                checked={storageProvider === "dropbox"}
-                disabled={!user?.dropbox?.access_token}
-                onCheckedChange={(value) =>
-                  setStorageProvider(value ? storageProviderSelectValue : "b2")
-                }
-              />
-
               <div className="flex items-center text-sm text-muted-foreground space-x-1">
                 <span>Use</span>
 
                 {(() => {
-                  // Build an array of available storage providers
-                  const availableProviders: StorageProvider[] = [
-                    ...(user?.dropbox?.access_token ? ['dropbox'] as StorageProvider[] : []),
-                    ...(user?.google?.access_token || true ? ['google'] as StorageProvider[] : [])
+                  type ProviderOption = {
+                    value: StorageProvider;
+                    label: string;
+                  };
+
+                  const availableProviders: ProviderOption[] = [
+                    { value: 'b2', label: 'fframess' },
+                    ...(user?.dropbox?.access_token
+                      ? [{ value: 'dropbox' as StorageProvider, label: 'Dropbox' }]
+                      : []),
+                    ...(user?.google?.access_token
+                      ? [{ value: 'google' as StorageProvider, label: 'Google Drive' }]
+                      : []),
                   ];
 
                   if (availableProviders.length > 1) {
-                    // More than one provider → show dropdown
                     return (
                       <Select
-                        defaultValue={availableProviders[0]}
-                        value={storageProviderSelectValue}
-                        onValueChange={(value: StorageProvider) => setStorageProviderSelectValue(value)}
+                        value={storageProvider}
+                        onValueChange={(value: StorageProvider) =>
+                          setStorageProvider(value)
+                        }
                       >
-                        <SelectTrigger className="w-[120px] text-start">
+                        <SelectTrigger className="w-[140px] text-start">
                           <SelectValue placeholder="Select Storage" />
                         </SelectTrigger>
                         <SelectContent>
                           {availableProviders.map((provider) => (
-                            <SelectItem key={provider} value={provider}>
-                              {provider === 'dropbox' ? 'Dropbox' : 'Google Drive'}
+                            <SelectItem key={provider.value} value={provider.value}>
+                              {provider.label}
                             </SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
                     );
                   } else if (availableProviders.length === 1) {
-                    // Only one provider → show as text
                     return (
                       <span className="font-medium">
-                        {availableProviders[0] === 'dropbox' ? 'Dropbox' : 'Google Drive'}
+                        {availableProviders[0].label}
                       </span>
                     );
-                  } else {
-                    // No provider → show nothing
-                    return null;
                   }
+
+                  return null;
                 })()}
 
                 <span>Storage</span>

@@ -5,7 +5,6 @@ import { TOKEN_KEY } from "./lib/api/token";
 // Define public routes that don't require authentication
 const publicRoutes = ["/", "/login", "/signup"];
 const authorizedRoutes = ["/new", "/upgrade", "/success", "/preferences"];
-
 function isPublicPath(pathname: string): boolean {
   // If path starts with any authorized route → NOT public
   if (authorizedRoutes.some(route => pathname === route || pathname.startsWith(`${route}/`))) {
@@ -17,10 +16,9 @@ function isPublicPath(pathname: string): boolean {
     return true;
   }
 
-  // Username profile routes: /username or /username/slug
-  const isUsernameRoute =
-    /^\/[a-zA-Z0-9_-]+(\/[a-zA-Z0-9._~!$&'()*+,;=:@%\-]+)?$/.test(pathname);
-
+  // Username profile routes: /username, /username/slug, /username/s/slug, /username/p/slug
+  const isUsernameRoute = /^\/[a-zA-Z0-9_-]+\/[sp]\/[a-zA-Z0-9._~!$&'()*+,;=:@%-]+$/.test(pathname);
+  
   return isUsernameRoute;
 }
 

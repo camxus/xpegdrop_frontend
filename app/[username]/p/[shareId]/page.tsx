@@ -1,11 +1,11 @@
 import { Metadata } from "next";
-import ProjectPage from "./client";
+import ProjectPage from "../../[projectName]/client";
 import { projectsApi } from "@/lib/api/projectsApi";
 import { ApiError } from "@/lib/api/client";
 import { userApi } from "@/lib/api/usersApi";
 import { headers as nextHeaders } from "next/headers";
 
-type PageParams = Promise<{ username: string; projectName: string }>;
+type PageParams = Promise<{ username: string; shareId: string }>;
 
 // generateMetadata expects a destructured object with `params: PageParams`
 export async function generateMetadata({
@@ -13,7 +13,7 @@ export async function generateMetadata({
 }: {
   params: PageParams;
 }): Promise<Metadata> {
-  const { username, projectName } = await params;
+  const { username, shareId } = await params;
 
   const headers = await nextHeaders();
   const tenant = headers?.get("x-tenant");
@@ -22,16 +22,14 @@ export async function generateMetadata({
   const userData = await userApi.getUserByUsername(username);
 
   try {
-    const projectData = tenant ? await projectsApi.getTenantProjectByProjectUrl(
-      tenant,
+    const projectData = await projectsApi.getProjectByShareId(
       username,
-      projectName
-    ) : await projectsApi.getProjectByProjectUrl(
-      username,
-      projectName
-    );
+      shareId,
+      "p"
+    )
 
     const project = projectData.project;
+    const share = projectData.share;
 
     const media =
       projectData.media?.map((media: any) => media.thumbnail_url) ?? [];
@@ -39,11 +37,11 @@ export async function generateMetadata({
     const mediaSlice = media.slice(0, 3);
 
     metadata = {
-      title: `${project.name} by ${userData.first_name} | fframess`,
+      title: `${share.name} by ${userData.first_name} | fframess`,
       description:
         "Your art is yours. Your data is yours. A platform built by artists, for artists.",
       openGraph: {
-        title: `${project.name} by ${userData.first_name} | fframess`,
+        title: `${share.name} by ${userData.first_name} | fframess`,
         description:
           "Your art is yours. Your data is yours. A platform built by artists, for artists.",
         images: mediaSlice,
@@ -51,7 +49,7 @@ export async function generateMetadata({
       },
       twitter: {
         card: "summary_large_image",
-        title: `${project.name} by ${userData.first_name} | fframess`,
+        title: `${share.name} by ${userData.first_name} | fframess`,
         description:
           "Your art is yours. Your data is yours. A platform built by artists, for artists.",
         images: mediaSlice,
@@ -70,11 +68,11 @@ export async function generateMetadata({
 
     if (status === 400 && message === "EMAIL_REQUIRED") {
       return {
-        title: `Private project by ${userData.first_name} | fframess`,
+        title: `Private presentation by ${userData.first_name} | fframess`,
         description:
           "Your art is yours. Your data is yours. A platform built by artists, for artists.",
         openGraph: {
-          title: `Private project by ${userData.first_name} | fframess`,
+          title: `Private presentation by ${userData.first_name} | fframess`,
           description:
             "Your art is yours. Your data is yours. A platform built by artists, for artists.",
           type: "website",
@@ -83,7 +81,7 @@ export async function generateMetadata({
           card: "summary_large_image",
           description:
             "Your art is yours. Your data is yours. A platform built by artists, for artists.",
-          title: `Private project by ${userData.first_name} | fframess`,
+          title: `Private presentation by ${userData.first_name} | fframess`,
         },
       };
     }
@@ -92,10 +90,14 @@ export async function generateMetadata({
   return metadata;
 }
 
-// Page component
-export default async function Page() {
+interface PageProps {
+  params: { shareId: string };
+}
+
+export default async function Page({ params }: PageProps) {
+  const { shareId } = params; // get shareId from the route
   const headers = await nextHeaders();
   const tenant = headers?.get("x-tenant");
 
-  return <ProjectPage tenantHandle={tenant} />;
+  return <ProjectPage tenantHandle={tenant} shareId={shareId} presentationMode />;
 }
