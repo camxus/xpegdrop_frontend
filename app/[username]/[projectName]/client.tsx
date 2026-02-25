@@ -700,7 +700,7 @@ export default function PublicProjectPage({ tenantHandle, presentationMode = fal
                         </DropdownMenuContent>
                       </DropdownMenu>
                     )}
-                  {project.project_url && permissions?.is_admin && (
+                  {!presentationMode && project.project_url && permissions?.is_admin && (
                     <>
                       <Button
                         onClick={handleShare}
@@ -713,7 +713,7 @@ export default function PublicProjectPage({ tenantHandle, presentationMode = fal
                       </Button>
                     </>
                   )}
-                  {permissions?.is_admin && (
+                  {!presentationMode && permissions?.is_admin && (
                     <div className="md:hidden">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
