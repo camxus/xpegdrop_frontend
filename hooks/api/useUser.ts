@@ -14,7 +14,7 @@ export function useUser() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const localUser: Partial<User> = getLocalStorage(LOCAL_USER_STORAGE_KEY)
+  const localUser: Partial<User> | null = getLocalStorage(LOCAL_USER_STORAGE_KEY)
   const setLocalUser = (user: Partial<User>) => setLocalStorage(LOCAL_USER_STORAGE_KEY, user || { ...localUser, user })
 
   // Get current authenticated user

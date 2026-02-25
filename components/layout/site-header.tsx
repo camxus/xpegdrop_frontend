@@ -521,7 +521,7 @@ export function SiteHeader({ children }: SiteHeaderProps) {
                 {storageStats && <StorageIndicator percentage={storageStats.used_percent} />}
                 {googleStats && <StorageIndicator percentage={googleStats.used_percent} type="Google" />}
                 {dropboxStats && <StorageIndicator percentage={dropboxStats.used_percent} type="Dropbox" />}
-                <div className="flex gap-2 mt-2">
+                <div className="flex gap-2 mt-2 items-center">
                   {googleAuthUrl.data && !user?.google?.access_token && (
                     <Tooltip>
                       <TooltipTrigger asChild>

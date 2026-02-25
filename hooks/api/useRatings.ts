@@ -188,8 +188,8 @@ export function useRatings() {
     }
 
   const handleRatingChange = (mediaName: string, value: number, ratingId?: string, project?: Project) => {
-    const firstName = user?.first_name ?? localUser.first_name;
-    const lastName = user?.last_name ?? localUser.last_name;
+    const firstName = user?.first_name ?? localUser?.first_name;
+    const lastName = user?.last_name ?? localUser?.last_name;
 
     if (!firstName || !lastName) {
       dialog.show({
