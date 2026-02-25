@@ -280,7 +280,10 @@ export function ShareDetailsDialog({ share, onUpdate }: ShareDetailsDialogProps)
   const [name, setName] = useState(share.name);
   const [newEmail, setNewEmail] = useState("");
   const [isPublic, setIsPublic] = useState(share.is_public);
-  const [canDownload, setCanDownload] = useState(share.can_download);
+  const [canDownload, setCanDownload] = useState(share.can_download ?? false);
+  const [canUpload, setCanUpload] = useState(share.can_upload ?? false);
+  const [canRate, setCanRate] = useState(share.can_rate ?? false);
+  const [canNote, setCanNote] = useState(share.can_note ?? false);
   const [approvedUsers, setApprovedUsers] = useState(share.approved_users || []);
 
   const userQueries = useUsers(approvedUsers.map(u => u.user_id));
@@ -333,36 +336,59 @@ export function ShareDetailsDialog({ share, onUpdate }: ShareDetailsDialogProps)
 
   // Auto-update share
   useEffect(() => {
-    const update = async () => {
-      try {
-        await updateShare({
-          shareId: share.share_id,
-          data: {
-            name: name,
-            is_public: isPublic,
-            approved_emails: emails,
-            can_download: canDownload,
-            approved_users: approvedUsers,
-          },
-        });
-        onUpdate()
-        toast({ title: "Share updated", description: "Settings saved" });
-      } catch {
-        toast({ title: "Error", description: "Failed to update share", variant: "destructive" });
-      }
-    };
-
     const hasChanged =
       share.name !== name ||
       share.is_public !== isPublic ||
       share.can_download !== canDownload ||
+      share.can_upload !== canUpload ||
+      share.can_rate !== canRate ||
+      share.can_note !== canNote ||
       !isSameSet(share.approved_emails, emails, e => e.value) ||
-      !isSameSet(share.approved_users, approvedUsers, u => u.user_id)
+      !isSameSet(share.approved_users, approvedUsers, u => u.user_id);
 
-    if (hasChanged) {
-      update();
-    }
-  }, [isPublic, name, emails, canDownload, approvedUsers]);
+    if (!hasChanged) return;
+
+    const timeout = setTimeout(async () => {
+      try {
+        await updateShare({
+          shareId: share.share_id,
+          data: {
+            name,
+            is_public: isPublic,
+            approved_emails: emails,
+            can_download: canDownload,
+            can_upload: canUpload,
+            can_rate: canRate,
+            can_note: canNote,
+            approved_users: approvedUsers,
+          },
+        });
+
+        onUpdate();
+        toast({
+          title: "Share updated",
+          description: "Settings saved",
+        });
+      } catch {
+        toast({
+          title: "Error",
+          description: "Failed to update share",
+          variant: "destructive",
+        });
+      }
+    }, 500);
+
+    return () => clearTimeout(timeout);
+  }, [
+    name,
+    isPublic,
+    emails,
+    approvedUsers,
+    canDownload,
+    canUpload,
+    canRate,
+    canNote,
+  ]);
 
   return (
     <div className="space-y-6 p-6">
@@ -572,13 +598,67 @@ export function ShareDetailsDialog({ share, onUpdate }: ShareDetailsDialogProps)
         </div>
 
         {share.mode === "collaborative" && (
-          <div className="flex items-center justify-between border rounded-lg p-3">
-            <div>
-              <Label className="text-sm font-medium">Allow Download</Label>
-              <p className="text-xs text-muted-foreground">Users can download files</p>
+          <>
+            {/* Download */}
+            <div className="flex items-center justify-between border rounded-lg p-3">
+              <div>
+                <Label className="text-sm font-medium">Allow Download</Label>
+                <p className="text-xs text-muted-foreground">
+                  Users can download files
+                </p>
+              </div>
+              <Switch
+                checked={canDownload}
+                onCheckedChange={setCanDownload}
+                className="flex-shrink-0"
+              />
             </div>
-            <Switch checked={canDownload} onCheckedChange={setCanDownload} className="flex-shrink-0" />
-          </div>
+
+            {/* Upload */}
+            <div className="flex items-center justify-between border rounded-lg p-3">
+              <div>
+                <Label className="text-sm font-medium">Allow Upload</Label>
+                <p className="text-xs text-muted-foreground">
+                  Editors can upload new files
+                </p>
+              </div>
+              <Switch
+                checked={canUpload}
+                onCheckedChange={setCanUpload}
+                className="flex-shrink-0"
+              />
+            </div>
+
+            {/* Rate */}
+            <div className="flex items-center justify-between border rounded-lg p-3">
+              <div>
+                <Label className="text-sm font-medium">Allow Rating</Label>
+                <p className="text-xs text-muted-foreground">
+                  Users can rate items in this share
+                </p>
+              </div>
+              <Switch
+                checked={canRate}
+                onCheckedChange={setCanRate}
+                className="flex-shrink-0"
+              />
+            </div>
+
+            {/* Note */}
+            <div className="flex items-center justify-between border rounded-lg p-3">
+              <div>
+                <Label className="text-sm font-medium">Allow Notes</Label>
+                <p className="text-xs text-muted-foreground">
+                  Users can leave comments or notes
+                </p>
+              </div>
+              <Switch
+                checked={canNote}
+                onCheckedChange={setCanNote}
+                className="flex-shrink-0"
+              />
+            </div>
+          </>
         )}
       </div>
     </div >
