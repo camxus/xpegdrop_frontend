@@ -21,7 +21,8 @@ import { EditImageView } from "./edit-image";
 import { useModal } from "@/hooks/use-modal";
 import { NotesModal } from "./notes-modal";
 import { Note } from "@/lib/api/notesApi";
-import { MessageSquareText } from "lucide-react";
+import { ExternalLink, MessageSquareText } from "lucide-react";
+import Link from "next/link";
 import { useUser } from "@/hooks/api/useUser";
 import { useDialog } from "@/hooks/use-dialog";
 import UnauthorizedRatingDialog, { UnauthorizedRatingDialogActions } from "./unauthorized-rating-dialog";
@@ -99,7 +100,7 @@ export function MediaMasonry({
       setHoveredMedia(null);
       onMediaHoverChange?.(false);
     }
-  }, [hoveredMedia, onMediaHoverChange]);
+  }, [onMediaHoverChange]);
 
   const handleMediaClick = useCallback(
     (mediaIndex: number) => {
@@ -187,7 +188,7 @@ export function MediaMasonry({
             onHover={() => handleMouseEnter(mediaFile.id)}
             onLeave={handleMouseLeave}
             onClick={() => handleMediaClick(index)}
-            onLoad={() => handleMediaLoad(mediaFile.id)}
+            onLoad={() => handleMediaLoad(mediaFile.name)}
             onRatingChange={(value, ratingId) =>
               handleRatingChange(mediaFile.name, value, ratingId)
             }
@@ -261,7 +262,7 @@ const MasonryMedia = memo(function MasonryMedia({
     modal.show({
       title: `Notes`,
       content: () => (
-        <NotesModal projectId={projectId} mediaName={mediaFile.name} canNote={canNote}/>
+        <NotesModal projectId={projectId} mediaName={mediaFile.name} canNote={canNote} />
       ),
       height: "400px",
       width: "500px",
@@ -364,6 +365,16 @@ const MasonryMedia = memo(function MasonryMedia({
               Show Notes
             </ContextMenuItem>
             {/* <ContextMenuSeparator /> */}
+            {canEdit && (
+              <ContextMenuItem>
+                <Link
+                  href={`/agents?fileId=${encodeURIComponent(mediaFile.id)}&fileName=${encodeURIComponent(mediaFile.name)}&fileType=${encodeURIComponent(mediaFile.type)}&projectId=${encodeURIComponent(projectId)}`} target="_blank"
+                  className="flex items-center gap-2">
+                  fframessAI
+                  <ExternalLink className="h-4 w-4" />
+                </Link>
+              </ContextMenuItem>
+            )}
             {canEdit && <ContextMenuItem onClick={() => handleDeleteMedia()}>
               <span className="text-destructive-foreground">Delete</span>
             </ContextMenuItem>}
@@ -392,13 +403,10 @@ const MasonryMedia = memo(function MasonryMedia({
             </div>
           </>
         }
-
-        <EditImageView
-          image={mediaFile}
-          isOpen={editOpen}
-          onClose={() => setEditOpen(false)}
-        />
       </motion.div>
     </>
-  );
-});
+  )
+}
+);
+
+

@@ -71,6 +71,7 @@
     "react-dropzone": "latest",
     "react-hook-form": "^7.60.0",
     "react-resizable-panels": "^2.1.7",
+    "reactflow": "^11.11.4",
     "recharts": "2.15.4",
     "sonner": "^1.7.4",
     "sst": "3.17.21",
