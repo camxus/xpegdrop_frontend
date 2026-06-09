@@ -50,7 +50,7 @@ export default function AgentsPage() {
   const { setCurrentSession, setCurrentSessionId, setLoading, setError } = useEnvironment();
   const { toast } = useToast();
 
-useEffect(() => {
+  useEffect(() => {
     const file = search.get('file');
     const fileId = search.get('fileId');
     const fileName = search.get('fileName');
@@ -65,15 +65,15 @@ useEffect(() => {
     let cancelled = false;
 
     const start = async () => {
-       setLoading(true);
-       setError(null);
-       try {
-         const formData = new FormData();
-         formData.append('imageId', fileId);
-         formData.append('projectId', projectId || '');
-         formData.append('mediaName', fileName);
-         if (file) formData.append('file', new File([], fileName, { type: fileType || 'application/octet-stream' }));
-         const res = await upload.mutateAsync(formData);
+      setLoading(true);
+      setError(null);
+      try {
+        const formData = new FormData();
+        formData.append('imageId', fileId);
+        formData.append('projectId', projectId || '');
+        formData.append('mediaName', fileName);
+        if (file) formData.append('file', new File([], fileName, { type: fileType || 'application/octet-stream' }));
+        const res = await upload.mutateAsync(formData);
         if (cancelled) return;
         setCurrentSession(res.data);
         setCurrentSessionId(res.data.session_id);
